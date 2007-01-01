@@ -802,7 +802,7 @@ class MainFrame(wx.Frame):
             parts[i] = ">>" + parts[i]
         text = '\r\n'.join(parts)
         maildata = {'subject':'Re: '+info['subject'][:32], 'from':mailaddr, 'to':info['mailfrom'],
-                    'text': text}
+                    'text': text, 'user':user}
         #print 'reply:', maildata 
         frame = writer.WriterFrame(self, self.rundir, maildata)
         frame.Show(True)
@@ -820,7 +820,8 @@ class MainFrame(wx.Frame):
             print 'get_item_content error:', str(e)
            
         mailaddr = config.cf.users[user]['email']
-        maildata = {'subject':'Re:'+info['subject'][:32], 'from':mailaddr, 'to':'', 'text':info['plain'], 'user':user}
+        maildata = {'subject':'Re: '+info['subject'][:32], 'from':mailaddr, 'to':'', 
+                    'text':info['plain'], 'user':user}
  
         frame = writer.WriterFrame(self, self.rundir, maildata)
         frame.Show(True)
@@ -838,7 +839,8 @@ class MainFrame(wx.Frame):
             print 'get_item_content error:', str(e)
         
         mailaddr = config.cf.users[user]['email']
-        maildata = {'subject':'Fw:'+info['subject'][:32], 'from':mailaddr, 'to':'', 'text':info['plain'], 'user':user}
+        maildata = {'subject':'Fw:'+info['subject'][:32], 'from':mailaddr, 'to':'', 
+                    'text':info['plain'], 'user':user}
         frame = writer.WriterFrame(self, self.rundir, maildata)
         frame.Show(True)
 
@@ -854,7 +856,8 @@ class MainFrame(wx.Frame):
         except Exception, e:
             print 'get_item_content error:', str(e)
         mailaddr = config.cf.users[user]['email']
-        maildata = {'subject':info['subject'], 'from':mailaddr, 'to':info['mailto'], 'text':info['plain'], 'user':user}
+        maildata = {'subject':info['subject'], 'from':mailaddr, 'to':info['mailto'], 
+                    'text':info['plain'], 'user':user}
  
         frame = writer.WriterFrame(self, self.rundir, maildata)
         frame.Show(True)

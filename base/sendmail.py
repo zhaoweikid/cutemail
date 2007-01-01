@@ -110,7 +110,7 @@ class SendMail:
         self.rcpt_to()
         self.data(message)
 
-class ServerSend(SendMail):
+class SendMailServer(SendMail):
     def __init__(self, smtp_server, fromaddr, toaddr):
         SendMail.__init__(smpt_server, fromaddr, toaddr)
 
@@ -131,7 +131,7 @@ class ServerSend(SendMail):
         except SessionError, e:
             traceback.print_exc()
         
-class NoserverSend(SendMail):
+class SendMailMX(SendMail):
     def __init__(self, fromaddr, toaddr):
         self.from_addr = fromaddr
         self.to_addr = toaddr
@@ -185,6 +185,8 @@ class NoserverSend(SendMail):
                 except socket.error, e:
                     traceback.print_exc()
                     continue
+
+
 
 if __name__ == '__main__':
     #print "----------------- authsend test ------------------------"

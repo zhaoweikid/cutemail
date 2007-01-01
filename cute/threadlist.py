@@ -168,7 +168,20 @@ class Task(threading.Thread):
         config.uiq.put(x, timeout=5)
     
     def sendmail(self, item):
-        pass
-    
-    
-    
+        tos = item['to']
+
+        x = sendmail.SendMailMX(item['from'], item['to'])
+        f = open(item['path'], 'r')
+        s = f.read()
+        f.close()
+        try:
+            x.send(s)
+        except Exception, why:
+            mesg = str(e)
+        else:
+            mesg = u'发送成功'
+        x = {'name': item['name'], 'task':'alert', 'message':mesg} 
+   
+        config.uiq.put(x, timeout=5)
+
+

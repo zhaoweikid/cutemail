@@ -265,7 +265,10 @@ class WriterFrame (wx.Frame):
 
     def OnMailSend(self, evt):
         self.save_mail('send') 
-        sendmail.sendfile(self.maildata)
+        msg = {'name':self.maildata['user'], 'task':'sendmail', 'to'=self.maildata['to'], 
+               'from':self.maildata['from'], 'path':self.maildata['filepath']}
+        #sendmail.sendfile(self.maildata)
+        config.taskq.put(msg)
 
     def OnMailSaveDraft(self, evt):
         self.save_mail('draft') 
