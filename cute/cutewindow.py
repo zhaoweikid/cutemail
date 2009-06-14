@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# -*- encoding: utf-8 -*-
+# coding: utf-8
 import os, sys, cStringIO, string, time
 import wx
 import wx.aui
@@ -21,7 +21,7 @@ class MainFrame(wx.Frame):
         self.rundir = os.path.dirname(os.path.abspath(sys.argv[0])).replace("\\", "/")
         self.bmpdir = self.rundir + os.sep + "bitmaps"
         icon = wx.EmptyIcon()
-        icon.CopyFromBitmap(wx.BitmapFromImage(wx.Image((self.bmpdir + "/mabmail.png"), wx.BITMAP_TYPE_PNG)))
+        icon.CopyFromBitmap(wx.BitmapFromImage(wx.Image((self.bmpdir + "/cutemail.png"), wx.BITMAP_TYPE_PNG)))
         self.SetIcon(icon)
         
         # 当前mailbox
@@ -375,9 +375,9 @@ class MainFrame(wx.Frame):
         self.viewmenu.Append(self.ID_VIEW_REFRESH, u"刷新", 'refresh.png')        
 
         importmenu = wx.Menu()
-        importmenu.Append(self.ID_IMPORT_MAB_USER, u"导入mabmail帐户")
-        importmenu.Append(self.ID_IMPORT_MAB_MAILBOX, u"导入mabmail邮箱")
-        importmenu.Append(self.ID_IMPORT_MAB_LINKMAN, u"导入mabmail地址薄")
+        importmenu.Append(self.ID_IMPORT_MAB_USER, u"导入cutemail帐户")
+        importmenu.Append(self.ID_IMPORT_MAB_MAILBOX, u"导入cutemail邮箱")
+        importmenu.Append(self.ID_IMPORT_MAB_LINKMAN, u"导入cutemail地址薄")
         importmenu.AppendSeparator()
         importmenu.Append(self.ID_IMPORT_OUTLOOK_USER, u"导入outlook帐户")
         importmenu.Append(self.ID_IMPORT_OUTLOOK_MAILBOX, u"导入outlook邮箱")
@@ -388,9 +388,9 @@ class MainFrame(wx.Frame):
         importmenu.Append(self.ID_IMPORT_FOXMAIL_LINKMAN, u"导入foxmail地址薄")
         
         exportmenu = wx.Menu()        
-        exportmenu.Append(self.ID_EXPORT_MAB_USER, u"导出mabmail帐户")
-        exportmenu.Append(self.ID_EXPORT_MAB_MAILBOX, u"导出mabmail邮箱")
-        exportmenu.Append(self.ID_EXPORT_MAB_LINKMAN, u"导出mabmail地址薄")
+        exportmenu.Append(self.ID_EXPORT_MAB_USER, u"导出cutemail帐户")
+        exportmenu.Append(self.ID_EXPORT_MAB_MAILBOX, u"导出cutemail邮箱")
+        exportmenu.Append(self.ID_EXPORT_MAB_LINKMAN, u"导出cutemail地址薄")
         
         self.toolmenu = PicMenu(self)
         self.toolmenu.Append(self.ID_TOOL_LINKMAN, u"地址薄", 'note.png')

@@ -1,20 +1,20 @@
 #!/usr/bin/python
-#-*- encoding: utf-8 -*-
+# coding: utf-8
 import sys, os
 import wx
-sys.path.append(os.getcwd() + os.sep + 'base')
-sys.path.append(os.getcwd() + os.sep + 'mab')
-from mab import mabwindow
+sys.path.append(os.path.join(os.getcwd(), 'base'))
+sys.path.append(os.path.join(os.getcwd(), 'cute'))
+from cute import cutewindow
 import config, threadlist
 
-class mabApp(wx.App):
+class cuteApp(wx.App):
     def __init__(self):                
         wx.App.__init__(self, 0)
         return None
 
     def OnInit(self):
         wx.InitAllImageHandlers()       
-        self.frame = mabwindow.MainFrame(None, 101, config.VERSION)
+        self.frame = cutewindow.MainFrame(None, 101, config.VERSION)
         self.frame.Show(True)
         self.SetTopWindow(self.frame)
         self.Bind(wx.EVT_ACTIVATE_APP, self.OnActivate)
@@ -33,7 +33,7 @@ if __name__ == '__main__':
     thsch.start()
     thtask.start()
     
-    app = mabApp()
+    app = cuteApp()
     app.MainLoop()
     
     thsch.is_running = False

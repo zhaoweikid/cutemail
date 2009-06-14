@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Komodo Project File - DO NOT EDIT -->
-<project id="208d4e55-7678-4c24-aa42-4e42f5902250" kpf_version="4" name="mabmail.kpf">
+<project id="208d4e55-7678-4c24-aa42-4e42f5902250" kpf_version="4" name="cutemail.kpf">
 <preference-set idref="208d4e55-7678-4c24-aa42-4e42f5902250">
   <string id="donotask_action_remotedebug_mapped_uri"></string>
   <boolean id="donotask_remotedebug_mapped_uri">0</boolean>

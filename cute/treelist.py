@@ -1,4 +1,4 @@
-# -*- encoding: utf-8 -*-
+# coding: utf-8
 import wx, wx.gizmos
 import cStringIO, types
 import config, common
@@ -159,7 +159,7 @@ class MailboxPanel(wx.Panel):
         self.tree.SetImageList(il)
         self.il = il
                        
-        root = self.tree.AddRoot("mabmail")
+        root = self.tree.AddRoot("cutemail")
         
         def add_to_tree(parent, name):
             if type(name) == type([]):
@@ -218,7 +218,7 @@ class MailboxTree(wx.TreeCtrl):
         self.SetImageList(il)
         self.il = il
         
-        root = self.AddRoot("mabmail")
+        root = self.AddRoot("cutemail")
         
         for k in config.cf.users:
             user = config.cf.users[k]
