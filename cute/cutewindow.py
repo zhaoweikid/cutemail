@@ -13,7 +13,7 @@ import pop3
 class MainFrame(wx.Frame):
     def __init__(self, parent, id, title):
         wx.Frame.__init__(self, parent, id, title, wx.DefaultPosition, wx.Size(800, 600), 
-                            name="MabMail", style=wx.DEFAULT_FRAME_STYLE )
+                            name="CuteMail", style=wx.DEFAULT_FRAME_STYLE )
         
         self.mgr = wx.aui.AuiManager()
         self.mgr.SetManagedWindow(self)
@@ -487,13 +487,13 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnImportFoxmailUser, id=self.ID_IMPORT_FOXMAIL_USER)
         self.Bind(wx.EVT_MENU, self.OnImportFoxmailMailbox, id=self.ID_IMPORT_FOXMAIL_MAILBOX)
         self.Bind(wx.EVT_MENU, self.OnImportFoxmailLinkman, id=self.ID_IMPORT_FOXMAIL_LINKMAN)
-        self.Bind(wx.EVT_MENU, self.OnImportMabUser, id=self.ID_IMPORT_MAB_USER)
-        self.Bind(wx.EVT_MENU, self.OnImportMabMailbox, id=self.ID_IMPORT_MAB_MAILBOX)
-        self.Bind(wx.EVT_MENU, self.OnImportMabLinkman, id=self.ID_IMPORT_MAB_LINKMAN)
+        self.Bind(wx.EVT_MENU, self.OnImportCuteUser, id=self.ID_IMPORT_MAB_USER)
+        self.Bind(wx.EVT_MENU, self.OnImportCuteMailbox, id=self.ID_IMPORT_MAB_MAILBOX)
+        self.Bind(wx.EVT_MENU, self.OnImportCuteLinkman, id=self.ID_IMPORT_MAB_LINKMAN)
         
-        self.Bind(wx.EVT_MENU, self.OnExportMabUser, id=self.ID_EXPORT_MAB_USER)
-        self.Bind(wx.EVT_MENU, self.OnExportMabMailbox, id=self.ID_EXPORT_MAB_MAILBOX)
-        self.Bind(wx.EVT_MENU, self.OnExportMabLinkman, id=self.ID_EXPORT_MAB_LINKMAN)
+        self.Bind(wx.EVT_MENU, self.OnExportCuteUser, id=self.ID_EXPORT_MAB_USER)
+        self.Bind(wx.EVT_MENU, self.OnExportCuteMailbox, id=self.ID_EXPORT_MAB_MAILBOX)
+        self.Bind(wx.EVT_MENU, self.OnExportCuteLinkman, id=self.ID_EXPORT_MAB_LINKMAN)
         
         self.Bind(wx.EVT_MENU, self.OnToolLinkman, id=self.ID_TOOL_LINKMAN)
         self.Bind(wx.EVT_MENU, self.OnToolNote, id=self.ID_TOOL_NOTE)
@@ -621,19 +621,19 @@ class MainFrame(wx.Frame):
         pass
     def OnImportFoxmailLinkman(self, event):
         pass
-    def OnImportMabUser(self, event):
+    def OnImportCuteUser(self, event):
         pass
-    def OnImportMabMailbox(self, event):
+    def OnImportCuteMailbox(self, event):
         pass
-    def OnImportMabLinkman(self, event):
+    def OnImportCuteLinkman(self, event):
         pass
         
         
-    def OnExportMabUser(self, event):
+    def OnExportCuteUser(self, event):
         pass
-    def OnExportMabMailbox(self, event):
+    def OnExportCuteMailbox(self, event):
         pass
-    def OnExportMabLinkman(self, event):
+    def OnExportCuteLinkman(self, event):
         pass
         
         
