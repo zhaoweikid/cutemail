@@ -1,10 +1,10 @@
 #-*- encoding: utf-8 -*-
 import os, string, sys, traceback, types
-import dbtable, utils
+import utils
 import threading, Queue
 import cPickle as pickle
-
-VERSION = " MabMail 1.0"
+import dbope
+VERSION = " CuteMail 1.0"
 
 
 # 全局配置信息
@@ -21,38 +21,63 @@ uiq   = Queue.Queue()
 class AppConfig:
     def __init__(self):            
         self.home = os.path.dirname(__file__)[:-5]
-        # 用户配置
+        # 以用户为索引的用户配置
         self.users = {}
-        # 以邮件地址为索引的用户信息
+        # 以邮件地址为索引的用户配置信息
         self.mailboxs = {}
         
         self.mailbox_map = {u'收件箱':'recv', u'发件箱':'send', u'草稿箱':'draft',
                             u'已发送邮件':'sendover', u'垃圾邮件':'spam',
                             u'病毒邮件':'virus', u'删除邮件':'trash'}
         
-        self.datadir = self.home + os.sep + 'data'
+        self.datadir = os.path.join(self.home, 'data')
         if not os.path.isdir(self.datadir):
             os.mkdir(self.datadir)
         
+        self.db = None
         # status表示邮件状态可以为未读，已读，已回复
         self.mailinfo_fields = ['filename','plain','html','header','subject','mailfrom','mailto',
-                          'mailcc','size','ctime','date','attach','mailbox','status','thread', 'charset']
-        self.mailinfo_index  = ['mailbox', 'status']
+                          'size','ctime','date','attach','mailbox','status','thread', 'charset']
+        #self.mailinfo_index  = ['mailbox', 'status']
         
+        self.mailinfo_sql = '''create table if not exists mailinfo (
+        id integer primary key autoincrement,
+        filename varchar(255) not null,
+        plain text,
+        html text,
+        header text,
+        subject varchar(255),
+        mailfrom varchar(128) not null,
+        mailto varchar(128) not null,
+        size integer default 0,
+        ctime datetime,
+        date datetime,
+        attach text,
+        mailbox varchar(64),
+        status varchar(32),
+        threads varchar(255),
+        charset varchar(64)
+        )'''
+        # 用户配置信息
         self.mailuser_fields = ['name','email','password','smtp','pop3','imap',
              'uidls','mailbox', 'schedule']
         
     def conf_init(self):
+        '''设置用户默认配置'''
         #mbox = [unicode(u['name']), u'收件箱',u'发件箱', u'草稿箱', u'已发送邮件', u'垃圾邮件', u'病毒邮件', u'删除邮件']
         dx = ['','','','','','',set(),[],[]]
         x = dict(zip(self.mailuser_fields, dx))
         #x = {'name':'','email':'','password':'','smtp':'','pop3':'','imap':'',
         #     'uidl':set(),'mailbox':'', 'schedule': []}
-        conf = {'config': x, 'mailinfo':None}
-        
-        return conf
+        #conf = {'config': x, 'mailinfo':None}
+        #return conf
+        return x 
     
     def user_add(self, incf):
+        '''
+        添加一个新用户
+        incf - 该用户的配置信息。是以self.mailuser_fields为关键字申城的字典
+        '''
         name = incf['name']
         email = incf['email']
         if self.users.has_key(name):
@@ -61,31 +86,35 @@ class AppConfig:
             raise ValueError, 'email %s is exists' % (email)
         
         conf = self.conf_init()
-        conf['config'].update(incf)
-        if not conf['config']['mailbox']:
+        conf.update(incf)
+        if not conf['mailbox']:
             print 'add default mailbox'
-            conf['config']['mailbox'] = [unicode(incf['name']), u'收件箱',u'发件箱', u'草稿箱', u'已发送邮件', u'垃圾邮件', u'病毒邮件', u'删除邮件']
+            conf['mailbox'] = [unicode(incf['name']), u'收件箱',u'发件箱', u'草稿箱', u'已发送邮件', u'垃圾邮件', u'病毒邮件', u'删除邮件']
             
         userpath = self.datadir + os.sep + name
         if not os.path.isdir(userpath):
             os.mkdir(userpath)
         infopath = userpath + os.sep + 'mailinfo'
-        conf['mailinfo'] = dbtable.DBTable(infopath, self.mailinfo_fields)
-        self.dump_conf(conf['config'])
+        #conf['mailinfo'] = dbtable.DBTable(infopath, self.mailinfo_fields)
+        self.db = dbope.DBOpe(infopath)
+        self.db.open()
+        self.db.execute(self.mailinfo_sql)
+        self.db.close()
+
+        self.dump_conf(conf)
         
         self.users[name] = conf
         self.mailboxs[email] = conf
      
     def user_delete(self, name):
         conf = self.users[name]
-        email = conf['config']['email']
+        email = conf['email']
         self.dump_user(name)
         
         del self.users[name]
         del self.mailboxs[email]
         
-        conf['mailinfo'].close()
-        userdir = self.datadir + os.sep + name
+        userdir = os.path.join(self.datadir, name)
         del conf
         os.rename(userdir, userdir+'.%d.bak' % (int(time.time())))
 
@@ -95,10 +124,7 @@ class AppConfig:
         for box in boxes:
             if box.endswith(".bak"): # ignore dir name end with .bak
                 continue
-            conf_path = self.datadir + os.sep + box + os.sep + 'config.db'
-            if not os.path.isfile(conf_path):
-                continue
-            
+            conf_path = os.path.join(self.datadir, box, 'config.db')
             if not os.path.isfile(conf_path):
                 continue
             else:
@@ -106,14 +132,14 @@ class AppConfig:
                 conf = pickle.load(f)
                 f.close()
                 
-            mailinfo_path   = self.datadir + os.sep + box + os.sep + "mailinfo"
-            mailinfo   = dbtable.DBTable(mailinfo_path, self.mailinfo_fields, self.mailinfo_index)
-            userconf = {'config': conf, 'mailinfo':mailinfo}
-            self.users[conf['name']] = userconf
-            self.mailboxs[conf['email']] = userconf
+            mailinfo_path   = os.path.join(self.datadir, box, "mailinfo.db")
+            #mailinfo   = dbtable.DBTable(mailinfo_path, self.mailinfo_fields, self.mailinfo_index)
+            #userconf = {'config': conf, 'mailinfo':mailinfo}
+            self.users[conf['name']] = conf
+            self.mailboxs[conf['email']] = conf
     
     def load_user(self, name):
-        conf_path = self.datadir + os.sep + name + os.sep + 'config.db'
+        conf_path = os.path.join(self.datadir, name, 'config.db')
         f = open(conf_path, 'r')
         conf = pickle.load(f)
         f.close()
@@ -122,26 +148,26 @@ class AppConfig:
             
     def dump_conf(self, cf):
         if type(cf) == types.StringType or type(cf) == types.UnicodeType:
-            cf = self.users[cf]['config']
-        confpath = self.datadir + os.sep + cf['name'] + os.sep + 'config.db'
+            cf = self.users[cf]
+        confpath = os.path.join(self.datadir, cf['name'], 'config.db')
         f = open(confpath, 'w')
         pickle.dump(cf, f)
         f.close()
     
     def dump_user(self, name):
         conf = self.users[name]
-        self.dump_conf(conf['config'])
-        conf['mailinfo'].sync()
+        self.dump_conf(conf)
+        #conf['mailinfo'].sync()
         
     def dump(self):
         for u in self.users:
             self.dump_user(u)
           
     def mail_add(self, name, info):
-        user = self.users[name]
-        mailinfo = user['mailinfo']
-        mailinfo.insert(info)
-        mailinfo.sync() 
+        usercf = self.users[name]
+        #mailinfo = user['mailinfo']
+        #mailinfo.insert(info)
+        #mailinfo.sync() 
     
         
 def load():
