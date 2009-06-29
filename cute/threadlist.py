@@ -124,12 +124,15 @@ class Task(threading.Thread):
             print 'get user config error!'
             return
         print ucf
-        pop = pop3.POP3Client(ucf['config'])
-        pop.init()
-        pop.login()
-        pop.infos()
-        pop.mails()
-        pop.close()
+        try:
+            pop = pop3.POP3Client(ucf)
+            pop.init()
+            pop.login()
+            pop.infos()
+            pop.mails()
+            pop.close()
+        except Exception, e:
+            error = str(e)
             
         print config.cf.users[name]
         

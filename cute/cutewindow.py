@@ -6,7 +6,7 @@ import wx.aui
 from   picmenu import PicMenu
 from   listindex import *
 import notebook, treelist
-import config, common
+import config, common, dbope
 import cPickle as pickle
 import pop3
 
@@ -19,7 +19,7 @@ class MainFrame(wx.Frame):
         self.mgr.SetManagedWindow(self)
         
         self.rundir = os.path.dirname(os.path.abspath(sys.argv[0])).replace("\\", "/")
-        self.bmpdir = self.rundir + os.sep + "bitmaps"
+        self.bmpdir = os.path.join(self.rundir, "bitmaps")
         icon = wx.EmptyIcon()
         icon.CopyFromBitmap(wx.BitmapFromImage(wx.Image((self.bmpdir + "/cutemail.png"), wx.BITMAP_TYPE_PNG)))
         self.SetIcon(icon)
@@ -33,13 +33,17 @@ class MainFrame(wx.Frame):
         self.init_const()
         # 创建菜单        
         self.make_menu()
+        # 创建工具栏
         self.make_toolbar()
+        # 创建状态栏
         self.make_statusbar()
         
+        # 创建用户信箱树形结构
         self.make_tree()        
         
+        # 创建显示邮件控件, 为每个用户的每个邮箱路径都创建一个
         self.init_data()
-        
+        # 把邮件信息加载进来        
         self.load_db_data()
         #self.listindex = treelist.MailListPanel(self) 
         
@@ -54,23 +58,24 @@ class MainFrame(wx.Frame):
         #self.treeindex = treelist.MailTreePanel(self)
         #self.treeindex.Hide()
         
+        # 内容显示控件
         self.listcnt = notebook.ViewBook(self)
         self.listcnt.Hide()
         
-        
+        # 为面板管理器增加用户邮箱树形结构
         self.mgr.AddPane(self.tree, wx.aui.AuiPaneInfo().Name("tree").Caption(u"用户").
                           Left().Layer(1).Position(1).CloseButton(True).MaximizeButton(True))
-        
-        
+         
+        # 把每个邮箱创建的邮件列表面板加入到面板管理器, 先不可见
         for k in self.mailboxs:
             print 'add to mgr:', k
             self.mgr.AddPane(self.mailboxs[k], wx.aui.AuiPaneInfo().Name(k).CenterPane().Hide())
             
         #self.mgr.AddPane(self.treeindex, wx.aui.AuiPaneInfo().Name("treeindex").CenterPane().Hide()) 
-                         
+        # 把邮件内容面板添加到面板管理器
         self.mgr.AddPane(self.listcnt, wx.aui.AuiPaneInfo().Name("listcnt").Caption(u"邮件内容").
                           Bottom().Layer(0).Position(3).CloseButton(True).MaximizeButton(True))
-        
+        # 显示当前选择的邮件列表面板 
         self.mgr.GetPane(k1).Show()
         self.mgr.Update()
         self.Bind(wx.EVT_TIMER, self.OnTimer)
@@ -91,6 +96,9 @@ class MainFrame(wx.Frame):
         self.Refresh()
         
     def OnTimer(self, event):
+        '''
+        定时任务
+        '''
         #print 'time now', time.ctime()
         try:
             item = config.uiq.get(0)
@@ -102,9 +110,12 @@ class MainFrame(wx.Frame):
             task = item['task']
             mlist = self.mailboxs['/%s/' % (name) + u'收件箱']
             if task == 'updatebox':
-                minfo = config.cf.users[name]['mailinfo']
-                infos = minfo.get(['status', 'new'])
-                if infos:
+                usercf = config.cf.users[name]
+                dbpath = os.path.join(config.cf.datadir, name, 'mailinfo.db')
+                conn = dbope.DBOpe(dbpath)
+                ret = conn.query("select * from mailinfo where status='new'")
+                conn.close()
+                if ret:
                     for inf in infos:
                         print inf['filename']
             elif task == 'alert':
@@ -121,25 +132,19 @@ class MainFrame(wx.Frame):
 
     def load_db_data(self):
         users = config.cf.users
-        mailfrom_pos = config.cf.mailinfo_fields.index('mailfrom')
-        subject_pos = config.cf.mailinfo_fields.index('subject')
-        attach_pos = config.cf.mailinfo_fields.index('attach')
-        date_pos = config.cf.mailinfo_fields.index('date')
-        size_pos = config.cf.mailinfo_fields.index('size')
         for u in users:
-            minfo = users[u]['mailinfo']
             mlist = self.mailboxs['/%s/' % (u) + u'收件箱']
-            minfo.reset()
-            rec = minfo.first()
-            while rec:
-                x = pickle.loads(rec[1])
-                print x
+            dbpath = os.path.join(config.cf.datadir, u, 'mailinfo.db')
+            print 'load db from path:', dbpath
+            conn = dbope.DBOpe(dbpath)
+            ret = conn.query("select * from mailinfo")
+            conn.close()
+            for row in ret:
                 att = 0
-                if len(x[attach_pos]) > 0:
+                if row['attach']:
                     att = 1
-                item = [att, x[mailfrom_pos], att, 0, x[subject_pos], x[date_pos], str(x[size_pos])]
+                item = [att, x['mailfrom'], att, 0, x['subject'], x['date'], str(x['size'])]
                 mlist.add_item(item, mlist.today)
-                rec = minfo.next()
 
     def init_const(self):
         self.ID_FILE_OPEN          = wx.NewId()
@@ -574,7 +579,7 @@ class MainFrame(wx.Frame):
         pass
     def OnFileGetMail(self, event):
         name = self.last_mailbox.split('/')
-        print name
+        print 'last_mailbox:', name
         x = {'name':name[1], 'task':'recvmail'}
         config.taskq.put(x)
         

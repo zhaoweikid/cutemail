@@ -1,4 +1,4 @@
-#-*- encoding: utf-8 -*-
+# coding: utf-8
 import string, os, sys, time, random
 import poplib, config, mailparse, utils
 
@@ -123,7 +123,7 @@ def test():
     for k in config.cf.users:
         print '---------- name:', k
         v = config.cf.users[k]
-        p = POP3Client(v['config'])
+        p = POP3Client(v)
         p.init()
         p.login() 
         p.infos()

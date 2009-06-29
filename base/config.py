@@ -94,7 +94,7 @@ class AppConfig:
         userpath = self.datadir + os.sep + name
         if not os.path.isdir(userpath):
             os.mkdir(userpath)
-        infopath = userpath + os.sep + 'mailinfo'
+        infopath = userpath + os.sep + 'mailinfo.db'
         #conf['mailinfo'] = dbtable.DBTable(infopath, self.mailinfo_fields)
         self.db = dbope.DBOpe(infopath)
         self.db.open()
@@ -179,7 +179,7 @@ def load():
     u = {}
     u['name'] = 'test1'
     u['email'] = 'python25@163.com'
-    u['password'] = '666666'
+    u['password'] = '8822747lusha'
     u['pop3_server'] = 'pop3.163.com'
     u['mailbox'] = [unicode(u['name']), [u'收件箱', 'a', 'b', ['c', 'dd']],u'发件箱', u'草稿箱', u'已发送邮件', u'垃圾邮件', u'病毒邮件', u'删除邮件']
     

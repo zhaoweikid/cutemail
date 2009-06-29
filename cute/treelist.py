@@ -66,9 +66,9 @@ class MailListPanel(wx.Panel):
         self.yestoday = self.add_item([u' 昨天 ',0,0,'','','']) 
         self.today = self.add_item([u' 今天 ',0,0,'','','']) 
         
-        self.add_item(item, self.week)
-        self.add_item(item, self.yestoday)
-        self.add_item(item, self.today)
+        #self.add_item(item, self.week)
+        #self.add_item(item, self.yestoday)
+        #self.add_item(item, self.today)
         
         self.tree.Expand(self.root)
         self.tree.GetMainWindow().Bind(wx.EVT_RIGHT_UP, self.OnRightUp)
@@ -221,10 +221,9 @@ class MailboxTree(wx.TreeCtrl):
         root = self.AddRoot("cutemail")
         
         for k in config.cf.users:
-            user = config.cf.users[k]
-            print 'user:', k, user
-            ucf = user['config']
-            mbox = ucf['mailbox']
+            usercf = config.cf.users[k]
+            print 'user:', k, usercf
+            mbox = usercf['mailbox']
             #tpathls = [] 
             self.add_to_tree(root, mbox)
         

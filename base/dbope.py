@@ -6,8 +6,11 @@ class DBOpe:
         self.conn = None
         self.path = dbpath
 
+        self.open()
+
     def open(self):
-        self.conn = sqlite3.connect(self.path)
+        if not self.conn:
+            self.conn = sqlite3.connect(self.path)
 
     def close(self):
         self.conn.close()
@@ -17,10 +20,21 @@ class DBOpe:
         self.conn.execute(sql)
         self.conn.commit()
 
-    def query(self, sql):
-        cur = sef.conn.cursor()
+    def query(self, sql, iszip=True):
+        cur = self.conn.cursor()
         cur.execute(sql)
-        ret = cur.fetchall()
+        res = cur.fetchall()
+        
+        ret = []
+        if res and iszip:
+            des = cur.description
+            names = [x[0] for x in des]
+
+            for line in res:
+                ret.append(dict(zip(names, line)))
+        else:
+            ret = res
+        
         cur.close()
         return ret
 
