@@ -26,7 +26,7 @@ class MainFrame(wx.Frame):
         
         # 当前mailbox
         self.last_mailbox = ''
-        # 以name为索引存储MailListPane
+        # 以邮箱路径为索引存储MailListPane
         self.mailboxs = {}
 
         # 初始化常量
@@ -118,6 +118,11 @@ class MainFrame(wx.Frame):
                 if ret:
                     for inf in infos:
                         print inf['filename']
+                        att = 0 
+                        if info['attach']:
+                            att = 1
+                        item = [info['mailfrom'], att,1, info['subject'], info['date'], info['size']]
+                        mlist.add_mail(item)
             elif task == 'alert':
                 pass
             else:

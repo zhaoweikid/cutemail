@@ -1,4 +1,5 @@
 # coding: utf-8
+import os, sys, time
 import wx, wx.gizmos
 import cStringIO, types
 import config, common
@@ -66,6 +67,12 @@ class MailListPanel(wx.Panel):
         self.yestoday = self.add_item([u' 昨天 ',0,0,'','','']) 
         self.today = self.add_item([u' 今天 ',0,0,'','','']) 
         
+        timenow = time.localtime()
+        self.time_today = time.mktime((timenow[0], timenow[1], timenow[2], 0, 0, 0, 0, 0, 0))
+        self.time_yestoday = self.time_today - 86400
+        self.time_week = self.time_today - 86400 * timenow[6]
+        self.time_month = time.mktime((timenow[0], timenow[1], 1, 0, 0, 0, 0, 0, 0))
+        
         #self.add_item(item, self.week)
         #self.add_item(item, self.yestoday)
         #self.add_item(item, self.today)
@@ -91,7 +98,21 @@ class MailListPanel(wx.Panel):
         self.tree.SetItemText(first, item[5], 5)
             
         return first
-        
+       
+    def add_mail(self, item):
+        mtime = time.mktime(time.strptime(item['date'], '%Y-%m-%d %H:%M:%S'))
+        print 'make time:', mtime
+        if mtime >= self.time_today:
+            self.add_item(item, self.today)
+        elif mtime >= self.time_yestoday:
+            self.add_item(item, self.yestoday)
+        elif mtime >= self.time_week:
+            self.add_item(item, self.week)
+        elif mtime >= self.time_month:
+            self.add_item(item, self.month)
+        else:
+            self.add_item(item, self.earlier)
+
     def OnActivate(self, evt):
         print 'OnActivate: %s' % self.tree.GetItemText(evt.GetItem())
 

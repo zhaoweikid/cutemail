@@ -74,6 +74,8 @@ class POP3Client:
     def mails(self):
         name = self.mailuser['name']
         count = 0
+
+        mailinfos = []
         for item in self.uidls:
             i, k = item
             print 'uidl:', i, k
@@ -118,7 +120,8 @@ class POP3Client:
             self.mailuser['uidls'].add(k)
             
             count += 1
-    
+        
+        return mailinfos
 def test():
     for k in config.cf.users:
         print '---------- name:', k
