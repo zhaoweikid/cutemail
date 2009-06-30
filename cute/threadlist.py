@@ -1,7 +1,7 @@
 # -*- encoding: utf-8 -*-
 import string, os, sys
-import wx, threading, time
-import config
+import wx, threading, time, traceback
+import config, dbope
 import pop3
 
 class Schedule(threading.Thread):
@@ -124,18 +124,39 @@ class Task(threading.Thread):
             print 'get user config error!'
             return
         print ucf
+        mailinfos = []
         try:
             pop = pop3.POP3Client(ucf)
             pop.init()
             pop.login()
             pop.infos()
-            pop.mails()
+            mailinfos = pop.mails()
             pop.close()
         except Exception, e:
             error = str(e)
+            traceback.print_exc()
+    
+        dbpath = os.path.join(config.cf.datadir, name, 'mailinfo.db')
+        conn = dbope.DBOpe(dbpath)
+        for minfo in mailinfos:
+            attachs = []
+            for x in minfo['attach']:
+                attachs.append('::'.join(x))
+            attachstr = '||'.join(attachs)
+            sql = "insert into mailinfo(filename,subject,mailfrom,mailto,size,ctime,date,plain,html,attach,mailbox) values " \
+                  "('%s','%s','%s','%s',%d,%s,'%s','%s','%s','%s','%s')" % \
+                  (minfo['filename'], minfo['subject'], minfo['from'], minfo['to'], minfo['size'],
+                   minfo['ctime'], minfo['date'], minfo['plain'].replace("'", "''"), minfo['html'].replace("'", "''"), attachstr, minfo['mailbox'])
             
+            sqlx = "insert into mailinfo(filename,subject,mailfrom,mailto,size,ctime,date,plain,html,attach,mailbox) values " \
+                   "(?,?,?,?,?,?,?,?,?,?,?)"
+            param = (minfo['filename'], minfo['subject'], minfo['from'], minfo['to'], minfo['size'],
+                     minfo['ctime'], minfo['date'], minfo['plain'], minfo['html'], minfo['attach'], minfo['mailbox'])
+            print sql[:30]
+            #conn.execute_param(sqlx, param)
+            conn.execute(sql)
+        conn.close()
         print config.cf.users[name]
-        
         config.cf.dump_conf(name)
         print 'recvmali complete!'
         x = {'name':name, 'task':'updatebox', 'message':''}

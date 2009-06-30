@@ -1,5 +1,6 @@
 # coding: utf-8
 import string, os, sys, time, random
+import traceback
 import poplib, config, mailparse, utils
 
 class POP3Client:
@@ -99,23 +100,25 @@ class POP3Client:
             filename = self.time_path + os.sep + hashdir + os.sep + '%d.' % (int(time.time())) + k + '.eml'
             print 'file:', filename, 'size:', len(filedata)
             
+            
+            try:
+                ret = mailparse.decode_mail_string(filedata)
+            except Exception, e:
+                traceback.print_exc()
+                continue
+            
             f = open(filename, 'w')
             f.write(filedata)
             f.close()
             
-            dfret = {'filename':'','plain':'','html':'','header':'','subject':'',
-           'mailfrom':'','mailto':[],'mailcc':[],'size':0,'ctime':0,'date':'','attach':[],
-           'mailbox':'','status':'new','thread':'', 'charset':''}
-            try:
-                ret = mailparse.decode_mail_string(filedata)
-            except:
-                ret = dfret
-            
             ret['filename'] = filename[len(self.recvpath):]
             ret['mailbox'] = '/'+name
+            ret['ctime'] = 'datetime()'
+            ret['uidl'] = k
+            mailinfos.append(ret)
             #print ret
             print '======== count:', count, ' of ', len(self.uidls)
-            config.cf.mail_add(name, ret) 
+            #config.cf.mail_add(name, ret) 
         
             self.mailuser['uidls'].add(k)
             

@@ -35,28 +35,29 @@ class AppConfig:
             os.mkdir(self.datadir)
         
         self.db = None
-        # status表示邮件状态可以为未读，已读，已回复
+        # status表示邮件状态可以为未读(new)，已读(read)，已回复(reply)
         self.mailinfo_fields = ['filename','plain','html','header','subject','mailfrom','mailto',
                           'size','ctime','date','attach','mailbox','status','thread', 'charset']
         #self.mailinfo_index  = ['mailbox', 'status']
         
+        # attach为用||分隔的多个文件名
         self.mailinfo_sql = '''create table if not exists mailinfo (
         id integer primary key autoincrement,
         filename varchar(255) not null,
         plain text,
         html text,
-        header text,
+        -- header text,
         subject varchar(255),
         mailfrom varchar(128) not null,
         mailto varchar(128) not null,
         size integer default 0,
         ctime datetime,
         date datetime,
-        attach text,
+        attach text default '',
         mailbox varchar(64),
-        status varchar(32),
-        threads varchar(255),
-        charset varchar(64)
+        status varchar(32) default 'new',
+        threads integer default 0,
+        charset varchar(64) default 'gbk'
         )'''
         # 用户配置信息
         self.mailuser_fields = ['name','email','password','smtp','pop3','imap',
@@ -138,7 +139,7 @@ class AppConfig:
             self.users[conf['name']] = conf
             self.mailboxs[conf['email']] = conf
     
-    def load_user(self, name):
+    def load_conf(self, name):
         conf_path = os.path.join(self.datadir, name, 'config.db')
         f = open(conf_path, 'r')
         conf = pickle.load(f)
@@ -159,12 +160,12 @@ class AppConfig:
         self.dump_conf(conf)
         #conf['mailinfo'].sync()
         
-    def dump(self):
+    def dump_all(self):
         for u in self.users:
             self.dump_user(u)
           
-    def mail_add(self, name, info):
-        usercf = self.users[name]
+    #def mail_add(self, name, info):
+        #usercf = self.users[name]
         #mailinfo = user['mailinfo']
         #mailinfo.insert(info)
         #mailinfo.sync() 
@@ -174,12 +175,19 @@ def load():
     global cf
     app = AppConfig()
     app.load()
+    print 'load users:', app.users        
+    cf = app
+
+def test():
+    global cf
+    app = AppConfig()
+    app.load()
     
     # for test
     u = {}
     u['name'] = 'test1'
     u['email'] = 'python25@163.com'
-    u['password'] = ''
+    u['password'] = sys.argv[1]
     u['pop3_server'] = 'pop3.163.com'
     u['mailbox'] = [unicode(u['name']), [u'收件箱', 'a', 'b', ['c', 'dd']],u'发件箱', u'草稿箱', u'已发送邮件', u'垃圾邮件', u'病毒邮件', u'删除邮件']
     
@@ -197,5 +205,8 @@ def load():
     print 'users:', app.users        
     cf = app
 
-load()
+if __name__ == '__main__':
+    test()
+else:
+    load()
 

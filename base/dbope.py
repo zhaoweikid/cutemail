@@ -16,9 +16,15 @@ class DBOpe:
         self.conn.close()
         self.conn = None
 
-    def execute(self, sql):
+    def execute(self, sql, iscommit=True):
         self.conn.execute(sql)
-        self.conn.commit()
+        if iscommit:
+            self.conn.commit()
+
+    def execute_param(self, sql, param, iscommit=True):
+        self.conn.execute(sql, param)
+        if iscommit:
+            self.conn.commit()
 
     def query(self, sql, iszip=True):
         cur = self.conn.cursor()

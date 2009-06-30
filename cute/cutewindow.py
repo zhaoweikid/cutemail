@@ -5,7 +5,7 @@ import wx
 import wx.aui
 from   picmenu import PicMenu
 from   listindex import *
-import notebook, treelist
+import notebook, treelist, viewhtml
 import config, common, dbope
 import cPickle as pickle
 import pop3
@@ -59,7 +59,7 @@ class MainFrame(wx.Frame):
         #self.treeindex.Hide()
         
         # 内容显示控件
-        self.listcnt = notebook.ViewBook(self)
+        self.listcnt = viewhtml.ViewHtml(self)
         self.listcnt.Hide()
         
         # 为面板管理器增加用户邮箱树形结构
@@ -113,16 +113,19 @@ class MainFrame(wx.Frame):
                 usercf = config.cf.users[name]
                 dbpath = os.path.join(config.cf.datadir, name, 'mailinfo.db')
                 conn = dbope.DBOpe(dbpath)
-                ret = conn.query("select * from mailinfo where status='new'")
+                ret = conn.query("select id,filename,subject,mailfrom,mailto,size,ctime,date,attach,mailbox,status from mailinfo where status='new'")
                 conn.close()
                 if ret:
-                    for inf in infos:
-                        print inf['filename']
+                    for info in ret:
+                        print info['filename']
                         att = 0 
                         if info['attach']:
                             att = 1
-                        item = [info['mailfrom'], att,1, info['subject'], info['date'], info['size']]
-                        mlist.add_mail(item)
+                        item = [info['mailfrom'], att,1, info['subject'], info['date'], str(info['size']/1024 + 1)+' K',
+                                wx.TreeItemData(str(info['id'])+ ',' + name + ',' + '/%s/' % (u) + u'收件箱')]
+                        #print item
+                        #mlist.add_mail(item)
+                        mlist.add_item(item, mlist.today)
             elif task == 'alert':
                 pass
             else:
@@ -142,13 +145,15 @@ class MainFrame(wx.Frame):
             dbpath = os.path.join(config.cf.datadir, u, 'mailinfo.db')
             print 'load db from path:', dbpath
             conn = dbope.DBOpe(dbpath)
-            ret = conn.query("select * from mailinfo")
+            ret = conn.query("select id,filename,subject,mailfrom,mailto,size,ctime,date,attach,mailbox,status from mailinfo")
             conn.close()
             for row in ret:
                 att = 0
                 if row['attach']:
                     att = 1
-                item = [att, x['mailfrom'], att, 0, x['subject'], x['date'], str(x['size'])]
+                item = [row['mailfrom'], att, 0, row['subject'], row['date'], str(row['size']/1024 + 1)+' K',
+                        wx.TreeItemData(str(row['id']) + ',' + u + ',' + '/%s/' % (u) + u'收件箱')]
+                #print item
                 mlist.add_item(item, mlist.today)
 
     def init_const(self):
