@@ -122,7 +122,7 @@ class MainFrame(wx.Frame):
                         if info['attach']:
                             att = 1
                         item = [info['mailfrom'], att,1, info['subject'], info['date'], str(info['size']/1024 + 1)+' K',
-                                wx.TreeItemData(str(info['id'])+ ',' + name + ',' + '/%s/' % (u) + u'收件箱')]
+                                wx.TreeItemData(str(info['id'])+ ',' + name + ',' + '/%s/' % (name) + u'收件箱')]
                         #print item
                         #mlist.add_mail(item)
                         mlist.add_item(item, mlist.today)
