@@ -85,7 +85,8 @@ class MailListPanel(wx.Panel):
         
         self.tree.Expand(self.root)
         self.tree.GetMainWindow().Bind(wx.EVT_RIGHT_UP, self.OnRightUp)
-        self.tree.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.OnActivate)
+        #self.tree.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.OnActivate)
+        self.tree.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnActivate)
         self.tree.Bind(wx.EVT_LIST_COL_CLICK, self.OnColClick)
 
     def add_item(self, item, parent=None):
@@ -107,8 +108,10 @@ class MailListPanel(wx.Panel):
         return first
        
     def add_mail(self, item):
-        mtime = time.mktime(time.strptime(item['date'], '%Y-%m-%d %H:%M:%S'))
-        print 'make time:', mtime
+        timels = time.strptime(item[4], '%Y-%m-%d %H:%M:%S')
+        #print 'timels:', timels
+        mtime = time.mktime(timels)
+        #print 'make time:', mtime
         if mtime >= self.time_today:
             self.add_item(item, self.today)
         elif mtime >= self.time_yestoday:
@@ -125,7 +128,7 @@ class MailListPanel(wx.Panel):
         s = self.tree.GetItemData(evt.GetItem()).GetData()
         if not s:
             return
-        mid, name, mlist = s.split(',')
+        mid, name, mlist = s
         sql = "select * from mailinfo where id=" + mid
         
         dbpath = os.path.join(config.cf.datadir, name, 'mailinfo.db')
@@ -140,7 +143,17 @@ class MailListPanel(wx.Panel):
             if htmldata:
                 self.parent.listcnt.set_text(htmldata)
             elif plaindata:
-                self.parent.listcnt.set_text(plaindata)
+                self.parent.listcnt.set_text(plaindata.replace('\r\n', '<br>').replace('\n', '<br>'))
+            if row['attach']:
+                attach = row['attach'].split('||')
+                if attach:
+                    pos = 0
+                    for a in attach:
+                        item = a.split('::')
+                        attachctl = self.parent.attachctl
+                        attachctl.ClearAll()
+                        attachctl.InsertImageStringItem(pos, item[0], attachctl.image_default)
+                        pos += 1
 
     def OnRightUp(self, evt):
         pos = evt.GetPosition()

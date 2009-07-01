@@ -5,7 +5,7 @@ import wx
 import wx.aui
 from   picmenu import PicMenu
 from   listindex import *
-import notebook, treelist, viewhtml
+import treelist, viewhtml
 import config, common, dbope
 import cPickle as pickle
 import pop3
@@ -50,11 +50,15 @@ class MainFrame(wx.Frame):
         # 获取所有用户名
         ks = config.cf.users.keys()
         # 第一个用户名
-        k1 = '/' + ks[0]
-            
         # 当前选择的mailbox
-        self.last_mailbox = k1
-        self.listindex = self.mailboxs[k1]
+        if ks:
+            k1 = '/' + ks[0]
+            self.last_mailbox = k1
+            self.listindex = self.mailboxs[k1]
+        else:
+            k1 = '/'
+            self.last_mailbox = k1
+            self.listindex = self.mailboxs[k1]
         #self.treeindex = treelist.MailTreePanel(self)
         #self.treeindex.Hide()
         
@@ -62,6 +66,9 @@ class MainFrame(wx.Frame):
         self.listcnt = viewhtml.ViewHtml(self)
         self.listcnt.Hide()
         
+        # 附件显示控件
+        self.attachctl = viewhtml.AttachListCtrl(self)
+        self.attachctl.Hide()
         # 为面板管理器增加用户邮箱树形结构
         self.mgr.AddPane(self.tree, wx.aui.AuiPaneInfo().Name("tree").Caption(u"用户").
                           Left().Layer(1).Position(1).CloseButton(True).MaximizeButton(True))
@@ -74,6 +81,9 @@ class MainFrame(wx.Frame):
         #self.mgr.AddPane(self.treeindex, wx.aui.AuiPaneInfo().Name("treeindex").CenterPane().Hide()) 
         # 把邮件内容面板添加到面板管理器
         self.mgr.AddPane(self.listcnt, wx.aui.AuiPaneInfo().Name("listcnt").Caption(u"邮件内容").
+                          Bottom().Layer(0).Position(3).CloseButton(True).MaximizeButton(True))
+        
+        self.mgr.AddPane(self.attachctl, wx.aui.AuiPaneInfo().Name("attachctl").Caption(u"附件内容").
                           Bottom().Layer(0).Position(3).CloseButton(True).MaximizeButton(True))
         # 显示当前选择的邮件列表面板 
         self.mgr.GetPane(k1).Show()
@@ -122,7 +132,7 @@ class MainFrame(wx.Frame):
                         if info['attach']:
                             att = 1
                         item = [info['mailfrom'], att,1, info['subject'], info['date'], str(info['size']/1024 + 1)+' K',
-                                wx.TreeItemData(str(info['id'])+ ',' + name + ',' + '/%s/' % (name) + u'收件箱')]
+                                wx.TreeItemData([str(info['id']), name, '/%s/' % (name) + u'收件箱'])]
                         #print item
                         #mlist.add_mail(item)
                         mlist.add_item(item, mlist.today)
@@ -132,6 +142,10 @@ class MainFrame(wx.Frame):
                 print 'uiq return error:', item
         
     def init_data(self):
+        k = '/'
+        obj = treelist.MailListPanel(self, k)
+        obj.Hide()
+        self.mailboxs[k] = obj
         for k in self.mailboxs:
             print 'init data:', k
             obj = treelist.MailListPanel(self, k)
@@ -145,16 +159,17 @@ class MainFrame(wx.Frame):
             dbpath = os.path.join(config.cf.datadir, u, 'mailinfo.db')
             print 'load db from path:', dbpath
             conn = dbope.DBOpe(dbpath)
-            ret = conn.query("select id,filename,subject,mailfrom,mailto,size,ctime,date,attach,mailbox,status from mailinfo")
+            ret = conn.query("select id,filename,subject,mailfrom,mailto,size,ctime,date,attach,mailbox,status from mailinfo order by date")
             conn.close()
             for row in ret:
                 att = 0
                 if row['attach']:
                     att = 1
                 item = [row['mailfrom'], att, 0, row['subject'], row['date'], str(row['size']/1024 + 1)+' K',
-                        wx.TreeItemData(str(row['id']) + ',' + u + ',' + '/%s/' % (u) + u'收件箱')]
+                        wx.TreeItemData([str(row['id']),u,'/%s/' % (u) + u'收件箱'])]
                 #print item
-                mlist.add_item(item, mlist.today)
+                #mlist.add_item(item, mlist.today)
+                mlist.add_mail(item)
 
     def init_const(self):
         self.ID_FILE_OPEN          = wx.NewId()
