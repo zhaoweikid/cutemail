@@ -105,7 +105,7 @@ class Task(threading.Thread):
         threadname = threading.currentThread().getName()
         while self.is_running:
             try:
-                item = config.taskq.get(timeout=10)
+                item = config.taskq.get(timeout=5)
             except:
                 #print threadname, 'not found task'
                 continue

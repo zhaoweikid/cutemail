@@ -75,7 +75,7 @@ class MainFrame(wx.Frame):
          
         # 把每个邮箱创建的邮件列表面板加入到面板管理器, 先不可见
         for k in self.mailboxs:
-            print 'add to mgr:', k
+            print 'add to mgr:', k, self.mailboxs[k]
             self.mgr.AddPane(self.mailboxs[k], wx.aui.AuiPaneInfo().Name(k).CenterPane().Hide())
             
         #self.mgr.AddPane(self.treeindex, wx.aui.AuiPaneInfo().Name("treeindex").CenterPane().Hide()) 
@@ -85,9 +85,11 @@ class MainFrame(wx.Frame):
         
         self.mgr.AddPane(self.attachctl, wx.aui.AuiPaneInfo().Name("attachctl").Caption(u"附件内容").
                           Bottom().Layer(0).Position(3).CloseButton(True).MaximizeButton(True))
-        # 显示当前选择的邮件列表面板 
+        # 显示当前选择的邮件列表面板
+        print 'show:', k1
         self.mgr.GetPane(k1).Show()
         self.mgr.Update()
+        
         self.Bind(wx.EVT_TIMER, self.OnTimer)
         self.timer = wx.Timer(self)
         self.timer.Start(1000)
@@ -142,16 +144,18 @@ class MainFrame(wx.Frame):
                 print 'uiq return error:', item
         
     def init_data(self):
-        k = '/'
-        obj = treelist.MailListPanel(self, k)
-        obj.Hide()
-        self.mailboxs[k] = obj
         for k in self.mailboxs:
             print 'init data:', k
             obj = treelist.MailListPanel(self, k)
             obj.Hide()
             self.mailboxs[k] = obj
-
+        k = u'/'
+        obj = viewhtml.ViewHtml(self)
+        obj.set_url('http://www.pythonid.com')
+        obj.Hide()
+        self.mailboxs[k] = obj
+        
+        
     def load_db_data(self):
         users = config.cf.users
         for u in users:

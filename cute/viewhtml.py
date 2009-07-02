@@ -33,6 +33,9 @@ if wx.Platform == '__WXMSW__':
 
         def set_text(self, text):
             self.html.LoadString(text)
+            
+        def set_url(self, url):
+            self.html.Navigate(url)
 
 else:
     class ViewHtml (wx.Panel):
@@ -47,4 +50,10 @@ else:
     
         def set_text(self, text):
             self.html.SetPage(text)
+            
+        def set_url(self, url):
+            self.html.LoadPage(url)
+            
+            
+            
             

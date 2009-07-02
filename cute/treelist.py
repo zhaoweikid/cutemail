@@ -172,6 +172,7 @@ class MailboxTree(wx.TreeCtrl):
         self.parent = parent
         super(MailboxTree, self).__init__(parent, wx.NewId(), wx.Point(0, 0), wx.Size(200, 200), 
                     style = wx.TR_DEFAULT_STYLE|wx.TR_HIDE_ROOT)
+                    #style = wx.TR_DEFAULT_STYLE|wx.TR_HIDE_ROOT)
         isz = (16,16)       
         il = wx.ImageList(isz[0], isz[1])
         rootidx  = il.Add(wx.BitmapFromImage(wx.ImageFromStream(cStringIO.StringIO(open('bitmaps/16/user.png','rb').read()))))
@@ -181,7 +182,7 @@ class MailboxTree(wx.TreeCtrl):
         self.SetImageList(il)
         self.il = il
         
-        root = self.AddRoot("cutemail")
+        root = self.AddRoot("/")
         
         for k in config.cf.users:
             usercf = config.cf.users[k]
