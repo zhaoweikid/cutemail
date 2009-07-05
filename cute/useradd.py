@@ -2,6 +2,9 @@
 import os, sys
 import wx
 import wx.wizard as wiz
+import wx.lib.sized_controls as sc
+
+tmpuser = {}
 
 def make_page_title(wizPg, title):
     sizer = wx.BoxSizer(wx.VERTICAL)
@@ -12,47 +15,108 @@ def make_page_title(wizPg, title):
     sizer.Add(wx.StaticLine(wizPg, -1), 0, wx.EXPAND|wx.ALL, 5)
     return sizer
 
-class WelcomePage(wiz.WizardPageSimple):
-    def __init__(self, parent, title):
-        wiz.WizardPageSimple.__init__(self, parent)
-
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        self.SetSizer(sizer)
-        title = wx.StaticText(self, -1, u'欢迎使用CuteMail')
-        #title.SetFont(wx.Font(12, wx.SWISS, wx.NORMAL, wx.BOLD))
-        sizer.Add(title, 0, wx.ALIGN_CENTRE|wx.ALL, 5)
-        sizer.Add(wx.StaticLine(self, -1), 0, wx.EXPAND|wx.ALL, 5)
-        content = wx.StaticText(self, -1, u'在使用CuteMail之前，你需要先添加账户，每个账户对应一个邮件地址。\nCuteMail将为你管理这个邮箱。')
-        sizer.Add(content, -1, wx.EXPAND|wx.ALL, 5)
- 
-
 class UsernamePage(wiz.WizardPageSimple):
     def __init__(self, parent, title):
         wiz.WizardPageSimple.__init__(self, parent)
-         
+        
+        panel = sc.SizedPanel(self, -1)
+        panel.SetSizerType("form")
         sizer = wx.BoxSizer(wx.VERTICAL)
-        self.SetSizer(sizer)
-        title = wx.StaticText(self, -1, u'建立新账户')
-        #title.SetFont(wx.Font(12, wx.SWISS, wx.NORMAL, wx.BOLD))
+        
+        title = wx.StaticText(self, -1, u'新建用户')
+        
         sizer.Add(title, 0, wx.ALIGN_CENTRE|wx.ALL, 5)
         sizer.Add(wx.StaticLine(self, -1), 0, wx.EXPAND|wx.ALL, 5)
-        content = wx.StaticText(self, -1, u'输入一个用户，用来标识此邮箱，CuteMail需要用不同的用户名来管理多账户。')
-        sizer.Add(content, -1, wx.EXPAND|wx.ALL, 5)
+        sizer.Add(panel, 1, wx.EXPAND|wx.ALL, 5)
+        self.SetSizer(sizer)
         
         
-
+        wx.StaticText(panel, -1, '') 
+        wx.StaticText(panel, -1, u'在使用CuteMail之前，你需要先添加账户，\n每个账户对应一个邮件地址。')
+        
+        wx.StaticText(panel, -1, u'请输入用户名:')
+        self.boxname = wx.TextCtrl(panel, -1, size=(200,-1))
+        
+        wx.StaticText(panel, -1, '') 
+        wx.StaticText(panel, -1, u'您需要设置一个该邮箱的信件存储位置，不填表示使用默认设置')
+        
+        wx.StaticText(panel, -1, u'请输入存储路径:')
+        self.storage = wx.TextCtrl(panel, -1, size=(200,-1))
+        
+        self.SetAutoLayout(True)
+ 
 
 class EmailPage(wiz.WizardPageSimple):
     def __init__(self, parent, title):
         wiz.WizardPageSimple.__init__(self, parent)
-        self.sizer = make_page_title(self, title)
 
+        panel = sc.SizedPanel(self, -1)
+        panel.SetSizerType("form")
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        
+        title = wx.StaticText(self, -1, u'输入邮件地址信息')
+        
+        sizer.Add(title, 0, wx.ALIGN_CENTRE|wx.ALL, 5)
+        sizer.Add(wx.StaticLine(self, -1), 0, wx.EXPAND|wx.ALL, 5)
+        sizer.Add(panel, 1, wx.EXPAND|wx.ALL, 5)
+        self.SetSizer(sizer)
+        
+        
+        wx.StaticText(panel, -1, '') 
+        wx.StaticText(panel, -1, u'请输入您的姓名，这将出现在您发送的邮件的发件人中。')
+        
+        wx.StaticText(panel, -1, u'姓名:')
+        self.username = wx.TextCtrl(panel, -1, size=(200,-1))
+        
+        wx.StaticText(panel, -1, '') 
+        wx.StaticText(panel, -1, u'请输入您要使用的邮箱')
+        
+        wx.StaticText(panel, -1, u'邮箱地址:')
+        self.email = wx.TextCtrl(panel, -1, size=(200,-1))
+        
+        self.SetAutoLayout(True)
 
 class ServerPage(wiz.WizardPageSimple):
     def __init__(self, parent, title):
         wiz.WizardPageSimple.__init__(self, parent)
-       	self.sizer = make_page_title(self, title)
 
+        panel = sc.SizedPanel(self, -1)
+        panel.SetSizerType("form")
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        
+        title = wx.StaticText(self, -1, u'选择邮件收取方式')
+        
+        sizer.Add(title, 0, wx.ALIGN_CENTRE|wx.ALL, 5)
+        sizer.Add(wx.StaticLine(self, -1), 0, wx.EXPAND|wx.ALL, 5)
+        sizer.Add(panel, 1, wx.EXPAND|wx.ALL, 5)
+        self.SetSizer(sizer)
+        
+        
+        wx.StaticText(panel, -1, '') 
+        wx.StaticText(panel, -1, u'请输入您使用的pop3服务器地址，比如pop3.163.com')
+        
+        wx.StaticText(panel, -1, u'POP3服务器地址:')
+        self.pop3server = wx.TextCtrl(panel, -1, size=(200,-1))
+        
+        wx.StaticText(panel, -1, '') 
+        wx.StaticText(panel, -1, u'请输入POP3账户密码')
+        
+        wx.StaticText(panel, -1, u'POP3密码:')
+        self.pop3pass = wx.TextCtrl(panel, -1, size=(200,-1))
+        
+        wx.StaticText(panel, -1, '') 
+        wx.StaticText(panel, -1, u'请输入您使用的SMTP服务器地址，比如smtp.163.com')
+        
+        wx.StaticText(panel, -1, u'SMTP服务器地址:')
+        self.smtpserver = wx.TextCtrl(panel, -1, size=(200,-1))
+        
+        wx.StaticText(panel, -1, '') 
+        wx.StaticText(panel, -1, u'请输入SMTP账户密码，不填写表示不需要密码')
+        
+        wx.StaticText(panel, -1, u'SMTP密码:')
+        self.smtppass = wx.TextCtrl(panel, -1, size=(200,-1))
+        
+        self.SetAutoLayout(True)
 
 class TestPanel(wx.Panel):
     def __init__(self, parent):
@@ -65,22 +129,24 @@ class TestPanel(wx.Panel):
     def OnRunSimpleWizard(self, evt):
         import images
         print 'run simple wizard...'
-        wizard = wiz.Wizard(self, -1, "Simple Wizard", images.getWizTest1Bitmap())
-        page1 = WelcomePage(wizard, "page 1")
-        page2 = UsernamePage(wizard, "page 2")
-        page3 = EmailPage(wizard, "page 3")
-        page4 = ServerPage(wizard, "page 4")
+        wizard = wiz.Wizard(self, -1, u"新建用户向导", images.WizTest1.GetBitmap())
+
+        page1 = UsernamePage(wizard, "page 1")
+        page2 = EmailPage(wizard, "page 2")
+        page3 = ServerPage(wizard, "page 3")
     
         wizard.FitToPage(page1)
-        page4.sizer.Add(wx.StaticText(page4, -1, "\nThis is the last page."))
     
         wiz.WizardPageSimple_Chain(page1, page2)
         wiz.WizardPageSimple_Chain(page2, page3)
-        wiz.WizardPageSimple_Chain(page3, page4)
     
         wizard.GetPageAreaSizer().Add(page1)
-        if wizard.RunWizard(page1):
+        ret = wizard.RunWizard(page1)
+        print 'ret:', ret
+        if ret:
             wx.MessageBox("Wizard completed successfully", "That's all folks!")
+            print 'boxname:', page1.boxname.GetValue()
+            print 'storage:', page1.storage.GetValue()
         else:
             wx.MessageBox("Wizard was cancelled", "That's all folks!")
     
