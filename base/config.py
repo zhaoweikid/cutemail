@@ -107,6 +107,7 @@ class AppConfig:
         
         self.users[name] = conf
         self.mailboxs[email] = conf
+        return conf
      
     def user_delete(self, name):
         conf = self.users[name]

@@ -182,14 +182,17 @@ class MailboxTree(wx.TreeCtrl):
         self.SetImageList(il)
         self.il = il
         
-        root = self.AddRoot("/")
+        self.load()
+        
+    def load(self):
+        self.root = self.AddRoot("/")
         
         for k in config.cf.users:
             usercf = config.cf.users[k]
             print 'user:', k, usercf
             mbox = usercf['mailbox']
             #tpathls = [] 
-            self.add_to_tree(root, mbox)
+            self.add_to_tree(self.root, mbox)
         
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnSelChanged, self) 
 
@@ -205,6 +208,7 @@ class MailboxTree(wx.TreeCtrl):
         self.SetPyData(item, None)
         self.SetItemImage(item, self.ridx, wx.TreeItemIcon_Normal)
         self.SetItemImage(item, self.openidx, wx.TreeItemIcon_Expanded)
+        #self.EnsureVisible(item)
         
         tpath = '/'.join(tpathls) + '/' + name
         if tpath[0] != '/':
@@ -212,6 +216,9 @@ class MailboxTree(wx.TreeCtrl):
         print 'tpath:', tpath
         self.parent.mailboxs[tpath] = None
         return item
+    
+    def append(self, name, tpathls=[]):
+        self.add_to_tree(self.root, name, tpathls) 
     
     def OnSelChanged(self, evt):
         self.item = evt.GetItem()

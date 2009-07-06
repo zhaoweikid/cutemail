@@ -716,10 +716,14 @@ class MainFrame(wx.Frame):
                   'smtp_pass': page3.smtppass.GetValue(),
                   }
             print 'me:', me
-            if config.user_add(me):
-                wx.MessageBox(u"用户添加成功!", u"欢迎使用CuteMail")
+            try:
+                conf = config.cf.user_add(me)
+            except Exception, e:
+                wx.MessageBox(u"用户添加失败!"+str(e), u"欢迎使用CuteMail")
+                self.tree.append(conf)
+                self.tree.Refresh()
             else:
-                wx.MessageBox(u"用户添加失败!", u"欢迎使用CuteMail")
+                wx.MessageBox(u"用户添加成功!", u"欢迎使用CuteMail")
                 
         
     def OnUserRename(self, event):
