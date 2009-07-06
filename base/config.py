@@ -59,19 +59,20 @@ class AppConfig:
         threads integer default 0,
         charset varchar(64) default 'gbk'
         )'''
-        # 用户配置信息
-        self.mailuser_fields = ['name','email','password','smtp','pop3','imap',
-             'uidls','mailbox', 'schedule']
+        # 用户配置信息, recv_interval为接收间隔时间，单位为分，reserve_time为信件保留时间，
+        # 单位为天，小于零表示不删除，等于0表示不保留， 大于零是保留天数
+        self.mailuser_fields = ['name', 'storage', 'mailname', 'email',
+            'reply_addr', 'recv_interval', 'reserve_time',
+            'pop3_server','pop3_pass','smtp_server', 'smtp_pass',
+            'uidls','mailbox', 'schedule']
         
     def conf_init(self):
         '''设置用户默认配置'''
-        #mbox = [unicode(u['name']), u'收件箱',u'发件箱', u'草稿箱', u'已发送邮件', u'垃圾邮件', u'病毒邮件', u'删除邮件']
-        dx = ['','','','','','',set(),[],[]]
+        dx = [''] * len(self.mailuser_fields)
         x = dict(zip(self.mailuser_fields, dx))
-        #x = {'name':'','email':'','password':'','smtp':'','pop3':'','imap':'',
-        #     'uidl':set(),'mailbox':'', 'schedule': []}
-        #conf = {'config': x, 'mailinfo':None}
-        #return conf
+        x['uidls'] = set()
+        x['mailbox'] = []
+        x['schedule'] = []
         return x 
     
     def user_add(self, incf):

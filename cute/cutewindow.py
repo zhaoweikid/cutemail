@@ -3,10 +3,12 @@
 import os, sys, cStringIO, string, time
 import wx
 import wx.aui
+import wx.wizard as wiz
+import wx.lib.sized_controls as sc
 from   picmenu import PicMenu
 from   listindex import *
 import treelist, viewhtml
-import config, common, dbope
+import config, common, dbope, useradd
 import cPickle as pickle
 import pop3
 
@@ -688,7 +690,38 @@ class MainFrame(wx.Frame):
         
         
     def OnUserNew(self, event):
-        pass
+        import images
+        print 'run simple wizard...'
+        wizard = wiz.Wizard(self, -1, u"新建用户向导", images.WizTest1.GetBitmap())
+
+        page1 = useradd.UsernamePage(wizard, u"输入账户名")
+        page2 = useradd.EmailPage(wizard, u"输入邮件地址")
+        page3 = useradd.ServerPage(wizard, u"输入服务器信息")
+    
+        wizard.FitToPage(page1)
+    
+        wiz.WizardPageSimple_Chain(page1, page2)
+        wiz.WizardPageSimple_Chain(page2, page3)
+    
+        wizard.GetPageAreaSizer().Add(page1)
+        ret = wizard.RunWizard(page1)
+        if ret:
+            me = {'name': page1.boxname.GetValue(),
+                  'storage': page1.storage.GetValue(),
+                  'mailname': page2.username.GetValue(),
+                  'email': page2.email.GetValue(),
+                  'pop3_server': page3.pop3server.GetValue(),
+                  'pop3_pass': page3.pop3pass.GetValue(),
+                  'smtp_server:': page3.smtpserver.GetValue(),
+                  'smtp_pass': page3.smtppass.GetValue(),
+                  }
+            print 'me:', me
+            if config.user_add(me):
+                wx.MessageBox(u"用户添加成功!", u"欢迎使用CuteMail")
+            else:
+                wx.MessageBox(u"用户添加失败!", u"欢迎使用CuteMail")
+                
+        
     def OnUserRename(self, event):
         pass
     def OnUserDel(self, event):
