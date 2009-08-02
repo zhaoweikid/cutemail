@@ -1,6 +1,6 @@
 # -*- encoding: utf-8 -*-
 import string, os, sys
-import wx, threading, time, traceback
+import wx, threading, time, traceback, base64
 import config, dbope
 import pop3
 
@@ -143,18 +143,23 @@ class Task(threading.Thread):
             for x in minfo['attach']:
                 attachs.append('::'.join(x))
             attachstr = '||'.join(attachs)
+            
+            filename = minfo['filename'].replace("'", "''")
+            subject = minfo['subject'].replace("'", "''")
+            plain = minfo['plain'].replace("'", "''")
+            html  = minfo['html'].replace("'", "''")
+            attach = attachstr.replace("'", "''")
+            
             sql = "insert into mailinfo(filename,subject,mailfrom,mailto,size,ctime,date,plain,html,attach,mailbox) values " \
                   "('%s','%s','%s','%s',%d,%s,'%s','%s','%s','%s','%s')" % \
-                  (minfo['filename'], minfo['subject'], minfo['from'], minfo['to'], minfo['size'],
-                   minfo['ctime'], minfo['date'], minfo['plain'].replace("'", "''"), minfo['html'].replace("'", "''"), attachstr, minfo['mailbox'])
+                  (filename, subject, minfo['from'], minfo['to'], minfo['size'],
+                   minfo['ctime'], minfo['date'], plain, html, attach, minfo['mailbox'])
             
-            sqlx = "insert into mailinfo(filename,subject,mailfrom,mailto,size,ctime,date,plain,html,attach,mailbox) values " \
-                   "(?,?,?,?,?,?,?,?,?,?,?)"
-            param = (minfo['filename'], minfo['subject'], minfo['from'], minfo['to'], minfo['size'],
-                     minfo['ctime'], minfo['date'], minfo['plain'], minfo['html'], minfo['attach'], minfo['mailbox'])
-            print sql[:30]
-            #conn.execute_param(sqlx, param)
-            conn.execute(sql)
+            #print sql.encode('gbk', 'ignore')
+            try:
+                conn.execute(sql)
+            except:
+                traceback.print_exc()
         conn.close()
         print config.cf.users[name]
         config.cf.dump_conf(name)

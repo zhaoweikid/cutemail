@@ -108,8 +108,12 @@ class MailListPanel(wx.Panel):
         return first
        
     def add_mail(self, item):
-        timels = time.strptime(item[4], '%Y-%m-%d %H:%M:%S')
-        #print 'timels:', timels
+        print 'add_mail:', item
+        if item[4] and item[4] != 'None':
+            timels = time.strptime(item[4], '%Y-%m-%d %H:%M:%S')
+        else:
+            timels = time.localtime()
+        print 'timels:', timels
         mtime = time.mktime(timels)
         #print 'make time:', mtime
         if mtime >= self.time_today:
@@ -144,15 +148,18 @@ class MailListPanel(wx.Panel):
                 self.parent.listcnt.set_text(htmldata)
             elif plaindata:
                 self.parent.listcnt.set_text(plaindata.replace('\r\n', '<br>').replace('\n', '<br>'))
+            attachctl = self.parent.attachctl
+            attachctl.ClearAll()
             if row['attach']:
                 attach = row['attach'].split('||')
                 if attach:
                     pos = 0
                     for a in attach:
                         item = a.split('::')
-                        attachctl = self.parent.attachctl
-                        attachctl.ClearAll()
                         attachctl.InsertImageStringItem(pos, item[0], attachctl.image_default)
+                        filename = os.path.join(config.cf.datadir, name, row['mailbox'], row['filename'])
+                        homename = os.path.join(config.cf.datadir, name)
+                        attachctl.SetItemData(pos, {'file':filename, 'home':homename, 'attach':item[0]})
                         pos += 1
 
     def OnRightUp(self, evt):
@@ -171,7 +178,7 @@ class MailboxTree(wx.TreeCtrl):
     def __init__(self, parent):
         self.parent = parent
         super(MailboxTree, self).__init__(parent, wx.NewId(), wx.Point(0, 0), wx.Size(200, 200), 
-                    style = wx.TR_DEFAULT_STYLE|wx.TR_HIDE_ROOT)
+                    style = wx.TR_DEFAULT_STYLE |wx.TR_HIDE_ROOT)
                     #style = wx.TR_DEFAULT_STYLE|wx.TR_HIDE_ROOT)
         isz = (16,16)       
         il = wx.ImageList(isz[0], isz[1])
@@ -203,7 +210,7 @@ class MailboxTree(wx.TreeCtrl):
             for x in name[1:]:
                 self.add_to_tree(p, x, tpathls)
             tpathls.remove(name[0])
-            return p 
+            return p
         item = self.AppendItem(parent, name)
         self.SetPyData(item, None)
         self.SetItemImage(item, self.ridx, wx.TreeItemIcon_Normal)
@@ -214,7 +221,7 @@ class MailboxTree(wx.TreeCtrl):
         if tpath[0] != '/':
             tpath = '/' + tpath
         print 'tpath:', tpath
-        self.parent.mailboxs[tpath] = None
+        self.parent.add_mailbox_panel(tpath)
         return item
     
     def append(self, name, tpathls=[]):

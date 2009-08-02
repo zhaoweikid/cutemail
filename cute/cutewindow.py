@@ -76,9 +76,9 @@ class MainFrame(wx.Frame):
                           Left().Layer(1).Position(1).CloseButton(True).MaximizeButton(True))
          
         # 把每个邮箱创建的邮件列表面板加入到面板管理器, 先不可见
-        for k in self.mailboxs:
-            print 'add to mgr:', k, self.mailboxs[k]
-            self.mgr.AddPane(self.mailboxs[k], wx.aui.AuiPaneInfo().Name(k).CenterPane().Hide())
+        #for k in self.mailboxs:
+        #    print 'add to mgr:', k, self.mailboxs[k]
+        #    self.mgr.AddPane(self.mailboxs[k], wx.aui.AuiPaneInfo().Name(k).CenterPane().Hide())
             
         #self.mgr.AddPane(self.treeindex, wx.aui.AuiPaneInfo().Name("treeindex").CenterPane().Hide()) 
         # 把邮件内容面板添加到面板管理器
@@ -99,6 +99,13 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
         self.Bind(wx.EVT_SIZE, self.OnSize)
         
+    def add_mailbox_panel(self, k, obj=None):
+        print 'add panel:', k
+        if not obj:
+            obj = treelist.MailListPanel(self, k)
+        obj.Hide()
+        self.mailboxs[k] = obj
+        self.mgr.AddPane(obj, wx.aui.AuiPaneInfo().Name(k).CenterPane().Hide())
         
     def OnCloseWindow(self, event):
         self.Hide()
@@ -146,17 +153,24 @@ class MainFrame(wx.Frame):
                 print 'uiq return error:', item
         
     def init_data(self):
-        for k in self.mailboxs:
+        mailboxkeys = self.mailboxs.keys()
+        
+        for k in mailboxkeys:
+            print 'key:', k
+        
+        for k in mailboxkeys:
             print 'init data:', k
-            obj = treelist.MailListPanel(self, k)
-            obj.Hide()
-            self.mailboxs[k] = obj
+            if not self.mailboxs[k]:
+                self.add_mailbox_panel(k)
+            #obj = treelist.MailListPanel(self, k)
+            #obj.Hide()
+            #self.mailboxs[k] = obj
         k = u'/'
         obj = viewhtml.ViewHtml(self)
         obj.set_url('http://www.pythonid.com')
-        obj.Hide()
-        self.mailboxs[k] = obj
-        
+        #obj.Hide()
+        #self.mailboxs[k] = obj
+        self.add_mailbox_panel(k)
         
     def load_db_data(self):
         users = config.cf.users
@@ -587,7 +601,8 @@ class MainFrame(wx.Frame):
     def display_mailbox(self, name):
         try:
             newobj = self.mailboxs[name]
-        except:
+        except Exception, e:
+            print e
             return False
         
         print 'display:', self.last_mailbox, name
@@ -694,36 +709,36 @@ class MainFrame(wx.Frame):
         print 'run simple wizard...'
         wizard = wiz.Wizard(self, -1, u"新建用户向导", images.WizTest1.GetBitmap())
 
-        page1 = useradd.UsernamePage(wizard, u"输入账户名")
-        page2 = useradd.EmailPage(wizard, u"输入邮件地址")
-        page3 = useradd.ServerPage(wizard, u"输入服务器信息")
+        page1 = useradd.UsernamePage(wizard, u"输入用户信息")
+        #page2 = useradd.EmailPage(wizard, u"输入邮件地址")
+        page2 = useradd.ServerPage(wizard, u"输入服务器信息")
     
         wizard.FitToPage(page1)
     
         wiz.WizardPageSimple_Chain(page1, page2)
-        wiz.WizardPageSimple_Chain(page2, page3)
+        #wiz.WizardPageSimple_Chain(page2, page3)
     
         wizard.GetPageAreaSizer().Add(page1)
         ret = wizard.RunWizard(page1)
         if ret:
             me = {'name': page1.boxname.GetValue(),
                   'storage': page1.storage.GetValue(),
-                  'mailname': page2.username.GetValue(),
-                  'email': page2.email.GetValue(),
-                  'pop3_server': page3.pop3server.GetValue(),
-                  'pop3_pass': page3.pop3pass.GetValue(),
-                  'smtp_server:': page3.smtpserver.GetValue(),
-                  'smtp_pass': page3.smtppass.GetValue(),
+                  'mailname': page1.username.GetValue(),
+                  'email': page1.email.GetValue(),
+                  'pop3_server': page2.pop3server.GetValue(),
+                  'pop3_pass': page2.pop3pass.GetValue(),
+                  'smtp_server:': page2.smtpserver.GetValue(),
+                  'smtp_pass': page2.smtppass.GetValue(),
                   }
             print 'me:', me
             try:
                 conf = config.cf.user_add(me)
             except Exception, e:
                 wx.MessageBox(u"用户添加失败!"+str(e), u"欢迎使用CuteMail")
-                self.tree.append(conf)
-                self.tree.Refresh()
             else:
-                wx.MessageBox(u"用户添加成功!", u"欢迎使用CuteMail")
+                #wx.MessageBox(u"用户添加成功!", u"欢迎使用CuteMail")
+                self.tree.append(conf['mailbox'])
+                self.tree.Refresh()
                 
         
     def OnUserRename(self, event):

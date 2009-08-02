@@ -43,6 +43,18 @@ class UsernamePage(wiz.WizardPageSimple):
         wx.StaticText(panel, -1, u'请输入存储路径:')
         self.storage = wx.TextCtrl(panel, -1, size=(200,-1))
         
+        wx.StaticText(panel, -1, '') 
+        wx.StaticText(panel, -1, u'请输入您的姓名，这将出现在您发送的邮件的发件人中。')
+        
+        wx.StaticText(panel, -1, u'姓名:')
+        self.username = wx.TextCtrl(panel, -1, size=(200,-1))
+        
+        wx.StaticText(panel, -1, '') 
+        wx.StaticText(panel, -1, u'请输入您要使用的邮箱')
+        
+        wx.StaticText(panel, -1, u'邮箱地址:')
+        self.email = wx.TextCtrl(panel, -1, size=(200,-1))
+        
         self.SetAutoLayout(True)
  
 

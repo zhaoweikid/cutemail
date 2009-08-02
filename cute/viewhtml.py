@@ -2,6 +2,7 @@ import string, sys, os
 import wx
 import wx.html
 import  wx.lib.mixins.listctrl  as  listmix
+import mailparse
 
 class AttachListCtrl (wx.ListCtrl, listmix.ListCtrlAutoWidthMixin):
     def __init__(self, parent):
@@ -16,6 +17,16 @@ class AttachListCtrl (wx.ListCtrl, listmix.ListCtrlAutoWidthMixin):
         
     def OnDoubleClick(self, event):
         print 'double click'
+        item = event.GetItem()
+        data = item.GetItemData(item.m_itemIndex)
+        
+        tmpdir = os.path.join(data['home'], 'tmp')
+        mailparse.decode_attach(data['file'], data['attach'])
+        
+        attachfile = os.path.join(tmpdir, data['attach'])
+        if os.path.isfile(attachfile):
+            wx.Execute(attachfile)
+        
 
 
 if wx.Platform == '__WXMSW__':

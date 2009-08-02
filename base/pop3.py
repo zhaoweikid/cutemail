@@ -6,7 +6,7 @@ import poplib, config, mailparse, utils
 class POP3Client:
     def __init__(self, mailuser):
         self.username = mailuser['email']
-        self.password = mailuser['password']
+        self.password = mailuser['pop3_pass']
         host = mailuser['pop3_server']
         self.hashdir_count = 10 
 

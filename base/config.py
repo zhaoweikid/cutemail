@@ -54,6 +54,7 @@ class AppConfig:
         ctime datetime,
         date datetime,
         attach text default '',
+        -- attachcount integer default 0,
         mailbox varchar(64),
         status varchar(32) default 'new',
         threads integer default 0,
