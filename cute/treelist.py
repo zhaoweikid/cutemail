@@ -108,12 +108,10 @@ class MailListPanel(wx.Panel):
         return first
        
     def add_mail(self, item):
-        print 'add_mail:', item
         if item[4] and item[4] != 'None':
             timels = time.strptime(item[4], '%Y-%m-%d %H:%M:%S')
         else:
             timels = time.localtime()
-        print 'timels:', timels
         mtime = time.mktime(timels)
         #print 'make time:', mtime
         if mtime >= self.time_today:
@@ -127,6 +125,44 @@ class MailListPanel(wx.Panel):
         else:
             self.add_item(item, self.earlier)
 
+    def make_popup_menu(self):
+        if not hasattr(self, 'ID_POPUP_REPLY'):
+            self.ID_POPUP_REPLY = wx.NewId()
+            self.ID_POPUP_FORWARD = wx.NewId()
+            self.ID_POPUP_SEND_SEC = wx.NewId()
+            self.ID_POPUP_VIEW = wx.NewId()
+            self.ID_POPUP_SOURCE = wx.NewId()
+            
+            self.Bind(wx.EVT_MENU, self.OnPopupReply, id=self.ID_POPUP_REPLY) 
+            self.Bind(wx.EVT_MENU, self.OnPopupForward, id=self.ID_POPUP_FORWARD) 
+            self.Bind(wx.EVT_MENU, self.OnPopupSendSec, id=self.ID_POPUP_SEND_SEC) 
+            self.Bind(wx.EVT_MENU, self.OnPopupView, id=self.ID_POPUP_VIEW) 
+            self.Bind(wx.EVT_MENU, self.OnPopupSource, id=self.ID_POPUP_SOURCE) 
+            
+        menu = wx.Menu()
+        menu.Append(self.ID_POPUP_REPLY, u'回复邮件')
+        menu.Append(self.ID_POPUP_FORWARD, u'转发邮件')
+        menu.Append(self.ID_POPUP_SEND_SEC, u'再次发送邮件')
+        menu.AppendSeparator()
+        menu.Append(self.ID_POPUP_VIEW, u'查看邮件')
+        menu.AppendSeparator()
+        menu.Append(self.ID_POPUP_SOURCE, u'信件原文')
+        
+        self.PopupMenu(menu)
+        menu.Destroy()
+
+    def OnPopupReply(self, evt):
+        pass
+    
+    def OnPopupForward(self, evt):
+        pass
+    def OnPopupSendSec(self, evt):
+        pass
+    def OnPopupView(self, evt):
+        pass
+    def OnPopupSource(self, evt):
+        pass
+        
     def OnActivate(self, evt):
         print 'OnActivate: %s' % self.tree.GetItemText(evt.GetItem())
         s = self.tree.GetItemData(evt.GetItem()).GetData()
@@ -164,9 +200,12 @@ class MailListPanel(wx.Panel):
 
     def OnRightUp(self, evt):
         pos = evt.GetPosition()
+        self.tree.HitTest(pos)
         item, flags, col = self.tree.HitTest(pos)
         if item:
             print 'Flags: %s, Col:%s, Text: %s' % (flags, col, self.tree.GetItemText(item, col))
+            
+        self.make_popup_menu()
 
     def OnSize(self, evt):
         self.tree.SetSize(self.GetSize())
@@ -196,7 +235,7 @@ class MailboxTree(wx.TreeCtrl):
         
         for k in config.cf.users:
             usercf = config.cf.users[k]
-            print 'user:', k, usercf
+            #print 'user:', k, usercf
             mbox = usercf['mailbox']
             #tpathls = [] 
             self.add_to_tree(self.root, mbox)
@@ -240,7 +279,7 @@ class MailboxTree(wx.TreeCtrl):
                 i = self.GetItemParent(i)
             tpathls.reverse()
             tpath = '/' + '/'.join(tpathls)
-            print 'path:', tpath
+            print 'OnSelChanged path:', tpath
             
             self.parent.display_mailbox(tpath)
             

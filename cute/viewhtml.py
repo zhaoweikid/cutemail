@@ -25,9 +25,14 @@ class AttachListCtrl (wx.ListCtrl, listmix.ListCtrlAutoWidthMixin):
         
         attachfile = os.path.join(tmpdir, data['attach'])
         if os.path.isfile(attachfile):
-            wx.Execute(attachfile)
+            #wx.Execute(attachfile)
+            self.Execute(attachfile)
         
-
+    def Execute(self, cmd):
+        def myexecute(cmd):
+            os.system(cmd)
+        th = threading.Thread(target=myexecute, args=(cmd, ))
+        th.start()
 
 if wx.Platform == '__WXMSW__':
     import wx.lib.iewin as iewin

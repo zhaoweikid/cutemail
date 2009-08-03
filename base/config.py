@@ -178,7 +178,7 @@ def load():
     global cf
     app = AppConfig()
     app.load()
-    print 'load users:', app.users        
+    #print 'load users:', app.users        
     cf = app
 
 def test():

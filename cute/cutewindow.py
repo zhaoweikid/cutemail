@@ -47,7 +47,6 @@ class MainFrame(wx.Frame):
         self.init_data()
         # 把邮件信息加载进来        
         self.load_db_data()
-        #self.listindex = treelist.MailListPanel(self) 
         
         # 获取所有用户名
         ks = config.cf.users.keys()
@@ -61,8 +60,10 @@ class MainFrame(wx.Frame):
             k1 = '/'
             self.last_mailbox = k1
             self.listindex = self.mailboxs[k1]
-        #self.treeindex = treelist.MailTreePanel(self)
-        #self.treeindex.Hide()
+
+                
+        self.last_mailbox = u'/'
+        self.listindex = self.mailboxs[u'/']
         
         # 内容显示控件
         self.listcnt = viewhtml.ViewHtml(self)
@@ -75,12 +76,7 @@ class MainFrame(wx.Frame):
         self.mgr.AddPane(self.tree, wx.aui.AuiPaneInfo().Name("tree").Caption(u"用户").
                           Left().Layer(1).Position(1).CloseButton(True).MaximizeButton(True))
          
-        # 把每个邮箱创建的邮件列表面板加入到面板管理器, 先不可见
-        #for k in self.mailboxs:
-        #    print 'add to mgr:', k, self.mailboxs[k]
-        #    self.mgr.AddPane(self.mailboxs[k], wx.aui.AuiPaneInfo().Name(k).CenterPane().Hide())
             
-        #self.mgr.AddPane(self.treeindex, wx.aui.AuiPaneInfo().Name("treeindex").CenterPane().Hide()) 
         # 把邮件内容面板添加到面板管理器
         self.mgr.AddPane(self.listcnt, wx.aui.AuiPaneInfo().Name("listcnt").Caption(u"邮件内容").
                           Bottom().Layer(0).Position(3).CloseButton(True).MaximizeButton(True))
@@ -88,8 +84,8 @@ class MainFrame(wx.Frame):
         self.mgr.AddPane(self.attachctl, wx.aui.AuiPaneInfo().Name("attachctl").Caption(u"附件内容").
                           Bottom().Layer(0).Position(3).CloseButton(True).MaximizeButton(True))
         # 显示当前选择的邮件列表面板
-        print 'show:', k1
-        self.mgr.GetPane(k1).Show()
+        print 'show:', self.last_mailbox
+        self.mgr.GetPane(self.last_mailbox).Show()
         self.mgr.Update()
         
         self.Bind(wx.EVT_TIMER, self.OnTimer)
@@ -107,69 +103,16 @@ class MainFrame(wx.Frame):
         self.mailboxs[k] = obj
         self.mgr.AddPane(obj, wx.aui.AuiPaneInfo().Name(k).CenterPane().Hide())
         
-    def OnCloseWindow(self, event):
-        self.Hide()
-        self.mgr.UnInit()
-        del self.mgr
-        self.Destroy()
-
-    def OnSize(self, event):
-        self.Refresh()
-        
-    def OnTimer(self, event):
-        '''
-        定时任务
-        '''
-        #print 'time now', time.ctime()
-        try:
-            item = config.uiq.get(0)
-        except:
-            pass
-        else:
-            print 'uiq: ', item
-            name = item['name']
-            task = item['task']
-            mlist = self.mailboxs['/%s/' % (name) + u'收件箱']
-            if task == 'updatebox':
-                usercf = config.cf.users[name]
-                dbpath = os.path.join(config.cf.datadir, name, 'mailinfo.db')
-                conn = dbope.DBOpe(dbpath)
-                ret = conn.query("select id,filename,subject,mailfrom,mailto,size,ctime,date,attach,mailbox,status from mailinfo where status='new'")
-                conn.close()
-                if ret:
-                    for info in ret:
-                        print info['filename']
-                        att = 0 
-                        if info['attach']:
-                            att = 1
-                        item = [info['mailfrom'], att,1, info['subject'], info['date'], str(info['size']/1024 + 1)+' K',
-                                wx.TreeItemData([str(info['id']), name, '/%s/' % (name) + u'收件箱'])]
-                        #print item
-                        #mlist.add_mail(item)
-                        mlist.add_item(item, mlist.today)
-            elif task == 'alert':
-                pass
-            else:
-                print 'uiq return error:', item
         
     def init_data(self):
         mailboxkeys = self.mailboxs.keys()
-        
-        for k in mailboxkeys:
-            print 'key:', k
-        
         for k in mailboxkeys:
             print 'init data:', k
             if not self.mailboxs[k]:
                 self.add_mailbox_panel(k)
-            #obj = treelist.MailListPanel(self, k)
-            #obj.Hide()
-            #self.mailboxs[k] = obj
         k = u'/'
         obj = viewhtml.ViewHtml(self)
         obj.set_url('http://www.pythonid.com')
-        #obj.Hide()
-        #self.mailboxs[k] = obj
         self.add_mailbox_panel(k)
         
     def load_db_data(self):
@@ -188,7 +131,6 @@ class MainFrame(wx.Frame):
                 item = [row['mailfrom'], att, 0, row['subject'], row['date'], str(row['size']/1024 + 1)+' K',
                         wx.TreeItemData([str(row['id']),u,'/%s/' % (u) + u'收件箱'])]
                 #print item
-                #mlist.add_item(item, mlist.today)
                 mlist.add_mail(item)
 
     def init_const(self):
@@ -203,6 +145,7 @@ class MainFrame(wx.Frame):
         self.ID_FILE_EXIT          = wx.NewId()
 
         self.ID_VIEW_MAIL    = wx.NewId()
+        self.ID_VIEW_ATTACH  = wx.NewId()
         self.ID_VIEW_SMTP    = wx.NewId()
         self.ID_VIEW_SEARCH  = wx.NewId()
         self.ID_VIEW_ENCODE  = wx.NewId()
@@ -318,23 +261,23 @@ class MainFrame(wx.Frame):
         self.ID_TOOLBAR_WWW = wx.NewId()
         self.ID_TOOLBAR_CHAT = wx.NewId()
         
-        self.toolbar = wx.ToolBar(self, -1, wx.DefaultPosition, wx.Size(48, 48), wx.TB_HORIZONTAL|wx.TB_FLAT)
+        self.toolbar = wx.ToolBar(self, -1, wx.DefaultPosition, wx.Size(48, 48), wx.TB_HORIZONTAL|wx.TB_FLAT|wx.TB_TEXT)
         self.toolbar.SetToolBitmapSize(wx.Size (48, 48))
-        self.toolbar.AddSimpleTool(self.ID_TOOLBAR_MAIL_GET, common.load_image('bitmaps/32/mail_get.png'), u"收取邮件", u"收取邮件")
+        self.toolbar.AddLabelTool(self.ID_TOOLBAR_MAIL_GET, u"收邮件", common.load_image('bitmaps/32/mail_get.png'), shortHelp=u"收取邮件", longHelp=u"收取邮件")
         #self.toolbar.AddLabelTool(3401, 'aaaa', common.load_image('bitmaps/32/mail_get.png'),shortHelp="收取邮件", longHelp="收取邮件")
-        self.toolbar.AddSimpleTool(self.ID_TOOLBAR_MAIL_SEND, common.load_image('bitmaps/32/mail_send.png'),  u"发送候发邮件", u"发送候发邮件")
+        self.toolbar.AddLabelTool(self.ID_TOOLBAR_MAIL_SEND, u'发送', common.load_image('bitmaps/32/mail_send.png'),  shortHelp=u"发送候发邮件", longHelp=u"发送候发邮件")
         self.toolbar.AddSeparator()
-        self.toolbar.AddSimpleTool(self.ID_TOOLBAR_MAIL_NEW, common.load_image('bitmaps/32/mail_new.png'),  u"写新邮件", u"写新邮件")
-        self.toolbar.AddSimpleTool(self.ID_TOOLBAR_MAIL_REPLY, common.load_image('bitmaps/32/mail_reply.png'), u"回复", u"回复")
-        self.toolbar.AddSimpleTool(self.ID_TOOLBAR_MAIL_FORWARD, common.load_image('bitmaps/32/mail_forward.png'), u"转发", u"转发")
-        self.toolbar.AddSimpleTool(self.ID_TOOLBAR_MAIL_DELETE, common.load_image('bitmaps/32/mail_delete.png'), u"删除", u"删除")
+        self.toolbar.AddLabelTool(self.ID_TOOLBAR_MAIL_NEW, u'新邮件', common.load_image('bitmaps/32/mail_new.png'),  shortHelp=u"写新邮件", longHelp=u"写新邮件")
+        self.toolbar.AddLabelTool(self.ID_TOOLBAR_MAIL_REPLY, u'回复', common.load_image('bitmaps/32/mail_reply.png'), shortHelp=u"回复", longHelp=u"回复")
+        self.toolbar.AddLabelTool(self.ID_TOOLBAR_MAIL_FORWARD, u'转发', common.load_image('bitmaps/32/mail_forward.png'), shortHelp=u"转发", longHelp=u"转发")
+        self.toolbar.AddLabelTool(self.ID_TOOLBAR_MAIL_DELETE, u'删除', common.load_image('bitmaps/32/mail_delete.png'), shortHelp=u"删除", longHelp=u"删除")
         self.toolbar.AddSeparator()
-        self.toolbar.AddSimpleTool(self.ID_TOOLBAR_ADDR, common.load_image('bitmaps/32/toggle_log.png'), u"地址薄", u"地址薄")
-        self.toolbar.AddSimpleTool(self.ID_TOOLBAR_FIND, common.load_image('bitmaps/32/filefind.png'), u"查找", u"查找")
+        self.toolbar.AddLabelTool(self.ID_TOOLBAR_ADDR, u'地址薄', common.load_image('bitmaps/32/toggle_log.png'), shortHelp=u"地址薄", longHelp=u"地址薄")
+        self.toolbar.AddLabelTool(self.ID_TOOLBAR_FIND, u'查找', common.load_image('bitmaps/32/filefind.png'), shortHelp=u"查找", longHelp=u"查找")
         self.toolbar.AddSeparator()
-        self.toolbar.AddSimpleTool(self.ID_TOOLBAR_CHAT, common.load_image('bitmaps/32/chat.png'), u"聊天", u"聊天")
+        self.toolbar.AddLabelTool(self.ID_TOOLBAR_CHAT, u'聊天', common.load_image('bitmaps/32/chat.png'), shortHelp=u"聊天", longHelp=u"聊天")
         self.toolbar.AddSeparator()
-        self.toolbar.AddSimpleTool(self.ID_TOOLBAR_WWW, common.load_image('bitmaps/32/www.png'), u"主页", u"主页")
+        self.toolbar.AddLabelTool(self.ID_TOOLBAR_WWW, u'主页', common.load_image('bitmaps/32/www.png'), shortHelp=u"主页", longHelp=u"主页")
         self.toolbar.Realize ()
         self.SetToolBar(self.toolbar)
         
@@ -376,6 +319,7 @@ class MainFrame(wx.Frame):
         encodingmenu.Append(self.ID_ENCODING_SHIFTJIS, u"日文(Shift-JIS)")
         encodingmenu.AppendSeparator()
         encodingmenu.Append(self.ID_ENCODING_KOREA, u"韩文")
+        '''
         encodingmenu.AppendSeparator()
         encodingmenu.Append(self.ID_ENCODING_OCCISO, u"西欧(ISO)")
         encodingmenu.Append(self.ID_ENCODING_OCCWIN, u"西欧(Windows)")
@@ -412,10 +356,11 @@ class MainFrame(wx.Frame):
         encodingmenu.Append(self.ID_ENCODING_TURWIN, u"土耳其文(Windows)")
         encodingmenu.AppendSeparator()
         encodingmenu.Append(self.ID_ENCODING_VNWIN, u"越南文(Windows)")
-        
+        '''
         
         self.viewmenu = PicMenu(self)
         self.viewmenu.Append(self.ID_VIEW_MAIL, u"邮件内容", 'contents.png')        
+        self.viewmenu.Append(self.ID_VIEW_ATTACH, u"附件内容", 'attach.png')        
         self.viewmenu.Append(self.ID_VIEW_SMTP, u"调试信息", 'blender.png')
         self.viewmenu.Append(self.ID_VIEW_SOURCE, u"信件原文")
         self.viewmenu.Append(self.ID_VIEW_SEARCH, u"查找邮件", 'mail_find.png')
@@ -524,6 +469,7 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnCloseWindow, id=self.ID_FILE_EXIT)
         
         self.Bind(wx.EVT_MENU, self.OnViewMail, id=self.ID_VIEW_MAIL)
+        self.Bind(wx.EVT_MENU, self.OnViewAttach, id=self.ID_VIEW_ATTACH)
         self.Bind(wx.EVT_MENU, self.OnViewSmtp, id=self.ID_VIEW_SMTP)
         self.Bind(wx.EVT_MENU, self.OnViewSource, id=self.ID_VIEW_SOURCE)
         self.Bind(wx.EVT_MENU, self.OnViewSearch, id=self.ID_VIEW_SEARCH)
@@ -593,11 +539,9 @@ class MainFrame(wx.Frame):
         self.statusbar.SetFieldsCount(3)
         self.SetStatusWidths([-1, -2, -2])
         
-  
     def make_tree(self):  
         self.tree = treelist.MailboxTree(self)
         
-    
     def display_mailbox(self, name):
         try:
             newobj = self.mailboxs[name]
@@ -618,6 +562,50 @@ class MainFrame(wx.Frame):
         return True
         
         
+    def OnCloseWindow(self, event):
+        self.Hide()
+        self.mgr.UnInit()
+        del self.mgr
+        self.Destroy()
+
+    def OnSize(self, event):
+        self.Refresh()
+        
+    def OnTimer(self, event):
+        '''
+        定时任务
+        '''
+        #print 'time now', time.ctime()
+        try:
+            item = config.uiq.get(0)
+        except:
+            pass
+        else:
+            print 'uiq: ', item
+            name = item['name']
+            task = item['task']
+            mlist = self.mailboxs['/%s/' % (name) + u'收件箱']
+            if task == 'updatebox':
+                usercf = config.cf.users[name]
+                dbpath = os.path.join(config.cf.datadir, name, 'mailinfo.db')
+                conn = dbope.DBOpe(dbpath)
+                ret = conn.query("select id,filename,subject,mailfrom,mailto,size,ctime,date,attach,mailbox,status from mailinfo where status='new'")
+                conn.close()
+                if ret:
+                    for info in ret:
+                        print info['filename']
+                        att = 0 
+                        if info['attach']:
+                            att = 1
+                        item = [info['mailfrom'], att,1, info['subject'], info['date'], str(info['size']/1024 + 1)+' K',
+                                wx.TreeItemData([str(info['id']), name, '/%s/' % (name) + u'收件箱'])]
+                        #print item
+                        #mlist.add_mail(item)
+                        mlist.add_item(item, mlist.today)
+            elif task == 'alert':
+                pass
+            else:
+                print 'uiq return error:', item
         
     def OnFileOpen(self, event):
        pass
@@ -640,11 +628,19 @@ class MainFrame(wx.Frame):
     def OnFileExport(self, event):
         pass
     def OnFileExit(self, event):
-        pass
+        self.Hide()
+        self.mgr.UnInit()
+        del self.mgr
+        self.Destroy()
             
     def OnViewMail(self, event):
-        pass
-    
+        self.mgr.GetPane('listcnt').Show()
+        self.mgr.Update()
+
+    def OnViewAttach(self, event):
+        self.mgr.GetPane('attachctl').Show()
+        self.mgr.Update()
+        
     def OnViewSmtp(self, event):
         pass
         
@@ -658,7 +654,7 @@ class MainFrame(wx.Frame):
     def OnViewSort(self, event):
         pass
     def OnViewRefresh(self, event):
-        pass
+        self.Refresh()
         
     def OnImportOutlookUser(self, event):
         pass       
@@ -808,5 +804,7 @@ class MainFrame(wx.Frame):
 
 
     def OnWebsite(self, event):
-        pass
+        self.display_mailbox(u'/')
+        
+        
         
