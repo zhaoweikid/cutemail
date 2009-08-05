@@ -1,6 +1,7 @@
 # coding: utf-8
 import os, sys, time
 import wx, wx.gizmos
+import  wx.lib.dialogs
 import cStringIO, types
 import config, common, dbope
         
@@ -21,7 +22,7 @@ class MailListPanel(wx.Panel):
             cols = [u'发件人','attach','mark',u'邮件主题',u'日期',u'邮件大小']
         
         item = ['zhaowei@bobo.com', 1,1, u'呵呵我的测试', '20090210', '12873']
-
+        self.lastitem = None
 
         self.image_attach = config.cf.home+'/bitmaps/16/attach.png'
         self.image_flag = config.cf.home+'/bitmaps/16/flag.png'
@@ -161,14 +162,31 @@ class MailListPanel(wx.Panel):
     def OnPopupView(self, evt):
         pass
     def OnPopupSource(self, evt):
-        pass
+        if self.lastitem:
+            s = self.tree.GetItemData(self.lastitem).GetData()
+            if not s:
+                return
+            print 'Source:', s
+            filepath = os.path.join(config.cf.datadir, s['user'], s['mailbox'], s['filename'].lstrip(os.sep))
+            print 'filepath:', filepath
+            f = open(filepath, 'r')
+            source = f.read()
+            f.close()
+            dlg = wx.lib.dialogs.ScrolledMessageDialog(self, source, u'信件原文',
+                                size = (800, 600), 
+                                style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX)
+            dlg.ShowModal()
         
     def OnActivate(self, evt):
         print 'OnActivate: %s' % self.tree.GetItemText(evt.GetItem())
+        self.lastitem = evt.GetItem()
         s = self.tree.GetItemData(evt.GetItem()).GetData()
         if not s:
             return
-        mid, name, mlist = s
+        #mid, name, mbox = s
+        mid  = s['id']
+        name = s['user']
+        mbox = s['box']
         sql = "select * from mailinfo where id=" + mid
         
         dbpath = os.path.join(config.cf.datadir, name, 'mailinfo.db')
@@ -203,6 +221,7 @@ class MailListPanel(wx.Panel):
         self.tree.HitTest(pos)
         item, flags, col = self.tree.HitTest(pos)
         if item:
+            self.tree.SelectItem(item)
             print 'Flags: %s, Col:%s, Text: %s' % (flags, col, self.tree.GetItemText(item, col))
             
         self.make_popup_menu()
@@ -241,6 +260,7 @@ class MailboxTree(wx.TreeCtrl):
             self.add_to_tree(self.root, mbox)
         
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnSelChanged, self) 
+        self.Bind(wx.EVT_RIGHT_UP, self.OnRightUp)
 
     def add_to_tree(self, parent, name, tpathls=[]):
         if type(name) == types.ListType:
@@ -266,6 +286,56 @@ class MailboxTree(wx.TreeCtrl):
     def append(self, name, tpathls=[]):
         self.add_to_tree(self.root, name, tpathls) 
     
+    
+    def make_popup_menu(self):
+        if not hasattr(self, 'ID_POPUP_RECV'):
+            self.ID_POPUP_RECV = wx.NewId()
+            self.ID_POPUP_SEND = wx.NewId()
+            self.ID_POPUP_MAILBOX_NEW = wx.NewId()
+            self.ID_POPUP_MAILBOX_RENAME = wx.NewId()
+            self.ID_POPUP_PASSWORD = wx.NewId()
+            self.ID_POPUP_FILTER = wx.NewId()
+            self.ID_POPUP_SETTING = wx.NewId()
+            
+            self.Bind(wx.EVT_MENU, self.OnPopupRecv, id=self.ID_POPUP_RECV)
+            self.Bind(wx.EVT_MENU, self.OnPopupSend, id=self.ID_POPUP_SEND)
+            self.Bind(wx.EVT_MENU, self.OnPopupMailboxNew, id=self.ID_POPUP_MAILBOX_NEW)
+            self.Bind(wx.EVT_MENU, self.OnPopupMailboxRename, id=self.ID_POPUP_MAILBOX_RENAME)
+            self.Bind(wx.EVT_MENU, self.OnPopupPassword, id=self.ID_POPUP_PASSWORD)
+            self.Bind(wx.EVT_MENU, self.OnPopupFilter, id=self.ID_POPUP_FILTER)
+            self.Bind(wx.EVT_MENU, self.OnPopupSetting, id=self.ID_POPUP_SETTING)
+            
+        menu = wx.Menu()
+        menu.Append(self.ID_POPUP_RECV, u'收取邮件')
+        menu.Append(self.ID_POPUP_SEND, u'发送发件箱内邮件')
+        menu.AppendSeparator()
+        menu.Append(self.ID_POPUP_MAILBOX_NEW, u'新建邮箱')
+        menu.Append(self.ID_POPUP_MAILBOX_RENAME, u'重命名邮箱')
+        menu.AppendSeparator()
+        menu.Append(self.ID_POPUP_PASSWORD, u'设置密码')
+        menu.Append(self.ID_POPUP_FILTER, u'设置过滤器')
+        menu.AppendSeparator()
+        menu.Append(self.ID_POPUP_SETTING, u'属性设置')
+        self.PopupMenu(menu)
+        menu.Destroy()
+    
+    def OnPopupRecv(self, evt):
+        pass
+    
+    def OnPopupSend(self, evt):
+        pass
+    
+    def OnPopupMailboxNew(self, evt):
+        pass
+    def OnPopupMailboxRename(self, evt):
+        pass
+    def OnPopupPassword(self, evt):
+        pass
+    def OnPopupFilter(self, evt):
+        pass
+    
+    def OnPopupSetting(self, evt):
+        pass
     def OnSelChanged(self, evt):
         self.item = evt.GetItem()
         if self.item:
@@ -287,4 +357,11 @@ class MailboxTree(wx.TreeCtrl):
     def OnSize(self, evt):
         self.SetSize(self.GetSize())
 
-
+    def OnRightUp(self, evt):
+        print 'tree right up...'
+        pt = evt.GetPosition()
+        item, flags = self.HitTest(pt)
+        
+        self.make_popup_menu()
+        
+        

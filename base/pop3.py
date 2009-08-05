@@ -29,7 +29,7 @@ class POP3Client:
         self.home = config.cf.datadir+os.sep+mailuser['name']
         print 'home:', self.home
         
-        for n in config.cf.mailbox_map.values():
+        for n in config.cf.mailbox_map_cn2en.values():
             npath = self.home + os.sep + n
             if not os.path.isdir(npath):
                 os.mkdir(npath)
@@ -112,7 +112,7 @@ class POP3Client:
             f.close()
             
             ret['filename'] = filename[len(self.recvpath):]
-            ret['mailbox'] = '/'+name
+            ret['mailbox'] = 'recv'
             ret['ctime'] = 'datetime()'
             ret['uidl'] = k
             mailinfos.append(ret)

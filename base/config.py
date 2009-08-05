@@ -26,9 +26,14 @@ class AppConfig:
         # 以邮件地址为索引的用户配置信息
         self.mailboxs = {}
         
-        self.mailbox_map = {u'收件箱':'recv', u'发件箱':'send', u'草稿箱':'draft',
+        self.mailbox_map_cn2en = {u'收件箱':'recv', u'发件箱':'send', u'草稿箱':'draft',
                             u'已发送邮件':'sendover', u'垃圾邮件':'spam',
                             u'病毒邮件':'virus', u'删除邮件':'trash'}
+        self.mailbox_map_en2cn = {}
+        
+        for k in self.mailbox_map_cn2en:
+            v = self.mailbox_map_cn2en[k]
+            self.mailbox_map_en2cn[v] = k
         
         self.datadir = os.path.join(self.home, 'data')
         if not os.path.isdir(self.datadir):

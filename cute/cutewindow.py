@@ -118,7 +118,7 @@ class MainFrame(wx.Frame):
     def load_db_data(self):
         users = config.cf.users
         for u in users:
-            mlist = self.mailboxs['/%s/' % (u) + u'收件箱']
+            #mlist = self.mailboxs['/%s/' % (u) + u'收件箱']
             dbpath = os.path.join(config.cf.datadir, u, 'mailinfo.db')
             print 'load db from path:', dbpath
             conn = dbope.DBOpe(dbpath)
@@ -129,9 +129,12 @@ class MainFrame(wx.Frame):
                 if row['attach']:
                     att = 1
                 item = [row['mailfrom'], att, 0, row['subject'], row['date'], str(row['size']/1024 + 1)+' K',
-                        wx.TreeItemData([str(row['id']),u,'/%s/' % (u) + u'收件箱'])]
+                        wx.TreeItemData({'id':str(row['id']), 'user':u,'box':'/%s/' % (u) + u'收件箱',
+                                         'filename': row['filename'], 'mailbox': row['mailbox']})]
                 #print item
-                mlist.add_mail(item)
+                boxname = '/%s/' % (u) + config.cf.mailbox_map_en2cn[row['mailbox']]
+                box = self.mailboxs[boxname]
+                box.add_mail(item)
 
     def init_const(self):
         self.ID_FILE_OPEN          = wx.NewId()
@@ -584,7 +587,7 @@ class MainFrame(wx.Frame):
             print 'uiq: ', item
             name = item['name']
             task = item['task']
-            mlist = self.mailboxs['/%s/' % (name) + u'收件箱']
+            boxpanel = self.mailboxs['/%s/' % (name) + u'收件箱']
             if task == 'updatebox':
                 usercf = config.cf.users[name]
                 dbpath = os.path.join(config.cf.datadir, name, 'mailinfo.db')
@@ -598,10 +601,11 @@ class MainFrame(wx.Frame):
                         if info['attach']:
                             att = 1
                         item = [info['mailfrom'], att,1, info['subject'], info['date'], str(info['size']/1024 + 1)+' K',
-                                wx.TreeItemData([str(info['id']), name, '/%s/' % (name) + u'收件箱'])]
+                                wx.TreeItemData({'id':str(info['id']), 'user':name, 'box':'/%s/' % (name) + u'收件箱',
+                                                 'filename':info['filename'], 'mailbox':info['mailbox']})]
                         #print item
-                        #mlist.add_mail(item)
-                        mlist.add_item(item, mlist.today)
+                        boxpanel.add_mail(item)
+                        #mlist.add_item(item, mlist.today)
             elif task == 'alert':
                 pass
             else:
@@ -645,7 +649,7 @@ class MainFrame(wx.Frame):
         pass
         
     def OnViewSource(self, event):
-        pass
+        self.mailboxs[self.last_mailbox].OnPopupSource(event)
     
     def OnViewSearch(self, event):
         pass
