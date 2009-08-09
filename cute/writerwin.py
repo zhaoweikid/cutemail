@@ -2,8 +2,9 @@
 import os, sys
 import wx
 import wx.richtext as rt
+import wx.lib.sized_controls as sc
 from picmenu import PicMenu
-import common
+from common import load_bitmap, load_image
 import images
 
 class WriterWin (wx.Frame):
@@ -18,19 +19,22 @@ class WriterWin (wx.Frame):
         self.make_status()
          
         sizer = wx.BoxSizer(wx.VERTICAL)
-        x = self.make_toolbar()
-        sizer.Add(x, flag=wx.ALL|wx.EXPAND, border=0)
+        #x = self.make_toolbar()
+        #sizer.Add(x, flag=wx.ALL|wx.EXPAND, border=0)
+        self.make_toolbar_new()
+        x = self.make_header()
+        if x:
+            sizer.Add(x, flag=wx.ALL|wx.EXPAND, border=0)
         x = self.make_writer_toolbar()
         sizer.Add(x, flag=wx.ALL|wx.EXPAND, border=0)
         x = self.make_writer()
-        sizer.Add(x, flag=wx.ALL|wx.EXPAND, border=0)
+        sizer.Add(x, flag=wx.ALL|wx.EXPAND, border=0, proportion=1)
         
         self.SetSizer(sizer)
         self.SetAutoLayout(True)
 
     def make_menu(self):
         self.ID_MAIL_SEND = wx.NewId()
-        self.ID_MAIL_SAVE_SENDBOX = wx.NewId()
         self.ID_MAIL_SAVE_DRAFT = wx.NewId()
         self.ID_MAIL_EXIT = wx.NewId()
 
@@ -47,8 +51,7 @@ class WriterWin (wx.Frame):
 
         self.mailmenu = PicMenu(self)
         self.mailmenu.Append(self.ID_MAIL_SEND, u'发送', 'mail_send.png')
-        self.mailmenu.Append(self.ID_MAIL_SAVE_SENDBOX, u'保存到发件箱', 'mail_send.png')
-        self.mailmenu.Append(self.ID_MAIL_SAVE_DRAFT, u'保存到草稿箱', 'mail_send.png')
+        self.mailmenu.Append(self.ID_MAIL_SAVE_DRAFT, u'保存为草稿', 'mail_send.png')
         self.mailmenu.AppendSeparator()
         self.mailmenu.Append(self.ID_MAIL_EXIT, u'退出', 'exit.png')
         self.menubar.Append(self.mailmenu, u'邮件')
@@ -72,7 +75,6 @@ class WriterWin (wx.Frame):
 
     
         self.Bind(wx.EVT_MENU, self.OnMailSend, id=self.ID_MAIL_SEND)     
-        self.Bind(wx.EVT_MENU, self.OnMailSaveSendbox, id=self.ID_MAIL_SAVE_SENDBOX)     
         self.Bind(wx.EVT_MENU, self.OnMailSaveDraft, id=self.ID_MAIL_SAVE_DRAFT)     
         self.Bind(wx.EVT_MENU, self.OnMailExit, id=self.ID_MAIL_EXIT)     
         self.Bind(wx.EVT_MENU, self.OnEditCopy, id=self.ID_EDIT_COPY)     
@@ -87,12 +89,11 @@ class WriterWin (wx.Frame):
         #client.SetBackgroundColour(wx.NamedColour("WHITE"))
         
         self.ID_TOOLBAR_SEND = wx.NewId()
-        self.ID_TOOLBAR_SAVE_SENDBOX = wx.NewId()
         self.ID_TOOLBAR_SAVE_DRAFT = wx.NewId()
         self.ID_TOOLBAR_ATTACH = wx.NewId()
         self.ID_TOOLBAR_LINKMAN = wx.NewId()
     
-        self.toolbar = wx.ToolBar(client, -1, wx.DefaultPosition, wx.Size(48, 48), wx.TB_HORIZONTAL|wx.TB_FLAT)
+        self.toolbar = wx.ToolBar(client, -1, wx.DefaultPosition, wx.Size(48, 48), style=wx.TB_HORIZONTAL|wx.TB_FLAT|wx.TB_TEXT)
         
         sizer1 = wx.BoxSizer(wx.VERTICAL)
         sizer1.Add(self.toolbar, flag=wx.ALL|wx.EXPAND)
@@ -100,25 +101,66 @@ class WriterWin (wx.Frame):
         
         self.toolbar.SetToolBitmapSize(wx.Size(48,48))
     
-        self.toolbar.AddSimpleTool(self.ID_TOOLBAR_SEND, common.load_image(self.bmpdir+'/32/mail_send.png'), u'发送邮件', u'发送邮件')
-        self.toolbar.AddSimpleTool(self.ID_TOOLBAR_SAVE_SENDBOX, common.load_image(self.bmpdir+'/32/mail_new.png'), u'保存到发件箱', u'保存到发件箱')
-        self.toolbar.AddSimpleTool(self.ID_TOOLBAR_SAVE_DRAFT, common.load_image(self.bmpdir+'/32/mail_new.png'), u'保存到草稿箱', u'保存到草稿箱')
+        self.toolbar.AddLabelTool(self.ID_TOOLBAR_SEND, u'发送邮件', load_bitmap(self.bmpdir+'/32/mail_send.png'), shortHelp=u'发送邮件', longHelp=u'发送邮件')
+        self.toolbar.AddLabelTool(self.ID_TOOLBAR_SAVE_DRAFT, u'保存为草稿', load_bitmap(self.bmpdir+'/32/queue.png'), shortHelp=u'保存到草稿箱', longHelp=u'保存到草稿箱')
         self.toolbar.AddSeparator()
-        self.toolbar.AddSimpleTool(self.ID_TOOLBAR_ATTACH, common.load_image(self.bmpdir+'/32/mail_new.png'), u'附件', u'附件')
+        self.toolbar.AddLabelTool(self.ID_TOOLBAR_ATTACH, u'附件', load_bitmap(self.bmpdir+'/32/attach.png'), shortHelp=u'附件', longHelp=u'附件')
         self.toolbar.AddSeparator()
-        self.toolbar.AddSimpleTool(self.ID_TOOLBAR_LINKMAN, common.load_image(self.bmpdir+'/32/chat.png'), u'联系人', u'联系人')
+        self.toolbar.AddLabelTool(self.ID_TOOLBAR_LINKMAN, u'联系人', load_bitmap(self.bmpdir+'/32/identity.png'), shortHelp=u'联系人', longHelp=u'联系人')
 
         self.toolbar.Realize()
         #self.SetToolBar(self.toolbar)
 
         self.Bind(wx.EVT_TOOL, self.OnMailSend, id=self.ID_TOOLBAR_SEND)
-        self.Bind(wx.EVT_TOOL, self.OnMailSaveSendbox, id=self.ID_TOOLBAR_SAVE_SENDBOX)
         self.Bind(wx.EVT_TOOL, self.OnMailSaveDraft, id=self.ID_TOOLBAR_SAVE_DRAFT)
         self.Bind(wx.EVT_TOOL, self.OnInsertAttach, id=self.ID_TOOLBAR_ATTACH)
         self.Bind(wx.EVT_TOOL, self.OnLinkman, id=self.ID_TOOLBAR_LINKMAN)
         
         return client
 
+
+
+    def make_toolbar_new(self):
+        self.ID_TOOLBAR_SEND = wx.NewId()
+        self.ID_TOOLBAR_SAVE_DRAFT = wx.NewId()
+        self.ID_TOOLBAR_ATTACH = wx.NewId()
+        self.ID_TOOLBAR_LINKMAN = wx.NewId()
+    
+        self.toolbar = wx.ToolBar(self, -1, wx.DefaultPosition, wx.Size(48, 48), style=wx.TB_HORIZONTAL|wx.TB_FLAT|wx.TB_TEXT)
+        self.toolbar.SetToolBitmapSize(wx.Size(48,48))
+    
+        self.toolbar.AddLabelTool(self.ID_TOOLBAR_SEND, u'发送邮件', load_bitmap(self.bmpdir+'/32/mail_send.png'), shortHelp=u'发送邮件', longHelp=u'发送邮件')
+        self.toolbar.AddLabelTool(self.ID_TOOLBAR_SAVE_DRAFT, u'保存为草稿', load_bitmap(self.bmpdir+'/32/queue.png'), shortHelp=u'保存到草稿箱', longHelp=u'保存到草稿箱')
+        self.toolbar.AddSeparator()
+        self.toolbar.AddLabelTool(self.ID_TOOLBAR_ATTACH, u'附件', load_bitmap(self.bmpdir+'/32/attach.png'), shortHelp=u'附件', longHelp=u'附件')
+        self.toolbar.AddSeparator()
+        self.toolbar.AddLabelTool(self.ID_TOOLBAR_LINKMAN, u'联系人', load_bitmap(self.bmpdir+'/32/identity.png'), shortHelp=u'联系人', longHelp=u'联系人')
+
+        self.toolbar.Realize()
+        self.SetToolBar(self.toolbar)
+
+        self.Bind(wx.EVT_TOOL, self.OnMailSend, id=self.ID_TOOLBAR_SEND)
+        self.Bind(wx.EVT_TOOL, self.OnMailSaveDraft, id=self.ID_TOOLBAR_SAVE_DRAFT)
+        self.Bind(wx.EVT_TOOL, self.OnInsertAttach, id=self.ID_TOOLBAR_ATTACH)
+        self.Bind(wx.EVT_TOOL, self.OnLinkman, id=self.ID_TOOLBAR_LINKMAN)
+     
+    def make_header(self):
+        #panel = sc.SizedPanel(self, -1)
+        #panel.SetSizerType("form")
+        panel = wx.Panel(self)
+        sizer = wx.FlexGridSizer(0, 2, 0, 0)
+        
+        a = wx.StaticText(panel, -1, u'　主　题:')
+        self.subject = wx.TextCtrl(panel, -1)
+        sizer.AddMany([(a, 0, wx.ALL|wx.EXPAND, 5), (self.subject, 0, wx.ALL|wx.EXPAND, 5)])
+        a = wx.StaticText(panel, -1, u'　收件人:')
+        self.mailto = wx.TextCtrl(panel, -1)
+        sizer.AddMany([(a, 0, wx.ALL|wx.EXPAND, 5), (self.mailto, 0, wx.ALL|wx.EXPAND, 5)])
+       
+        sizer.AddGrowableCol(1)
+        panel.SetSizer(sizer) 
+        return panel
+        
     def make_status(self):
         self.statusbar = self.CreateStatusBar()
         self.statusbar.SetFieldsCount(3)
@@ -142,57 +184,62 @@ class WriterWin (wx.Frame):
             
          
         doBind( self.writertb.AddTool(wx.ID_CUT, images._rt_cut.GetBitmap(),
-                            shortHelpString="Cut"), self.ForwardEvent, self.ForwardEvent)
+                            shortHelpString=u"剪切"), self.ForwardEvent, self.ForwardEvent)
         doBind( self.writertb.AddTool(wx.ID_COPY, images._rt_copy.GetBitmap(),
-                            shortHelpString="Copy"), self.ForwardEvent, self.ForwardEvent)
+                            shortHelpString=u"复制"), self.ForwardEvent, self.ForwardEvent)
         doBind( self.writertb.AddTool(wx.ID_PASTE, images._rt_paste.GetBitmap(),
-                            shortHelpString="Paste"), self.ForwardEvent, self.ForwardEvent)
+                            shortHelpString=u"粘贴"), self.ForwardEvent, self.ForwardEvent)
         self.writertb.AddSeparator()
         doBind( self.writertb.AddTool(wx.ID_UNDO, images._rt_undo.GetBitmap(),
-                            shortHelpString="Undo"), self.ForwardEvent, self.ForwardEvent)
+                            shortHelpString=u"撤销"), self.ForwardEvent, self.ForwardEvent)
         doBind( self.writertb.AddTool(wx.ID_REDO, images._rt_redo.GetBitmap(),
-                            shortHelpString="Redo"), self.ForwardEvent, self.ForwardEvent)
+                            shortHelpString=u"恢复"), self.ForwardEvent, self.ForwardEvent)
         self.writertb.AddSeparator()
         doBind( self.writertb.AddTool(-1, images._rt_bold.GetBitmap(), isToggle=True,
-                            shortHelpString="Bold"), self.OnBold, self.OnUpdateBold)
+                            shortHelpString=u"粗体"), self.OnBold, self.OnUpdateBold)
         doBind( self.writertb.AddTool(-1, images._rt_italic.GetBitmap(), isToggle=True,
-                            shortHelpString="Italic"), self.OnItalic, self.OnUpdateItalic)
+                            shortHelpString=u"斜体"), self.OnItalic, self.OnUpdateItalic)
         doBind( self.writertb.AddTool(-1, images._rt_underline.GetBitmap(), isToggle=True,
-                            shortHelpString="Underline"), self.OnUnderline, self.OnUpdateUnderline)
+                            shortHelpString=u"下划线"), self.OnUnderline, self.OnUpdateUnderline)
         self.writertb.AddSeparator()
         doBind( self.writertb.AddTool(-1, images._rt_alignleft.GetBitmap(), isToggle=True,
-                            shortHelpString="Align Left"), self.OnAlignLeft, self.OnUpdateAlignLeft)
+                            shortHelpString=u"左对齐"), self.OnAlignLeft, self.OnUpdateAlignLeft)
         doBind( self.writertb.AddTool(-1, images._rt_centre.GetBitmap(), isToggle=True,
-                            shortHelpString="Center"), self.OnAlignCenter, self.OnUpdateAlignCenter)
+                            shortHelpString=u"居中"), self.OnAlignCenter, self.OnUpdateAlignCenter)
         doBind( self.writertb.AddTool(-1, images._rt_alignright.GetBitmap(), isToggle=True,
-                            shortHelpString="Align Right"), self.OnAlignRight, self.OnUpdateAlignRight)
+                            shortHelpString=u"右对齐"), self.OnAlignRight, self.OnUpdateAlignRight)
         self.writertb.AddSeparator()
         doBind( self.writertb.AddTool(-1, images._rt_indentless.GetBitmap(),
-                            shortHelpString="Indent Less"), self.OnIndentLess)
+                            shortHelpString=u"向左缩进"), self.OnIndentLess)
         doBind( self.writertb.AddTool(-1, images._rt_indentmore.GetBitmap(),
-                            shortHelpString="Indent More"), self.OnIndentMore)
+                            shortHelpString=u"向右缩进"), self.OnIndentMore)
         self.writertb.AddSeparator()
         doBind( self.writertb.AddTool(-1, images._rt_font.GetBitmap(),
-                            shortHelpString="Font"), self.OnFont)
+                            shortHelpString=u"字体"), self.OnFont)
         doBind( self.writertb.AddTool(-1, images._rt_colour.GetBitmap(),
-                            shortHelpString="Font Colour"), self.OnColour)
+                            shortHelpString=u"字体颜色"), self.OnColour)
 
+        doBind( self.writertb.AddTool(-1, images._rt_colour.GetBitmap(),
+                            shortHelpString=u"插入图片"), self.OnInsertImage)
         self.writertb.Realize()
         
         return tbpanel
             
             
     def make_writer(self):
-        wpanel = wx.Panel(self)
-        wpanel.SetBackgroundColour(wx.NamedColour("WHITE"))
-        self.rtc =  rt.RichTextCtrl(wpanel, style=wx.VSCROLL|wx.HSCROLL|wx.NO_BORDER)
+        #wpanel = wx.Panel(self)
+        #wpanel.SetBackgroundColour(wx.NamedColour("WHITE"))
+        #self.rtc =  rt.RichTextCtrl(wpanel, style=wx.VSCROLL|wx.HSCROLL|wx.NO_BORDER)
+        #wx.CallAfter(self.rtc.SetFocus)
+        #sizer1 = wx.BoxSizer(wx.VERTICAL)
+        #sizer1.Add(self.rtc, flag=wx.ALL|wx.EXPAND, border=1)
+        #wpanel.SetSizer(sizer1)
+        
+        #return wpanel
+        
+        self.rtc =  rt.RichTextCtrl(self, style=wx.VSCROLL|wx.HSCROLL|wx.NO_BORDER)
         wx.CallAfter(self.rtc.SetFocus)
-        
-        sizer1 = wx.BoxSizer(wx.VERTICAL)
-        sizer1.Add(self.rtc, flag=wx.ALL|wx.EXPAND, border=1)
-        wpanel.SetSizer(sizer1)
-        
-        return wpanel
+        return self.rtc
         
         
     def OnToolClick(self, evt):
@@ -210,8 +257,6 @@ class WriterWin (wx.Frame):
         
 
     def OnMailSend(self, evt):
-        pass
-    def OnMailSaveSendbox(self, evt):
         pass
     def OnMailSaveDraft(self, evt):
         pass
@@ -352,10 +397,6 @@ class WriterWin (wx.Frame):
 
 
     def OnFont(self, evt):
-        if not self.rtc.HasSelection():
-            return
-
-        r = self.rtc.GetSelectionRange()
         fontData = wx.FontData()
         fontData.EnableEffects(False)
         attr = rt.TextAttrEx()
@@ -368,9 +409,13 @@ class WriterWin (wx.Frame):
             fontData = dlg.GetFontData()
             font = fontData.GetChosenFont()
             if font:
-                attr.SetFlags(rt.TEXT_ATTR_FONT)
-                attr.SetFont(font)
-                self.rtc.SetStyle(r, attr)
+                if self.rtc.HasSelection():
+                    attr.SetFlags(rt.TEXT_ATTR_FONT)
+                    attr.SetFont(font)
+                    r = self.rtc.GetSelectionRange()
+                    self.rtc.SetStyle(r, attr)
+                else:
+                    self.rtc.SetFont(font)
         dlg.Destroy()
 
 
@@ -395,7 +440,22 @@ class WriterWin (wx.Frame):
                     self.rtc.SetStyle(r, attr)
         dlg.Destroy()
         
-
+    def OnInsertImage(self, evt):
+        dlg = wx.FileDialog(
+            self, message="选择图片",
+            defaultDir=os.getcwd(), 
+            defaultFile="",
+            wildcard=u"jpg图片 (*.jpg)|*.jpg|bmp图片 (*.bmp)|*.bmp|" \
+                     u"gif图片 (*.gif)|*.gif|png图片文件 (*.png)|*.png|" \
+                     u"jpeg图片文件 (*.jpeg)|*.jpeg|所有文件 (*.*)|*.*",
+            style=wx.OPEN | wx.MULTIPLE | wx.CHANGE_DIR
+            )
+        if dlg.ShowModal() == wx.ID_OK:
+            paths = dlg.GetPaths()
+            for path in paths:
+                pic = load_image(path)
+                self.rtc.WriteImage(pic)
+        dlg.Destroy()
 
     def OnUpdateBold(self, evt):
         evt.Check(self.rtc.IsSelectionBold())

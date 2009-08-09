@@ -30,7 +30,7 @@ class MailListPanel(wx.Panel):
         self.pngs = {self.image_attach:0, self.image_flag:0, self.image_mark:0}
         
         for k in self.pngs:
-            self.pngs[k] = self.il.Add(common.load_image(k))
+            self.pngs[k] = self.il.Add(common.load_bitmap(k))
         
         for c in cols:        
             if c == 'attach':
