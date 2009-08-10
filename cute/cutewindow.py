@@ -53,6 +53,8 @@ class MainFrame(wx.Frame):
         ks = config.cf.users.keys()
         # 第一个用户名
         # 当前选择的mailbox
+        
+        '''
         if ks:
             k1 = '/' + ks[0]
             self.last_mailbox = k1
@@ -63,8 +65,13 @@ class MainFrame(wx.Frame):
             self.listindex = self.mailboxs[k1]
 
                 
-        self.last_mailbox = u'/'
-        self.listindex = self.mailboxs[u'/']
+        #self.last_mailbox = u'/'
+        #self.listindex = self.mailboxs[u'/']
+        '''
+        if ks:
+            self.last_mailbox = '/'+ks[0]
+        else:
+            self.last_mailbox = '/'
         
         # 内容显示控件
         self.listcnt = viewhtml.ViewHtml(self)
@@ -76,7 +83,6 @@ class MainFrame(wx.Frame):
         # 为面板管理器增加用户邮箱树形结构
         self.mgr.AddPane(self.tree, wx.aui.AuiPaneInfo().Name("tree").Caption(u"用户").
                           Left().Layer(1).Position(1).CloseButton(True).MaximizeButton(True))
-         
             
         # 把邮件内容面板添加到面板管理器
         self.mgr.AddPane(self.listcnt, wx.aui.AuiPaneInfo().Name("listcnt").Caption(u"邮件内容").
@@ -114,7 +120,7 @@ class MainFrame(wx.Frame):
         k = u'/'
         obj = viewhtml.ViewHtml(self)
         obj.set_url('http://www.pythonid.com')
-        self.add_mailbox_panel(k)
+        self.add_mailbox_panel(k, obj)
         
     def load_db_data(self):
         users = config.cf.users
@@ -281,7 +287,7 @@ class MainFrame(wx.Frame):
         self.toolbar.AddSeparator()
         self.toolbar.AddLabelTool(self.ID_TOOLBAR_CHAT, u'聊天', common.load_bitmap('bitmaps/32/chat.png'), shortHelp=u"聊天", longHelp=u"聊天")
         self.toolbar.AddSeparator()
-        self.toolbar.AddLabelTool(self.ID_TOOLBAR_WWW, u'主页', common.load_bitmap('bitmaps/32/www.png'), shortHelp=u"主页", longHelp=u"主页")
+        self.toolbar.AddLabelTool(self.ID_TOOLBAR_WWW, u'主页', common.load_bitmap('bitmaps/32/home.png'), shortHelp=u"主页", longHelp=u"主页")
         self.toolbar.Realize ()
         self.SetToolBar(self.toolbar)
         
@@ -366,7 +372,7 @@ class MainFrame(wx.Frame):
         self.viewmenu.Append(self.ID_VIEW_MAIL, u"邮件内容", 'contents.png')        
         self.viewmenu.Append(self.ID_VIEW_ATTACH, u"附件内容", 'attach.png')        
         self.viewmenu.Append(self.ID_VIEW_SMTP, u"调试信息", 'blender.png')
-        self.viewmenu.Append(self.ID_VIEW_SOURCE, u"信件原文")
+        self.viewmenu.Append(self.ID_VIEW_SOURCE, u"信件原文", 'note.png')
         self.viewmenu.Append(self.ID_VIEW_SEARCH, u"查找邮件", 'mail_find.png')
         self.viewmenu.AppendSeparator()
         self.viewmenu.AppendMenu(self.ID_VIEW_ENCODE, u"编码", encodingmenu)
@@ -547,6 +553,7 @@ class MainFrame(wx.Frame):
         self.tree = treelist.MailboxTree(self)
         
     def display_mailbox(self, name):
+        print 'display name:', name
         try:
             newobj = self.mailboxs[name]
         except Exception, e:
@@ -758,7 +765,7 @@ class MainFrame(wx.Frame):
         s = self.last_mailbox.split('/')
         maildata = {'subject':'', 'from':s[1], 'to':'', 'text':''}
 
-        frame = writer.WriterFrame(self, self.rundir)
+        frame = writer.WriterFrame(self, self.rundir, maildata)
         frame.Show(True)
         frame.SetTopWindow(frame)
 
