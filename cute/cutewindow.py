@@ -9,6 +9,7 @@ from   picmenu import PicMenu
 from   listindex import *
 import treelist, viewhtml
 import config, common, dbope, useradd
+import viewer, writer
 import cPickle as pickle
 import pop3
 
@@ -612,7 +613,8 @@ class MainFrame(wx.Frame):
                 print 'uiq return error:', item
         
     def OnFileOpen(self, event):
-       pass
+        pass 
+
     def OnFileSaveAs(self, event):
         pass
     def OnFileGetMail(self, event):
@@ -753,15 +755,45 @@ class MainFrame(wx.Frame):
         pass
         
     def OnMailWrite(self, event):
-        pass
+        s = self.last_mailbox.split('/')
+        maildata = {'subject':'', 'from':s[1], 'to':'', 'text':''}
+
+        frame = writer.WriterFrame(self, self.rundir)
+        frame.Show(True)
+        frame.SetTopWindow(frame)
+
     def OnMailReply(self, event):
-        pass
+        s = self.last_mailbox.split('/')
+        maildata = {'subject':'', 'from':s[1], 'to':'', 'text':''}
+ 
+        frame = writer.WriterFrame(self, self.rundir, maildata)
+        frame.Show(True)
+        frame.SetTopWindow(frame)
+
     def OnMailReplyAll(self, event):
-        pass
+        s = self.last_mailbox.split('/')
+        maildata = {'subject':'', 'from':s[1], 'to':'', 'text':''}
+ 
+        frame = writer.WriterFrame(self, self.rundir, maildata)
+        frame.Show(True)
+        frame.SetTopWindow(frame)
+
     def OnMailForward(self, event):
-        pass
+        s = self.last_mailbox.split('/')
+        maildata = {'subject':'', 'from':s[1], 'to':'', 'text':''}
+ 
+        frame = writer.WriterFrame(self, self.rundir, maildata)
+        frame.Show(True)
+        frame.SetTopWindow(frame)
+
     def OnMailSendSec(self, event):
-        pass
+        s = self.last_mailbox.split('/')
+        maildata = {'subject':'', 'from':s[1], 'to':'', 'text':''}
+ 
+        frame = writer.WriterFrame(self, self.rundir, maildata)
+        frame.Show(True)
+        frame.SetTopWindow(frame)
+
     def OnMailAttach(self, event):
         pass
     def OnMailAddWhite(self, event):

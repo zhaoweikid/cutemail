@@ -5,7 +5,7 @@ import wx
 rundir = os.path.dirname(os.path.dirname(os.path.abspath(sys.argv[0]))).replace("\\", "/")
 sys.path.insert(0, os.path.join(rundir, 'base'))
 
-import viewhtml
+import viewhtml, mailparse
 from common import load_bitmap, load_image
 from picmenu import PicMenu
 
@@ -78,19 +78,29 @@ class MailViewFrame(wx.Frame):
         if maildata[0] == 'text':
             text = maildata
         elif maildata[0] == 'file':
-            f = open(maildata, 'r')
-            text = f.read()
-            f.close()
+            text = ''
+            ret = mailparse.decode_mail(maildata[1])
+            if ret:
+                if ret['html']:
+                    text = ret['html']
+                else:
+                    text = ret['plain']
         else:
             text = 'no text'
         #panel = wx.Panel(self)
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        self.viewer = viewhtml.ViewHtml(self)
-        sizer.Add(self.viewer, flag=wx.ALL|wx.EXPAND, border=0, proportion=1)
+        #sizer = wx.BoxSizer(wx.VERTICAL)
+        #self.viewer = viewhtml.ViewHtml(self)
+        #sizer.Add(self.viewer, flag=wx.ALL|wx.EXPAND, border=0, proportion=1)
         
-        self.viewer.set_text(text)
+        #self.viewer.set_text('aaaaaa')
         
-        self.SetSizer(sizer)
+        #self.SetSizer(sizer)
+        #
+        
+        import wx.lib.iewin as iewin
+            
+        self.html = iewin.IEHtmlWindow(self)
+        self.html.LoadString('11111111')
         
         
     def OnFileExit(self, evt):
@@ -112,7 +122,7 @@ class TestApp(wx.App):
     def OnInit(self):
         rundir = os.path.dirname(os.path.dirname(os.path.abspath(sys.argv[0]))).replace("\\", "/")
         mailfile = sys.argv[1]
-        frame = MailViewFrame(None, rundir, mailfile)    
+        frame = MailViewFrame(None, rundir, ['file', mailfile])    
         frame.Show(True)
         self.SetTopWindow(frame)
         
