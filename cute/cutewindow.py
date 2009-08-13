@@ -763,6 +763,8 @@ class MainFrame(wx.Frame):
         
     def OnMailWrite(self, event):
         s = self.last_mailbox.split('/')
+        print 'user name:', s[1]
+        mailaddr = config.cf.users[s[1]]['email']
         maildata = {'subject':'', 'from':s[1], 'to':'', 'text':''}
 
         frame = writer.WriterFrame(self, self.rundir, maildata)
@@ -770,7 +772,8 @@ class MainFrame(wx.Frame):
 
     def OnMailReply(self, event):
         s = self.last_mailbox.split('/')
-        maildata = {'subject':'', 'from':s[1], 'to':'', 'text':''}
+        mailaddr = config.cf.users[s[1]]['email']
+        maildata = {'subject':'', 'from':mailaddr, 'to':'', 'text':''}
  
         frame = writer.WriterFrame(self, self.rundir, maildata)
         frame.Show(True)
