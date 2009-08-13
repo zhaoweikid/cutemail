@@ -237,7 +237,7 @@ class WriterFrame (wx.Frame):
 
     def OnInsertAttach(self, evt):
         dlg = wx.FileDialog(
-            self, message="选择附件",
+            self, message=u"选择附件",
             defaultDir=os.getcwd(), 
             defaultFile="",
             wildcard=u"所有文件 (*.*)|*.*",
@@ -421,7 +421,7 @@ class WriterFrame (wx.Frame):
         
     def OnInsertImage(self, evt):
         dlg = wx.FileDialog(
-            self, message="选择图片",
+            self, message=u"选择图片",
             defaultDir=os.getcwd(), 
             defaultFile="",
             wildcard=u"jpg图片 (*.jpg)|*.jpg|bmp图片 (*.bmp)|*.bmp|" \

@@ -767,7 +767,6 @@ class MainFrame(wx.Frame):
 
         frame = writer.WriterFrame(self, self.rundir, maildata)
         frame.Show(True)
-        frame.SetTopWindow(frame)
 
     def OnMailReply(self, event):
         s = self.last_mailbox.split('/')
@@ -775,7 +774,6 @@ class MainFrame(wx.Frame):
  
         frame = writer.WriterFrame(self, self.rundir, maildata)
         frame.Show(True)
-        frame.SetTopWindow(frame)
 
     def OnMailReplyAll(self, event):
         s = self.last_mailbox.split('/')
@@ -783,7 +781,6 @@ class MainFrame(wx.Frame):
  
         frame = writer.WriterFrame(self, self.rundir, maildata)
         frame.Show(True)
-        frame.SetTopWindow(frame)
 
     def OnMailForward(self, event):
         s = self.last_mailbox.split('/')
@@ -791,7 +788,6 @@ class MainFrame(wx.Frame):
  
         frame = writer.WriterFrame(self, self.rundir, maildata)
         frame.Show(True)
-        frame.SetTopWindow(frame)
 
     def OnMailSendSec(self, event):
         s = self.last_mailbox.split('/')
@@ -799,7 +795,6 @@ class MainFrame(wx.Frame):
  
         frame = writer.WriterFrame(self, self.rundir, maildata)
         frame.Show(True)
-        frame.SetTopWindow(frame)
 
     def OnMailAttach(self, event):
         pass

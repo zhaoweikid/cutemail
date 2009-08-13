@@ -1,6 +1,7 @@
 # coding: utf-8
 import os, sys
 import wx
+import wx.lib.iewin as iewin
 
 rundir = os.path.dirname(os.path.dirname(os.path.abspath(sys.argv[0]))).replace("\\", "/")
 sys.path.insert(0, os.path.join(rundir, 'base'))
@@ -93,11 +94,7 @@ class MailViewFrame(wx.Frame):
         #sizer.Add(self.viewer, flag=wx.ALL|wx.EXPAND, border=0, proportion=1)
         
         #self.viewer.set_text('aaaaaa')
-        
         #self.SetSizer(sizer)
-        #
-        
-        import wx.lib.iewin as iewin
             
         self.html = iewin.IEHtmlWindow(self)
         self.html.LoadString('11111111')
