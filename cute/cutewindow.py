@@ -42,7 +42,7 @@ class MainFrame(wx.Frame):
         self.make_statusbar()
         
         # 创建用户信箱树形结构
-        self.make_tree()        
+        self.tree = treelist.MailboxTree(self)
         
         # 创建显示邮件控件, 为每个用户的每个邮箱路径都创建一个
         self.init_data()
@@ -54,20 +54,6 @@ class MainFrame(wx.Frame):
         # 第一个用户名
         # 当前选择的mailbox
         
-        '''
-        if ks:
-            k1 = '/' + ks[0]
-            self.last_mailbox = k1
-            self.listindex = self.mailboxs[k1]
-        else:
-            k1 = '/'
-            self.last_mailbox = k1
-            self.listindex = self.mailboxs[k1]
-
-                
-        #self.last_mailbox = u'/'
-        #self.listindex = self.mailboxs[u'/']
-        '''
         if ks:
             self.last_mailbox = '/'+ks[0]
         else:
@@ -78,7 +64,7 @@ class MainFrame(wx.Frame):
         self.listcnt.Hide()
         
         # 附件显示控件
-        self.attachctl = viewhtml.AttachListCtrl(self)
+        self.attachctl = viewhtml.AttachListCtrl(self, self.rundir)
         self.attachctl.Hide()
         # 为面板管理器增加用户邮箱树形结构
         self.mgr.AddPane(self.tree, wx.aui.AuiPaneInfo().Name("tree").Caption(u"用户").
@@ -109,6 +95,7 @@ class MainFrame(wx.Frame):
         obj.Hide()
         self.mailboxs[k] = obj
         self.mgr.AddPane(obj, wx.aui.AuiPaneInfo().Name(k).CenterPane().Hide())
+        return obj
         
         
     def init_data(self):
@@ -122,6 +109,27 @@ class MainFrame(wx.Frame):
         obj.set_url('http://www.pythonid.com')
         self.add_mailbox_panel(k, obj)
         
+    def load_db_one(self, user, mid):
+        dbpath = os.path.join(config.cf.datadir, user, 'mailinfo.db')
+        print 'load db from path:', dbpath
+        conn = dbope.DBOpe(dbpath)
+        ret = conn.query("select id,filename,subject,mailfrom,mailto,size,ctime,date,attach,mailbox,status from mailinfo where id=" + str(mid))
+        conn.close()
+        for row in ret:
+            att = 0
+            if row['attach']:
+                att = 1
+                
+            boxname = '/%s/' % (user) + config.cf.mailbox_map_en2cn[row['mailbox']]
+            row['user'] = user
+            row['box'] = boxname
+            row['filepath'] = os.path.join(config.cf.datadir, user, row['mailbox'], row['filename'].lstrip(os.sep))
+            item = [row['mailfrom'], att, 0, row['subject'], row['date'], str(row['size']/1024 + 1)+' K',
+                    wx.TreeItemData(row)]
+                #print item
+            panel = self.mailboxs[boxname]
+            panel.add_mail(item)
+            
     def load_db_data(self):
         users = config.cf.users
         for u in users:
@@ -135,13 +143,16 @@ class MainFrame(wx.Frame):
                 att = 0
                 if row['attach']:
                     att = 1
-                item = [row['mailfrom'], att, 0, row['subject'], row['date'], str(row['size']/1024 + 1)+' K',
-                        wx.TreeItemData({'id':str(row['id']), 'user':u,'box':'/%s/' % (u) + u'收件箱',
-                                         'filename': row['filename'], 'mailbox': row['mailbox']})]
-                #print item
+                    
                 boxname = '/%s/' % (u) + config.cf.mailbox_map_en2cn[row['mailbox']]
-                box = self.mailboxs[boxname]
-                box.add_mail(item)
+                row['user'] = u
+                row['box'] = boxname
+                row['filepath'] = os.path.join(config.cf.datadir, u, row['mailbox'], row['filename'].lstrip(os.sep))
+                item = [row['mailfrom'], att, 0, row['subject'], row['date'], str(row['size']/1024 + 1)+' K',
+                        wx.TreeItemData(row)]
+                #print item
+                panel = self.mailboxs[boxname]
+                panel.add_mail(item)
 
     def init_const(self):
         self.ID_FILE_OPEN          = wx.NewId()
@@ -201,7 +212,6 @@ class MainFrame(wx.Frame):
         self.ID_MAILBOX_DEL         = wx.NewId()
         self.ID_MAILBOX_CLEAR_TRASH = wx.NewId()
         self.ID_MAILBOX_CLEAR_SPAM  = wx.NewId()
-        self.ID_MAILBOX_CLEAR_VIRUS = wx.NewId()
         
         self.ID_HELP          = wx.NewId()
         self.ID_HELP_FEEDBACK = wx.NewId()
@@ -449,7 +459,6 @@ class MainFrame(wx.Frame):
         self.mailboxmenu.AppendSeparator()
         self.mailboxmenu.Append(self.ID_MAILBOX_CLEAR_TRASH, u"清空删除邮件")
         self.mailboxmenu.Append(self.ID_MAILBOX_CLEAR_SPAM, u"清空垃圾邮件")   
-        self.mailboxmenu.Append(self.ID_MAILBOX_CLEAR_VIRUS, u"清空病毒邮件")
         
         self.helpmenu = PicMenu(self)
         self.helpmenu.Append(self.ID_HELP, u"帮助主题", 'help.png')      
@@ -536,7 +545,6 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnMailboxDel, id=self.ID_MAILBOX_DEL)
         self.Bind(wx.EVT_MENU, self.OnMailboxClearTrash, id=self.ID_MAILBOX_CLEAR_TRASH)
         self.Bind(wx.EVT_MENU, self.OnMailboxClearSpam, id=self.ID_MAILBOX_CLEAR_SPAM)
-        self.Bind(wx.EVT_MENU, self.OnMailboxClearVirus, id=self.ID_MAILBOX_CLEAR_VIRUS)
 
 
         self.Bind(wx.EVT_MENU, self.OnHelp, id=self.ID_HELP)
@@ -548,9 +556,6 @@ class MainFrame(wx.Frame):
         self.statusbar = self.CreateStatusBar()
         self.statusbar.SetFieldsCount(3)
         self.SetStatusWidths([-1, -2, -2])
-        
-    def make_tree(self):  
-        self.tree = treelist.MailboxTree(self)
         
     def display_mailbox(self, name):
         print 'display name:', name
@@ -581,7 +586,7 @@ class MainFrame(wx.Frame):
 
     def OnSize(self, event):
         self.Refresh()
-        
+            
     def OnTimer(self, event):
         '''
         定时任务
@@ -608,9 +613,11 @@ class MainFrame(wx.Frame):
                         att = 0 
                         if info['attach']:
                             att = 1
+                        info['user'] = name
+                        info['box'] = '/%s/%s' % (name, info['mailbox'])
+                        info['filepath'] = os.path.join(config.cf.datadir, name, info['mailbox'], info['filename'].lstrip(os.sep))
                         item = [info['mailfrom'], att,1, info['subject'], info['date'], str(info['size']/1024 + 1)+' K',
-                                wx.TreeItemData({'id':str(info['id']), 'user':name, 'box':'/%s/' % (name) + u'收件箱',
-                                                 'filename':info['filename'], 'mailbox':info['mailbox']})]
+                                wx.TreeItemData(info)]
                         #print item
                         boxpanel.add_mail(item)
                         #mlist.add_item(item, mlist.today)
@@ -625,6 +632,8 @@ class MainFrame(wx.Frame):
     def OnFileSaveAs(self, event):
         pass
     def OnFileGetMail(self, event):
+        if self.last_mailbox == '/':
+            return
         name = self.last_mailbox.split('/')
         print 'last_mailbox:', name
         x = {'name':name[1], 'task':'recvmail'}
@@ -746,7 +755,7 @@ class MainFrame(wx.Frame):
                 wx.MessageBox(u"用户添加失败!"+str(e), u"欢迎使用CuteMail")
             else:
                 #wx.MessageBox(u"用户添加成功!", u"欢迎使用CuteMail")
-                self.tree.append(conf['mailbox'])
+                self.tree.append(conf['mailbox'], me)
                 self.tree.Refresh()
                 
         
@@ -762,39 +771,98 @@ class MainFrame(wx.Frame):
         pass
         
     def OnMailWrite(self, event):
+        if self.last_mailbox == '/':
+            return
         s = self.last_mailbox.split('/')
         print 'user name:', s[1]
         mailaddr = config.cf.users[s[1]]['email']
-        maildata = {'subject':'', 'from':s[1], 'to':'', 'text':''}
+        maildata = {'subject':'', 'from':mailaddr, 'to':'', 'text':''}
 
         frame = writer.WriterFrame(self, self.rundir, maildata)
         frame.Show(True)
 
     def OnMailReply(self, event):
+        if self.last_mailbox == '/':
+            return
+        panel = self.mailboxs[self.last_mailbox]
+        if not panel:
+            return
+        
+        try:
+            info = panel.get_item_content()
+        except Exception, e:
+            print 'get_item_content error:', str(e)
+        
         s = self.last_mailbox.split('/')
         mailaddr = config.cf.users[s[1]]['email']
-        maildata = {'subject':'', 'from':mailaddr, 'to':'', 'text':''}
- 
+        text = info['plain']
+        text = text.replace('\r\n', '\n')
+        parts = text.split('\n')
+        for i in xrange(0, len(parts)):
+            parts[i] = ">>" + parts[i]
+        text = '\r\n'.join(parts)
+        maildata = {'subject':'Re: '+info['subject'][:32], 'from':mailaddr, 'to':info['mailfrom'],
+                    'text': text}
+        #print 'reply:', maildata 
         frame = writer.WriterFrame(self, self.rundir, maildata)
         frame.Show(True)
 
     def OnMailReplyAll(self, event):
+        if self.last_mailbox == '/':
+            return
+        
+        panel = self.mailboxs[self.last_mailbox]
+        if not panel:
+            return
+        
+        try:
+            info = panel.get_item_content()
+        except Exception, e:
+            print 'get_item_content error:', str(e)
+           
+         
         s = self.last_mailbox.split('/')
-        maildata = {'subject':'', 'from':s[1], 'to':'', 'text':''}
+        mailaddr = config.cf.users[s[1]]['email']
+        maildata = {'subject':'Re:'+info['subject'][:32], 'from':mailaddr, 'to':'', 'text':info['plain']}
  
         frame = writer.WriterFrame(self, self.rundir, maildata)
         frame.Show(True)
 
     def OnMailForward(self, event):
+        if self.last_mailbox == '/':
+            return
+        
+        panel = self.mailboxs[self.last_mailbox]
+        if not panel:
+            return
+        
+        try:
+            info = panel.get_item_content()
+        except Exception, e:
+            print 'get_item_content error:', str(e)
+        
         s = self.last_mailbox.split('/')
-        maildata = {'subject':'', 'from':s[1], 'to':'', 'text':''}
- 
+        mailaddr = config.cf.users[s[1]]['email']
+        maildata = {'subject':'Fw:'+info['subject'][:32], 'from':mailaddr, 'to':'', 'text':info['plain']}
         frame = writer.WriterFrame(self, self.rundir, maildata)
         frame.Show(True)
 
     def OnMailSendSec(self, event):
+        if self.last_mailbox == '/':
+            return
+        
+        
+        panel = self.mailboxs[self.last_mailbox]
+        if not panel:
+            return
+        
+        try:
+            info = panel.get_item_content()
+        except Exception, e:
+            print 'get_item_content error:', str(e)
         s = self.last_mailbox.split('/')
-        maildata = {'subject':'', 'from':s[1], 'to':'', 'text':''}
+        mailaddr = config.cf.users[s[1]]['email']
+        maildata = {'subject':info['subject'], 'from':mailaddr, 'to':info['mailto'], 'text':info['plain']}
  
         frame = writer.WriterFrame(self, self.rundir, maildata)
         frame.Show(True)
@@ -812,7 +880,33 @@ class MainFrame(wx.Frame):
     def OnMailMoveTo(self, event):
         pass
     def OnMailDel(self, event):
-        pass
+        print 'delete mail'
+        if self.last_mailbox == '/':
+            return
+        
+        panel = self.mailboxs[self.last_mailbox]
+        if not panel:
+            return
+        
+        try:
+            info = panel.get_item_content()
+        except Exception, e:
+            print 'get_item_content error:', str(e)
+            
+        id = info['id']
+        sql = "update mailinfo set mailbox='trash' where id=" + str(id)
+        print 'delete:', sql
+        
+        s = self.last_mailbox.split('/')
+        username = s[1]
+        db = dbope.openuser(config.cf, username)
+        db.execute(sql)
+        db.close()
+        
+        panel.remove_item()
+        
+        self.load_db_one(username, id)
+
     def OnMailFlag(self, event):
         pass
     def OnMailSearch(self, event):
@@ -822,16 +916,17 @@ class MainFrame(wx.Frame):
         
         
     def OnMailboxNew(self, event):
-        pass
+        self.tree.last_item_add_child()
+        
     def OnMailboxRename(self, event):
-        pass
+        self.tree.last_item_rename() 
+        
     def OnMailboxDel(self, event):
-        pass
+        self.tree.last_item_remove()
+       
     def OnMailboxClearTrash(self, event):
         pass
     def OnMailboxClearSpam(self, event):
-        pass
-    def OnMailboxClearVirus(self, event):
         pass
         
     def OnHelp(self, event):

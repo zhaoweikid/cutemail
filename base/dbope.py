@@ -44,4 +44,9 @@ class DBOpe:
         cur.close()
         return ret
 
-
+def openuser(cf, username):
+    dbpath = os.path.join(cf.datadir, username, 'mailinfo.db')
+    
+    return DBOpe(dbpath) 
+    
+    

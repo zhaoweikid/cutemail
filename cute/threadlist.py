@@ -146,22 +146,22 @@ class Task(threading.Thread):
             
             filename = minfo['filename'].replace("'", "''")
             subject = minfo['subject'].replace("'", "''")
-            plain = minfo['plain'].replace("'", "''")
-            html  = minfo['html'].replace("'", "''")
+            #plain = minfo['plain'].replace("'", "''")
+            #html  = minfo['html'].replace("'", "''")
             attach = attachstr.replace("'", "''")
             
-            sql = "insert into mailinfo(filename,subject,mailfrom,mailto,size,ctime,date,plain,html,attach,mailbox) values " \
-                  "('%s','%s','%s','%s',%d,%s,'%s','%s','%s','%s','%s')" % \
+            sql = "insert into mailinfo(filename,subject,mailfrom,mailto,size,ctime,date,attach,mailbox) values " \
+                  "('%s','%s','%s','%s',%d,%s,'%s','%s','%s')" % \
                   (filename, subject, minfo['from'], minfo['to'], minfo['size'],
-                   minfo['ctime'], minfo['date'], plain, html, attach, minfo['mailbox'])
+                   minfo['ctime'], minfo['date'], attach, minfo['mailbox'])
             
-            #print sql.encode('gbk', 'ignore')
             try:
                 conn.execute(sql)
             except:
                 traceback.print_exc()
         conn.close()
         print config.cf.users[name]
+        # 有可能有冲突
         config.cf.dump_conf(name)
         print 'recvmali complete!'
         x = {'name':name, 'task':'updatebox', 'message':''}

@@ -6,10 +6,11 @@ import wx.lib.sized_controls as sc
 from picmenu import PicMenu
 from common import load_bitmap, load_image
 import images
+import viewhtml
 
 class WriterFrame (wx.Frame):
     def __init__(self, parent, rundir, maildata):
-        wx.Frame.__init__(self, parent, title=u'写邮件', size=(800,600))
+        wx.Frame.__init__(self, parent, title=u'写邮件 ' + maildata['from'], size=(800,600))
         
         self.maildata = maildata
         self.rundir = rundir 
@@ -28,8 +29,23 @@ class WriterFrame (wx.Frame):
             sizer.Add(x, flag=wx.ALL|wx.EXPAND, border=0)
         x = self.make_writer_toolbar()
         sizer.Add(x, flag=wx.ALL|wx.EXPAND, border=0)
+        
+        #self.splitter = wx.SplitterWindow(self, -1, style = wx.SP_LIVE_UPDATE)
+        #sizer.Add(self.splitter, flag=wx.ALL|wx.EXPAND, border=0)
+        
         x = self.make_writer(maildata)
         sizer.Add(x, flag=wx.ALL|wx.EXPAND, border=0, proportion=1)
+        
+        x = self.make_attach(maildata)
+        sizer.Add(x, flag=wx.ALL|wx.EXPAND, border=0, proportion=1)
+        
+        
+        #spsizer = wx.BoxSizer(wx.VERTICAL)
+        #spsizer.Add(self.rtc, flag=wx.ALL|wx.EXPAND, border=0, proportion=1)
+        #spsizer.Add(self.attach, flag=wx.ALL|wx.EXPAND, border=0, proportion=1)
+        #self.splitter.SetSizer(spsizer)
+        #self.splitter.SetMinimumPaneSize(20)
+        #self.splitter.SplitHorizontally(self.rtc, self.attach, -200)
         
         self.SetSizer(sizer)
         self.SetAutoLayout(True)
@@ -121,6 +137,7 @@ class WriterFrame (wx.Frame):
         
         a = wx.StaticText(panel, -1, u'　主　题:')
         self.subject = wx.TextCtrl(panel, -1, maildata['subject'])
+        wx.CallAfter(self.subject.SetInsertionPoint, 0)
         sizer.AddMany([(a, 0, wx.ALL|wx.EXPAND, 5), (self.subject, 0, wx.ALL|wx.EXPAND, 5)])
         a = wx.StaticText(panel, -1, u'　收件人:')
         self.mailto = wx.TextCtrl(panel, -1, maildata['to'])
@@ -207,9 +224,16 @@ class WriterFrame (wx.Frame):
         #return wpanel
         
         self.rtc =  rt.RichTextCtrl(self, style=wx.VSCROLL|wx.HSCROLL|wx.NO_BORDER)
+        self.rtc.Newline()
         self.rtc.WriteText(maildata['text'])
+        self.rtc.MoveHome()
         wx.CallAfter(self.rtc.SetFocus)
         return self.rtc
+    
+    def make_attach(self, maildata):
+        self.attach = viewhtml.AttachListCtrl(self, self.rundir, wx.Size(-1,100))
+        return self.attach
+       
        
     def create_mail(self, path):
         pass

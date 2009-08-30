@@ -6,7 +6,6 @@ import cPickle as pickle
 import dbope
 VERSION = " CuteMail 1.0"
 
-
 # 全局配置信息
 cf = None
 # ui程序发送的任务队列
@@ -26,14 +25,16 @@ class AppConfig:
         # 以邮件地址为索引的用户配置信息
         self.mailboxs = {}
         
-        self.mailbox_map_cn2en = {u'收件箱':'recv', u'发件箱':'send', u'草稿箱':'draft',
-                            u'已发送邮件':'sendover', u'垃圾邮件':'spam',
-                            u'病毒邮件':'virus', u'删除邮件':'trash'}
-        self.mailbox_map_en2cn = {}
+        self.mailbox_cn_names = [u'收件箱', u'发件箱', u'草稿箱', u'已发送邮件', u'垃圾邮件', u'删除邮件']
+        self.mailbox_en_names = ['recv', 'send', 'draft', 'sendover', 'spam', 'trash']
         
-        for k in self.mailbox_map_cn2en:
-            v = self.mailbox_map_cn2en[k]
-            self.mailbox_map_en2cn[v] = k
+        self.mailbox_map_cn2en = {}
+        for i in range(0, len(self.mailbox_cn_names)):
+            self.mailbox_map_cn2en[self.mailbox_cn_names[i]] = self.mailbox_en_names[i]
+            
+        self.mailbox_map_en2cn = {}
+        for i in range(0, len(self.mailbox_cn_names)):
+            self.mailbox_map_en2cn[self.mailbox_en_names[i]] = self.mailbox_cn_names[i]
         
         self.datadir = os.path.join(self.home, 'data')
         if not os.path.isdir(self.datadir):
@@ -49,8 +50,8 @@ class AppConfig:
         self.mailinfo_sql = '''create table if not exists mailinfo (
         id integer primary key autoincrement,
         filename varchar(255) not null,
-        plain text,
-        html text,
+        -- plain text,
+        -- html text,
         -- header text,
         subject varchar(255),
         mailfrom varchar(128) not null,
@@ -97,7 +98,10 @@ class AppConfig:
         conf.update(incf)
         if not conf['mailbox']:
             print 'add default mailbox'
-            conf['mailbox'] = [unicode(incf['name']), u'收件箱',u'发件箱', u'草稿箱', u'已发送邮件', u'垃圾邮件', u'病毒邮件', u'删除邮件']
+            boxs = []
+            for x in self.mailbox_cn_names:
+                boxs.append([x, []])
+            conf['mailbox'] = [unicode(incf['name']), boxs]
             
         userpath = self.datadir + os.sep + name
         if not os.path.isdir(userpath):
@@ -146,6 +150,7 @@ class AppConfig:
             #userconf = {'config': conf, 'mailinfo':mailinfo}
             self.users[conf['name']] = conf
             self.mailboxs[conf['email']] = conf
+            print conf['mailbox']
     
     def load_conf(self, name):
         conf_path = os.path.join(self.datadir, name, 'config.db')
@@ -166,19 +171,11 @@ class AppConfig:
     def dump_user(self, name):
         conf = self.users[name]
         self.dump_conf(conf)
-        #conf['mailinfo'].sync()
         
     def dump_all(self):
         for u in self.users:
             self.dump_user(u)
           
-    #def mail_add(self, name, info):
-        #usercf = self.users[name]
-        #mailinfo = user['mailinfo']
-        #mailinfo.insert(info)
-        #mailinfo.sync() 
-    
-        
 def load():
     global cf
     app = AppConfig()

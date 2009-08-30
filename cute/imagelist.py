@@ -1,14 +1,18 @@
 # coding: utf-8
 import os, sys
+import threading
 import wx
 from common import load_bitmap, load_image
+import mailparse
 
 #class ImageList (wx.Frame):
 class ImageList (wx.Panel):
-    def __init__(self, parent, rundir):
+    def __init__(self, parent, rundir, size=wx.Size(-1,-1)):
         wx.Panel.__init__(self, parent, -1)
         #wx.Frame.__init__(self, None, -1, size=(800, 600))
+        self.SetBackgroundColour(wx.Colour(255,0,0))
         self.list = wx.ListCtrl(self, -1, style=wx.LC_ICON|wx.LC_AUTOARRANGE)
+        self.data = []
         
         self.extensions = [".gif", '.png', '.jpg', '.jpeg', '.bmp', '.exe', '.zip', '.rar', '.doc', 
                         '.xls', '.ppt', '.txt', '.pdf', '.eml', '.chm', '.mdb', '.dll', '.ini', '.bat', 
@@ -33,10 +37,19 @@ class ImageList (wx.Panel):
 
         #for x in range(0, ilmax+1):
         #    self.list.InsertImageStringItem(x, '%d'% (x), x)
+        
+        sizer = wx.BoxSizer()
+        sizer.Add(self.list, flag=wx.ALL|wx.EXPAND, border=0, proportion=1)
+        
+        self.SetSizer(sizer)
+        
+        
+        self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnItemActivated, self.list)
 
-    def add_file(self, filename):
+    def add_file(self, filename, data=None):
         s = os.path.splitext(filename)
         extname = s[1]
+        #print 'extname:', extname
         if not self.extmap.has_key(extname):
             x = self.load_win_icon(extname)  
             if x:
@@ -46,9 +59,15 @@ class ImageList (wx.Panel):
                 extname = '.exe'
 
         i = self.extmap[extname]
-        self.list.InsertImageStringItem(i, filename, i)
+        itemidx = self.list.InsertImageStringItem(i, filename, i)
+        if data:
+            idx = len(self.data)
+            self.data.append(data)
+            self.list.SetItemData(itemidx, idx)
 
-        
+    def clear(self):
+        self.data = []
+        self.list.ClearAll()
 
     def load_win_shell32_icon(self, idx):
         tmpicon = wx.Icon("c:\windows\system32\shell32.dll;%s" %(idx), wx.BITMAP_TYPE_ICO)
@@ -93,7 +112,31 @@ class ImageList (wx.Panel):
         bmp = wx.BitmapFromIcon(tmpicon)
         
         return bmp
-
+    
+    def OnItemActivated(self, event):
+        print 'actived'
+        itemidx = event.m_itemIndex
+        dataidx = self.list.GetItemData(itemidx)
+        
+        data = self.data[dataidx]
+        tmpdir = os.path.join(data['home'], 'tmp')
+        print 'file:', data['file']
+        tmpdir = os.path.join(data['home'], 'tmp')
+        mailparse.decode_attach(data['file'], data['attach'], tmpdir)
+        
+        attachfile = os.path.join(tmpdir, data['attach'])
+        if os.path.isfile(attachfile):
+            #wx.Execute(attachfile)
+            print 'execute:', attachfile
+            self.Execute(attachfile)
+        
+    def Execute(self, cmd):
+        def myexecute(cmd):
+            cmd = '"' + cmd.encode('gbk') + '"'
+            print 'myexecute:', cmd
+            os.system(cmd)
+        th = threading.Thread(target=myexecute, args=(cmd, ))
+        th.start() 
 
 class TestFrame(wx.Frame):
     def __init__(self):

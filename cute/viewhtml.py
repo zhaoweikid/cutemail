@@ -2,38 +2,12 @@ import string, sys, os
 import wx
 import wx.html
 import  wx.lib.mixins.listctrl  as  listmix
-import mailparse
+import mailparse, imagelist
 
-class AttachListCtrl (wx.ListCtrl, listmix.ListCtrlAutoWidthMixin):
-    def __init__(self, parent):
-        wx.ListCtrl.__init__(self, parent, -1)
-        listmix.ListCtrlAutoWidthMixin.__init__(self)
+class AttachListCtrl (imagelist.ImageList):
+    def __init__(self, parent, rundir, size=wx.Size(-1,-1)):
+        imagelist.ImageList.__init__(self, parent, rundir)
         
-        self.imagelist = wx.ImageList(32, 32, True)
-        self.image_default = self.imagelist.Add(wx.Bitmap("bitmaps/32/www.png", wx.BITMAP_TYPE_PNG))
-        self.AssignImageList(self.imagelist, wx.IMAGE_LIST_NORMAL)
-        
-        self.Bind(wx.EVT_LEFT_DCLICK, self.OnDoubleClick)
-        
-    def OnDoubleClick(self, event):
-        print 'double click'
-        item = event.GetItem()
-        data = item.GetItemData(item.m_itemIndex)
-        
-        tmpdir = os.path.join(data['home'], 'tmp')
-        mailparse.decode_attach(data['file'], data['attach'])
-        
-        attachfile = os.path.join(tmpdir, data['attach'])
-        if os.path.isfile(attachfile):
-            #wx.Execute(attachfile)
-            self.Execute(attachfile)
-        
-    def Execute(self, cmd):
-        def myexecute(cmd):
-            os.system(cmd)
-        th = threading.Thread(target=myexecute, args=(cmd, ))
-        th.start()
-
 if wx.Platform == '__WXMSW__':
     import wx.lib.iewin as iewin
 

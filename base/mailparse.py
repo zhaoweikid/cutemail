@@ -155,9 +155,14 @@ def get_attach(msg, dirname, filename):
                     f.write(cnt)
                     f.close()
             else:
+                print 'aname:', type(aname), aname
+                print 'filename:', type(filename), filename
                 if aname == filename:
-                    f = open(dirname + os.sep + filename, "wb")
+                    tmpfile = os.path.join(dirname, filename)
+                    print 'tmpfile:', tmpfile
+                    f = open(tmpfile, "wb")
                     cnt = msg.get_payload(decode=True)
+                    print 'write:', len(cnt)
                     f.write(cnt)
                     f.close()
 
@@ -165,11 +170,10 @@ def get_attach(msg, dirname, filename):
 def decode_attach(mailfile, filename, tmpdir='tmp'):
     if not os.path.isdir(tmpdir):
         os.mkdir(tmpdir)
-    if type(filename) == types.UnicodeType:
-        filename = filename.encode(charset)
-    if type(mailfile) == types.UnicodeType:
-        mailfile = mailfile.encode(charset)
-    #fpath = tmpdir + os.sep + mailfile
+    #if type(filename) == types.UnicodeType:
+    #    filename = filename.encode(charset)
+    #if type(mailfile) == types.UnicodeType:
+    #    mailfile = mailfile.encode(charset)
     fp = open(mailfile, "r")
     msg = email.message_from_file(fp)
     get_attach(msg, tmpdir, filename)  

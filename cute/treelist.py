@@ -3,7 +3,7 @@ import os, sys, time
 import wx, wx.gizmos
 import  wx.lib.dialogs
 import cStringIO, types
-import config, common, dbope
+import config, common, dbope, utils, mailparse
         
 class MailListPanel(wx.Panel):
     def __init__(self, parent, flag=''):       
@@ -125,7 +125,14 @@ class MailListPanel(wx.Panel):
             self.add_item(item, self.month)
         else:
             self.add_item(item, self.earlier)
-
+    
+    def remove_item(self, item=None):
+        if not item:
+            item = self.lastitem
+        if not item:
+            raise ValueError, 'item must not None'
+        self.tree.Delete(item) 
+        
     def make_popup_menu(self):
         if not hasattr(self, 'ID_POPUP_REPLY'):
             self.ID_POPUP_REPLY = wx.NewId()
@@ -151,6 +158,22 @@ class MailListPanel(wx.Panel):
         
         self.PopupMenu(menu)
         menu.Destroy()
+
+    def get_item_content(self, item=None):
+        if not item:
+            item = self.lastitem
+        if not item:
+            raise ValueError, 'item must not None'
+        
+        data = self.tree.GetItemData(item).GetData()
+        if not data:
+            raise ValueError, "not found item data"
+        
+        info = mailparse.decode_mail(data['filepath'])
+        data['html'] = info['html']
+        data['plain'] = info['plain']
+        
+        return data
 
     def OnPopupReply(self, evt):
         pass
@@ -180,41 +203,36 @@ class MailListPanel(wx.Panel):
     def OnActivate(self, evt):
         print 'OnActivate: %s' % self.tree.GetItemText(evt.GetItem())
         self.lastitem = evt.GetItem()
-        s = self.tree.GetItemData(evt.GetItem()).GetData()
-        if not s:
+        row = self.tree.GetItemData(evt.GetItem()).GetData()
+        if not row:
             return
         #mid, name, mbox = s
-        mid  = s['id']
-        name = s['user']
-        mbox = s['box']
-        sql = "select * from mailinfo where id=" + mid
+        mid  = row['id']
+        name = row['user']
+        mbox = row['box']
         
-        dbpath = os.path.join(config.cf.datadir, name, 'mailinfo.db')
-        print 'dbpath:', dbpath
-        conn = dbope.DBOpe(dbpath)
-        ret = conn.query(sql)
-        conn.close()
-        if ret:
-            row = ret[0]
-            htmldata = row['html']
-            plaindata = row['plain']
-            if htmldata:
-                self.parent.listcnt.set_text(htmldata)
-            elif plaindata:
-                self.parent.listcnt.set_text(plaindata.replace('\r\n', '<br>').replace('\n', '<br>'))
-            attachctl = self.parent.attachctl
-            attachctl.ClearAll()
-            if row['attach']:
-                attach = row['attach'].split('||')
-                if attach:
-                    pos = 0
-                    for a in attach:
-                        item = a.split('::')
-                        attachctl.InsertImageStringItem(pos, item[0], attachctl.image_default)
-                        filename = os.path.join(config.cf.datadir, name, row['mailbox'], row['filename'])
-                        homename = os.path.join(config.cf.datadir, name)
-                        attachctl.SetItemData(pos, {'file':filename, 'home':homename, 'attach':item[0]})
-                        pos += 1
+        info = mailparse.decode_mail(row['filepath'])
+        
+        htmldata = info['html']
+        plaindata = info['plain']
+        if htmldata:
+            self.parent.listcnt.set_text(htmldata)
+        elif plaindata:
+            self.parent.listcnt.set_text(plaindata.replace('\r\n', '<br>').replace('\n', '<br>'))
+        attachctl = self.parent.attachctl
+        attachctl.clear()
+        if row['attach']:
+            attach = row['attach'].split('||')
+            if attach:
+                pos = 0
+                for a in attach:
+                    item = a.split('::')
+                    filename = os.path.join(config.cf.datadir, name, row['mailbox'], row['filename'].strip(os.sep))
+                    homename = os.path.join(config.cf.datadir, name)
+                    attachdata = {'file':filename, 'home':homename, 'attach':item[0]}
+                    print 'attachdata:', attachdata
+                    attachctl.add_file(item[0], attachdata)
+                    pos += 1
 
     def OnRightUp(self, evt):
         pos = evt.GetPosition()
@@ -249,6 +267,97 @@ class MailboxTree(wx.TreeCtrl):
         
         self.load()
         
+    def last_item(self):
+        return self.GetSelection()
+    
+    def last_item_data(self):
+        item = self.GetSelection()
+        return self.GetPyData(item)
+    
+    def last_item_remove(self):
+        data = self.last_item_data()
+        print 'data:', data
+        dlg = wx.MessageDialog(self, u'删除该邮件夹的同时会删除里面的所有邮件!', u'注意',
+                               wx.YES_NO|wx.ICON_INFORMATION)
+        if dlg.ShowModal() == wx.NO:
+            dlg.Destroy()
+            print 'return, not remove'
+            return
+        dlg.Destroy() 
+        usercf = config.cf.users[data['user']]
+        mailbox = usercf['mailbox'] 
+        parts = data['path'].split('/')
+        del parts[0]
+            
+        utils.mailbox_remove(mailbox, parts)
+        config.cf.dump_conf(data['user'])
+        #panel = self.parent.mailboxs[data['path']]
+        #panel.Destroy()
+        #del self.parent.mailboxs[data['path']]
+        self.Delete(data['item'])
+        
+        # 把数据库中这个邮件夹的邮件全部移动到已删除
+    
+    def last_item_rename(self):
+        data = self.last_item_data()
+        
+        dlg = wx.TextEntryDialog(self, u'邮件夹' + data['boxname'] + u'重命名为:')
+        if dlg.ShowModal() == wx.ID_OK:
+            name = dlg.GetValue()
+        else:
+            dlg.Destroy()
+            return
+        dlg.Destroy()
+        
+        usercf = config.cf.users[data['user']]
+        mailbox = usercf['mailbox'] 
+        parts = data['path'].split('/')
+        del parts[0]
+        item = data['item']
+        utils.mailbox_rename(mailbox, parts, name)
+        
+        parts[-1] = name
+        config.cf.dump_conf(data['user'])
+        newpath = '/' + '/'.join(parts)
+        
+        print 'newpath:', newpath
+        oldpanel = self.parent.mailboxs[data['path']]
+        del self.parent.mailboxs[data['path']]
+        self.parent.mailboxs[newpath] = oldpanel
+        self.parent.mgr.AddPane(oldpanel, wx.aui.AuiPaneInfo().Name(newpath).CenterPane().Hide())
+        
+        data['path'] = newpath
+        data['boxname'] = name
+        
+        self.SetItemText(item, name)
+        # 数据库中所有这个邮件夹的邮件要改mailbox字段
+        
+    def last_item_add_child(self):
+        data = self.last_item_data()
+        
+        dlg = wx.TextEntryDialog(self, u'新邮件夹名字:')
+        if dlg.ShowModal() == wx.ID_OK:
+            name = dlg.GetValue()
+        else:
+            dlg.Destroy()
+            return
+        dlg.Destroy()
+        
+        usercf = config.cf.users[data['user']]
+        mailbox = usercf['mailbox'] 
+        parts = data['path'].split('/')
+        del parts[0]
+        item = data['item']
+        
+        utils.mailbox_add(mailbox, parts, name)
+        
+        parts.append(name)
+        newpath = '/' + '/'.join(parts)        
+        child = self.add_tree_node(item, name, data['user'], newpath)
+        self.SetItemText(child, name)
+        
+        config.cf.dump_conf(data['user'])
+        
     def load(self):
         self.root = self.AddRoot("/")
         
@@ -257,34 +366,36 @@ class MailboxTree(wx.TreeCtrl):
             #print 'user:', k, usercf
             mbox = usercf['mailbox']
             #tpathls = [] 
-            self.add_to_tree(self.root, mbox)
+            self.add_to_tree(self.root, mbox, k)
         
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnSelChanged, self) 
         self.Bind(wx.EVT_RIGHT_UP, self.OnRightUp)
 
-    def add_to_tree(self, parent, name, tpathls=[]):
-        if type(name) == types.ListType:
-            p = self.add_to_tree(parent, name[0], tpathls)
-            tpathls.append(name[0])
-            for x in name[1:]:
-                self.add_to_tree(p, x, tpathls)
-            tpathls.remove(name[0])
-            return p
-        item = self.AppendItem(parent, name)
-        self.SetPyData(item, None)
+    def add_tree_node(self, parent, name, user, tpath):
+        item  = self.AppendItem(parent, name)
+        panel = self.parent.add_mailbox_panel(tpath)
+        
+        data = {'path':tpath, 'user':user, 'boxname':name, 'item':item, 'panel':panel}
+        self.SetPyData(item, data)
         self.SetItemImage(item, self.ridx, wx.TreeItemIcon_Normal)
         self.SetItemImage(item, self.openidx, wx.TreeItemIcon_Expanded)
-        #self.EnsureVisible(item)
-        
-        tpath = '/'.join(tpathls) + '/' + name
-        if tpath[0] != '/':
-            tpath = '/' + tpath
-        print 'tpath:', tpath
-        self.parent.add_mailbox_panel(tpath)
+
         return item
-    
-    def append(self, name, tpathls=[]):
-        self.add_to_tree(self.root, name, tpathls) 
+            
+    def add_to_tree(self, parent, name, user, tpathls=[]):
+        print 'add_to_tree:', name
+        tpath = '/' + '/'.join(tpathls) + '/' + name[0]
+        print 'tpath:', tpath
+        
+        p = self.add_tree_node(parent, name[0], user, tpath)
+        tpathls.append(name[0])
+        for child in name[1]:
+            self.add_to_tree(p, child, user, tpathls)
+            tpathls.pop(-1)
+            
+        
+    def append(self, name, user, tpathls=[]):
+        self.add_to_tree(self.root, name, user, tpathls) 
     
     
     def make_popup_menu(self):
@@ -339,16 +450,10 @@ class MailboxTree(wx.TreeCtrl):
     def OnSelChanged(self, evt):
         self.item = evt.GetItem()
         if self.item:
-            i = self.item
-            tpathls = []
-            while 1:
-                if not i or not i.IsOk() or not self.IsVisible(i):
-                    break
-                text = self.GetItemText(i)
-                tpathls.append(text)
-                i = self.GetItemParent(i)
-            tpathls.reverse()
-            tpath = '/' + '/'.join(tpathls)
+            data = self.GetPyData(self.item)
+            print data
+            
+            tpath = data['path']
             print 'OnSelChanged path:', tpath
             
             self.parent.display_mailbox(tpath)
@@ -363,5 +468,8 @@ class MailboxTree(wx.TreeCtrl):
         item, flags = self.HitTest(pt)
         
         self.make_popup_menu()
+        
+        
+    
         
         
