@@ -13,6 +13,7 @@ class ImageList (wx.Panel):
         self.SetBackgroundColour(wx.Colour(255,0,0))
         self.list = wx.ListCtrl(self, -1, style=wx.LC_ICON|wx.LC_AUTOARRANGE)
         self.data = []
+        self.lastitem = None
         
         self.extensions = [".gif", '.png', '.jpg', '.jpeg', '.bmp', '.exe', '.zip', '.rar', '.doc', 
                         '.xls', '.ppt', '.txt', '.pdf', '.eml', '.chm', '.mdb', '.dll', '.ini', '.bat', 
@@ -45,6 +46,8 @@ class ImageList (wx.Panel):
         
         
         self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnItemActivated, self.list)
+        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnItemSelected, self.list)
+        self.list.Bind(wx.EVT_KEY_UP, self.OnKeyUp)
 
     def add_file(self, filename, data=None):
         s = os.path.splitext(filename)
@@ -64,6 +67,27 @@ class ImageList (wx.Panel):
             idx = len(self.data)
             self.data.append(data)
             self.list.SetItemData(itemidx, idx)
+
+    def remove_file(self, filename):
+        item = self.list.FindItem(-1, filename)
+        if not item:
+            print 'not found:', filename
+            return
+
+        data = self.list.GetItemData(item)
+        if data:
+            self.data.remove(data)
+        self.list.DeleteItem(item)
+    
+    def remove_item(self, item=None):
+        if not item and self.lastitem == None:
+            return
+
+        item = self.lastitem
+        data = self.list.GetItemData(item)
+        if data:
+            self.data.remove(data)
+        self.list.DeleteItem(item)
 
     def clear(self):
         self.data = []
@@ -117,8 +141,12 @@ class ImageList (wx.Panel):
         print 'actived'
         itemidx = event.m_itemIndex
         dataidx = self.list.GetItemData(itemidx)
-        
+        if not dataidx:
+            return
         data = self.data[dataidx]
+        if not data.has_key('home'):
+            return
+
         tmpdir = os.path.join(data['home'], 'tmp')
         print 'file:', data['file']
         tmpdir = os.path.join(data['home'], 'tmp')
@@ -137,6 +165,18 @@ class ImageList (wx.Panel):
             os.system(cmd)
         th = threading.Thread(target=myexecute, args=(cmd, ))
         th.start() 
+    
+    def OnItemSelected(self, event):
+        self.lastitem = event.m_itemIndex
+        print 'imagelist last item:', self.lastitem
+
+
+    def OnKeyUp(self, evt):
+        print 'key up:', evt.GetKeyCode()
+        if 127 == evt.GetKeyCode():
+            self.remove_item()                
+
+
 
 class TestFrame(wx.Frame):
     def __init__(self):

@@ -1,5 +1,5 @@
 # coding: utf-8
-import os, sys
+import os, sys, time
 import wx
 import wx.richtext as rt
 import wx.lib.sized_controls as sc
@@ -7,6 +7,7 @@ from picmenu import PicMenu
 from common import load_bitmap, load_image
 import images
 import viewhtml
+import createmail, config
 
 class WriterFrame (wx.Frame):
     def __init__(self, parent, rundir, maildata):
@@ -16,6 +17,7 @@ class WriterFrame (wx.Frame):
         self.rundir = rundir 
         self.bmpdir = self.rundir + "/bitmaps"
         self.header = {}
+        self.attachlist = []
 
         self.make_menu()
         self.make_status()
@@ -30,22 +32,17 @@ class WriterFrame (wx.Frame):
         x = self.make_writer_toolbar()
         sizer.Add(x, flag=wx.ALL|wx.EXPAND, border=0)
         
-        #self.splitter = wx.SplitterWindow(self, -1, style = wx.SP_LIVE_UPDATE)
-        #sizer.Add(self.splitter, flag=wx.ALL|wx.EXPAND, border=0)
+        self.splitter = wx.SplitterWindow(self, -1, style = wx.SP_LIVE_UPDATE)
+        sizer.Add(self.splitter, flag=wx.ALL|wx.EXPAND, border=0, proportion=1)
         
-        x = self.make_writer(maildata)
-        sizer.Add(x, flag=wx.ALL|wx.EXPAND, border=0, proportion=1)
+        x = self.make_writer(self.splitter, maildata)
+        #sizer.Add(x, flag=wx.ALL|wx.EXPAND, border=0, proportion=1)
         
-        x = self.make_attach(maildata)
-        sizer.Add(x, flag=wx.ALL|wx.EXPAND, border=0, proportion=1)
+        x = self.make_attach(self.splitter, maildata)
+        #sizer.Add(x, flag=wx.ALL|wx.EXPAND, border=0, proportion=1)
         
-        
-        #spsizer = wx.BoxSizer(wx.VERTICAL)
-        #spsizer.Add(self.rtc, flag=wx.ALL|wx.EXPAND, border=0, proportion=1)
-        #spsizer.Add(self.attach, flag=wx.ALL|wx.EXPAND, border=0, proportion=1)
-        #self.splitter.SetSizer(spsizer)
         #self.splitter.SetMinimumPaneSize(20)
-        #self.splitter.SplitHorizontally(self.rtc, self.attach, -200)
+        self.splitter.SplitHorizontally(self.rtc, self.attach, -70)
         
         self.SetSizer(sizer)
         self.SetAutoLayout(True)
@@ -212,36 +209,44 @@ class WriterFrame (wx.Frame):
         return tbpanel
             
             
-    def make_writer(self, maildata):
-        #wpanel = wx.Panel(self)
-        #wpanel.SetBackgroundColour(wx.NamedColour("WHITE"))
-        #self.rtc =  rt.RichTextCtrl(wpanel, style=wx.VSCROLL|wx.HSCROLL|wx.NO_BORDER)
-        #wx.CallAfter(self.rtc.SetFocus)
-        #sizer1 = wx.BoxSizer(wx.VERTICAL)
-        #sizer1.Add(self.rtc, flag=wx.ALL|wx.EXPAND, border=1)
-        #wpanel.SetSizer(sizer1)
-        
-        #return wpanel
-        
-        self.rtc =  rt.RichTextCtrl(self, style=wx.VSCROLL|wx.HSCROLL|wx.NO_BORDER)
+    def make_writer(self, parent, maildata):
+        self.rtc =  rt.RichTextCtrl(parent, style=wx.VSCROLL|wx.HSCROLL|wx.NO_BORDER)
         self.rtc.Newline()
         self.rtc.WriteText(maildata['text'])
         self.rtc.MoveHome()
         wx.CallAfter(self.rtc.SetFocus)
         return self.rtc
     
-    def make_attach(self, maildata):
-        self.attach = viewhtml.AttachListCtrl(self, self.rundir, wx.Size(-1,100))
+    def make_attach(self, parent, maildata):
+        self.attach = viewhtml.AttachListCtrl(parent, self.rundir, wx.Size(-1,100))
         return self.attach
        
        
     def create_mail(self, path):
-        pass
+        handler = rt.RichTextHTMLHandler()
+        handler.SetFlags(rt.RICHTEXT_HANDLER_SAVE_IMAGES_TO_MEMORY)
+        handler.SetFontSizeMapping([7,9,11,12,14,22,100])
+
+        import cStringIO
+        htmlstream = cStringIO.StringIO()
+        if not handler.SaveStream(self.rtc.GetBuffer(), htmlstream):
+            return
+        
+        creator = createmail.CreateEmail('', htmlstream.getvalue(), self.attachlist, self.header) 
+        s = creator.generate_email()
+        
+        f = open(path, 'w')
+        f.write(s)
+        f.close()
+
 
     def OnMailSend(self, evt):
         pass
 
     def OnMailSaveDraft(self, evt):
+        s = str(time.time())+'.eml'
+        filepath = os.path.join(config.cf.datadir, self.maildata['user'], 'draft', s)
+        print 'save file:', filepath
         self.create_mail(filepath)
 
     def OnMailExit(self, evt):
@@ -271,8 +276,13 @@ class WriterFrame (wx.Frame):
             paths = dlg.GetPaths()
             for path in paths:
                 print 'attach:', path
+                
+                self.attachlist.append(path)
+                self.attach.add_file(os.path.basename(path), {'path':path})
         dlg.Destroy()
-       
+      
+    def OnDeleteAttach(self, evt):
+        pass
 
     def OnOptionReceipt(self, evt):
         self.header['Disposition-Notification-To'] = self.maildata['from']

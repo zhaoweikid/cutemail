@@ -771,30 +771,30 @@ class MainFrame(wx.Frame):
         pass
         
     def OnMailWrite(self, event):
-        if self.last_mailbox == '/':
+        data = self.tree.last_item_data()
+        if not data:
             return
-        s = self.last_mailbox.split('/')
-        print 'user name:', s[1]
-        mailaddr = config.cf.users[s[1]]['email']
-        maildata = {'subject':'', 'from':mailaddr, 'to':'', 'text':''}
+        user = data['user']
+        print 'user name:', user
+        mailaddr = config.cf.users[user]['email']
+        maildata = {'subject':'', 'from':mailaddr, 'to':'', 'text':'', 'user':user}
 
         frame = writer.WriterFrame(self, self.rundir, maildata)
         frame.Show(True)
 
     def OnMailReply(self, event):
-        if self.last_mailbox == '/':
+        data = self.tree.last_item_data()
+        if not data:
             return
-        panel = self.mailboxs[self.last_mailbox]
-        if not panel:
-            return
-        
+        user = data['user']
+        panel = data['panel']
+       
         try:
             info = panel.get_item_content()
         except Exception, e:
             print 'get_item_content error:', str(e)
         
-        s = self.last_mailbox.split('/')
-        mailaddr = config.cf.users[s[1]]['email']
+        mailaddr = config.cf.users[user]['email']
         text = info['plain']
         text = text.replace('\r\n', '\n')
         parts = text.split('\n')
@@ -808,61 +808,53 @@ class MainFrame(wx.Frame):
         frame.Show(True)
 
     def OnMailReplyAll(self, event):
-        if self.last_mailbox == '/':
+        data = self.tree.last_item_data()
+        if not data:
             return
-        
-        panel = self.mailboxs[self.last_mailbox]
-        if not panel:
-            return
-        
+        user  = data['user']
+        panel = data['panel']
+
         try:
             info = panel.get_item_content()
         except Exception, e:
             print 'get_item_content error:', str(e)
            
-         
-        s = self.last_mailbox.split('/')
-        mailaddr = config.cf.users[s[1]]['email']
-        maildata = {'subject':'Re:'+info['subject'][:32], 'from':mailaddr, 'to':'', 'text':info['plain']}
+        mailaddr = config.cf.users[user]['email']
+        maildata = {'subject':'Re:'+info['subject'][:32], 'from':mailaddr, 'to':'', 'text':info['plain'], 'user':user}
  
         frame = writer.WriterFrame(self, self.rundir, maildata)
         frame.Show(True)
 
     def OnMailForward(self, event):
-        if self.last_mailbox == '/':
+        data = self.tree.last_item_data()
+        if not data:
             return
-        
-        panel = self.mailboxs[self.last_mailbox]
-        if not panel:
-            return
-        
+        user  = data['user']
+        panel = data['panel']
+
         try:
             info = panel.get_item_content()
         except Exception, e:
             print 'get_item_content error:', str(e)
         
-        s = self.last_mailbox.split('/')
-        mailaddr = config.cf.users[s[1]]['email']
-        maildata = {'subject':'Fw:'+info['subject'][:32], 'from':mailaddr, 'to':'', 'text':info['plain']}
+        mailaddr = config.cf.users[user]['email']
+        maildata = {'subject':'Fw:'+info['subject'][:32], 'from':mailaddr, 'to':'', 'text':info['plain'], 'user':user}
         frame = writer.WriterFrame(self, self.rundir, maildata)
         frame.Show(True)
 
     def OnMailSendSec(self, event):
-        if self.last_mailbox == '/':
+        data = self.tree.last_item_data()
+        if not data:
             return
-        
-        
-        panel = self.mailboxs[self.last_mailbox]
-        if not panel:
-            return
-        
+        user  = data['user']
+        panel = data['panel']
+
         try:
             info = panel.get_item_content()
         except Exception, e:
             print 'get_item_content error:', str(e)
-        s = self.last_mailbox.split('/')
-        mailaddr = config.cf.users[s[1]]['email']
-        maildata = {'subject':info['subject'], 'from':mailaddr, 'to':info['mailto'], 'text':info['plain']}
+        mailaddr = config.cf.users[user]['email']
+        maildata = {'subject':info['subject'], 'from':mailaddr, 'to':info['mailto'], 'text':info['plain'], 'user':user}
  
         frame = writer.WriterFrame(self, self.rundir, maildata)
         frame.Show(True)

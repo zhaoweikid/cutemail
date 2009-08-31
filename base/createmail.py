@@ -19,7 +19,7 @@ class CreateEmail:
         self.mail = ""
 
     def generate_head(self):
-        for k in headdic.keys():
+        for k in self.headdict.keys():
             if k == 'subject' or k == 'from' or k == 'to':
                 self.msg[k] = email.Header.Header(self.headdict[k], "UTF-8")
             else:
@@ -32,13 +32,15 @@ class CreateEmail:
         #创建纯文本
         if self.messagetext:
             body_plain = MIMEText(self.messagetext, _subtype = 'plain', _charset = 'UTF-8')
+            if body_plain:
+                self.attach.attach(body_plain)
         #创建超文本
         if self.messagehtml:
             body_html = MIMEText(self.messagehtml, _subtype = 'html', _charset = 'UTF-8')
-        if body_plain:
-            self.attach.attach(body_plain)
-        if body_html:
-            self.attach.attach(body_html)
+            if body_html:
+                self.attach.attach(body_html)
+      
+            
         #创建附件
         for filename in self.filelist:
             attachment = MIMEText(Encoders._bencode(open(filename, 'rb').read()))
