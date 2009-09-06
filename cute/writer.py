@@ -238,17 +238,38 @@ class WriterFrame (wx.Frame):
         f = open(path, 'w')
         f.write(s)
         f.close()
+        
+        aa = []
+        for x in self.attachlist:
+            aa.append(x + '::')
+        self.maildata['size'] = len(s)
+        self.maildata['date'] = '%d-%02d-%02d %02d:%02d:%02d' % (time.localtime()[:6])
+        self.maildata['attach'] = '||'.join(aa)
+    
+    def save_mail(self, box):
+        tostr = self.mailto.GetValue().strip()
+        self.maildata['to'] = tostr.split(',')
+        s = str(time.time())+'.eml'
+        filedir = os.path.join(config.cf.datadir, self.maildata['user'], box)
+        filepath = os.path.join(filedir, s)
+        print 'save file:', filepath
+        if not os.path.isdir(filedir):
+            os.mkdir(filedir)
+        self.create_mail(filepath)
+        self.maildata['filepath'] = filepath
+        sql = "insert into mailinfo(filename,subject,mailfrom,mailto,size,ctime,date,attach,mailbox) values ('%s','%s','%s','%s',%d,'%s','%s','%s','%s')" % \
+              (s, self.maildata['from'], self.maildata['to'], self.maildata['size'],
+               self.maildata['date'], self.maildata['attach'], box)
+        
 
 
     def OnMailSend(self, evt):
-        pass
+        self.save_mail('send') 
+        sendmail.sendfile(self.maildata)
 
     def OnMailSaveDraft(self, evt):
-        s = str(time.time())+'.eml'
-        filepath = os.path.join(config.cf.datadir, self.maildata['user'], 'draft', s)
-        print 'save file:', filepath
-        self.create_mail(filepath)
-
+        self.save_mail('draft') 
+        
     def OnMailExit(self, evt):
         self.Destroy()
 

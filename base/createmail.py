@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-#-*- encoding: UTF-8 -*-
-
+# coding: utf-8
+import base64
 from email.MIMEText import MIMEText
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEBase import MIMEBase
@@ -20,13 +20,14 @@ class CreateEmail:
 
     def generate_head(self):
         for k in self.headdict.keys():
+            k = k.lower()
             if k == 'subject' or k == 'from' or k == 'to':
                 self.msg[k] = email.Header.Header(self.headdict[k], "UTF-8")
             else:
                 self.msg[k] = self.headdict[k]
 
-        self.msg['date'] = Utils.formatdate(localtime = 1)
-        self.msg['message-id'] = Utils.make_msgid()
+        self.msg['Date'] = Utils.formatdate(localtime = 1)
+        self.msg['Message-Id'] = Utils.make_msgid()
 
     def generate_body(self):
         #创建纯文本
@@ -43,10 +44,14 @@ class CreateEmail:
             
         #创建附件
         for filename in self.filelist:
+            onlyfilename = os.path.basename(filename)
+            print 'type:', type(onlyfilename)
+            onlyfilename = '=?utf-8?b?%s?=' % (base64.b64encode(onlyfilename.encode('utf-8')))
+            print 'onlyfilename:', onlyfilename
             attachment = MIMEText(Encoders._bencode(open(filename, 'rb').read()))
-            attachment.replace_header('Content-type', 'Application/octet-stream: name="' + os.path.basename(filename) + '"')
+            attachment.replace_header('Content-type', 'Application/octet-stream: name="' + onlyfilename + '"')
             attachment.replace_header('Content-Transfer-Encoding', 'base64')
-            attachment.add_header('Content-diposition', 'attachment;filename="' + os.path.basename(filename) + '"')
+            attachment.add_header('Content-Disposition', 'attachment;filename="' + onlyfilename + '"')
             self.attach.attach(attachment)
 
     def generate_email(self):
