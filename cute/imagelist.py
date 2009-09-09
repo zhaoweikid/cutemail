@@ -24,7 +24,6 @@ class ImageList (wx.Panel):
         self.il = wx.ImageList(32, 32, True)
         
         for name in self.extensions:
-            print name
             x = self.load_win_icon(name)
             if x:
                 ilmax = self.il.Add(x)

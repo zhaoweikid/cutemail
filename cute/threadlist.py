@@ -169,17 +169,19 @@ class Task(threading.Thread):
     
     def sendmail(self, item):
         tos = item['to']
-
-        x = sendmail.SendMailMX(item['from'], item['to'])
+        usercf = config.cf.users[item['name']]
+        print 'smtp server:', usercf['smtp_server']
+        x = sendmail.SendMail(usercf['smtp_server'], item['from'], item['to'])
         f = open(item['path'], 'r')
         s = f.read()
         f.close()
         try:
-            x.send(s)
+            x.authsend(s, usercf['smtp_pass'])
         except Exception, why:
+            traceback.print_exc()
             mesg = str(why)
         else:
-            mesg = u'发送成功'
+            mesg = u'信件发送成功!'
         x = {'name': item['name'], 'task':'alert', 'message':mesg} 
    
         config.uiq.put(x, timeout=5)

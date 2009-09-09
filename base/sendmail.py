@@ -20,7 +20,7 @@ class MySMTP(smtplib.SMTP):
             try:
                 self.sock = socket.socket(af, socktype, proto)
                 if self.debuglevel > 0: print>>stderr, 'connect:', sa
-                self.sock.settimeout(3)
+                self.sock.settimeout(30)
                 self.sock.connect(sa)
             except socket.error, msg:
                 if self.debuglevel > 0: print>>stderr, 'connect fail:', msg
@@ -109,27 +109,9 @@ class SendMail:
         self.rcpt_to()
         self.data(message)
 
-class SendMailServer(SendMail):
-    def __init__(self, smtp_server, fromaddr, toaddr):
-        SendMail.__init__(smpt_server, fromaddr, toaddr)
+    def quit(self):
+        self.svr.docmd('QUIT')
 
-    def srv_authsend(self, message, passwd):
-        try:
-            self.authsend(message, passwd)
-
-        except socket.error,e:
-            traceback.print_exc()
-        except SessionError, e:
-            traceback.print_exc()
-
-    def srv_send(self, message):
-        try:
-            self.send(message)
-        except socket.error,e:
-            traceback.print_exc()
-        except SessionError, e:
-            traceback.print_exc()
-        
 class SendMailMX(SendMail):
     def __init__(self, fromaddr, toaddr):
         self.from_addr = fromaddr
@@ -186,18 +168,5 @@ class SendMailMX(SendMail):
                     continue
 
 
-
-if __name__ == '__main__':
-    #print "----------------- authsend test ------------------------"
-    #auth_test = ServerSend ("mail.eyou.net", "lanwenhong@eyou.net", ["rubbish_lan@sohu.com","lanwenhong12@163.com","yangyang@eyou.net"])
-    #auth_test.svr_authsend("subject: test \r\nfrom: lanwenhong@eyou.net\r\nto: rubbish_lan@sohu.com\r\n\r\nthis is test\n", "baozou123")
-
-    #print "----------------- send     test ------------------------"
-    #test = ServerSend("mail.eyou.net", "lanwenhong@eyou.net", ["rubbish_lan@sohu.com","lanwenhong12@163.com","yangyang@eyou.net"])
-    #test.svr_send("subject: test \r\nfrom: lanwenhong@eyou.net\r\nto: rubbish_lan@sohu.com\r\n\r\nthis is test\n")
-
-    print "----------------- noserversend  ------------------------"
-    noserver = NoserverSend("lanwenhong@eyou.net", ["yangyang@eyou.net", "zhaowei@eyou.net", "lanwenhong12@163.com", "bijisheng@eyou.net"])
-    noserver.send("subject: test \r\nfrom: lanwenhong@eyou.net\r\nto: rubbish_lan@sohu.com\r\n\r\nthis is test\n")
 
 

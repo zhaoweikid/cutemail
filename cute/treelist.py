@@ -4,6 +4,7 @@ import wx, wx.gizmos
 import  wx.lib.dialogs
 import cStringIO, types
 import config, common, dbope, utils, mailparse
+from optiondlg import OptionsDialog
         
 class MailListPanel(wx.Panel):
     def __init__(self, parent, flag=''):       
@@ -446,7 +447,15 @@ class MailboxTree(wx.TreeCtrl):
         pass
     
     def OnPopupSetting(self, evt):
-        pass
+        data = self.last_item_data()
+        usercf = config.cf.users[data['user']]
+        dlg = OptionsDialog(self, usercf)
+        if dlg.ShowModal() == wx.ID_OK:
+            data = dlg.get_values()
+            for k in data:
+                usercf[k] = data[k]
+            config.cf.dump_conf(usercf)
+
     def OnSelChanged(self, evt):
         self.item = evt.GetItem()
         if self.item:

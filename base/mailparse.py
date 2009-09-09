@@ -94,6 +94,7 @@ def decode_message(msg, ret):
 
     text = get_content(msg, ret)
 
+    '''
     oldstr = ret['subject']
     if oldstr:
         iscn = False
@@ -104,7 +105,7 @@ def decode_message(msg, ret):
             ret['subject'] = unicode(oldstr, ret['charset'])
     else:
         ret['subject'] = u'无主题'
-
+    '''
 
 
 def decode_mail(mailfile):

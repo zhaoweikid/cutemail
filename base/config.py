@@ -72,6 +72,9 @@ class AppConfig:
             'reply_addr', 'recv_interval', 'reserve_time',
             'pop3_server','pop3_pass','smtp_server', 'smtp_pass',
             'uidls','mailbox', 'schedule']
+        self.mailuser_fields_cn = [u'用户名', u'存储路径', u'姓名', u'邮件地址', u'回复地址',
+                u'收信间隔时间(分)', u'信件在服务器上保留时间(天)', u'pop3服务器地址', u'pop3密码', 
+                u'smtp服务器地址', u'smtp密码', u'邮件唯一标示', u'邮箱结构', u'定时任务']
         
     def conf_init(self):
         '''设置用户默认配置'''

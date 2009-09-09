@@ -191,13 +191,6 @@ class MainFrame(wx.Frame):
         self.ID_TOOL_EXPORT     = wx.NewId()
         self.ID_TOOL_SETTING    = wx.NewId()
         
-        self.ID_USER_NEW            = wx.NewId()
-        self.ID_USER_RENAME         = wx.NewId()
-        self.ID_USER_DEL            = wx.NewId()
-        self.ID_USER_FILTER_SETTING = wx.NewId()
-        self.ID_USER_BWLIST_SETTING = wx.NewId()
-        self.ID_USER_OPTIONS        = wx.NewId()
-        
         self.ID_MAIL_WRITE     = wx.NewId()
         self.ID_MAIL_REPLY     = wx.NewId()
         self.ID_MAIL_REPLY_ALL = wx.NewId()
@@ -215,7 +208,14 @@ class MainFrame(wx.Frame):
         self.ID_MAIL_FLAG      = wx.NewId()
         self.ID_MAIL_SEARCH    = wx.NewId()
         self.ID_MAIL_OPTIONS   = wx.NewId()
-        
+ 
+        self.ID_MAILBOX_USER_NEW            = wx.NewId()
+        self.ID_MAILBOX_USER_RENAME         = wx.NewId()
+        self.ID_MAILBOX_USER_DEL            = wx.NewId()
+        self.ID_MAILBOX_USER_FILTER_SETTING = wx.NewId()
+        self.ID_MAILBOX_USER_BWLIST_SETTING = wx.NewId()
+        self.ID_MAILBOX_USER_OPTIONS        = wx.NewId()
+       
         self.ID_MAILBOX_NEW         = wx.NewId()
         self.ID_MAILBOX_RENAME      = wx.NewId()
         self.ID_MAILBOX_DEL         = wx.NewId()
@@ -250,33 +250,6 @@ class MainFrame(wx.Frame):
         self.ID_ENCODING_EUC      = wx.NewId()
         self.ID_ENCODING_SHIFTJIS = wx.NewId()
         self.ID_ENCODING_KOREA    = wx.NewId()
-        self.ID_ENCODING_OCCISO   = wx.NewId()
-        self.ID_ENCODING_OCCWIN   = wx.NewId()
-        self.ID_ENCODING_MDOS     = wx.NewId()
-        self.ID_ENCODING_MISO     = wx.NewId()
-        self.ID_ENCODING_MWIN     = wx.NewId()
-        self.ID_ENCODING_THA      = wx.NewId()
-        self.ID_ENCODING_XLDOS    = wx.NewId()
-        self.ID_ENCODING_XLISO    = wx.NewId()
-        self.ID_ENCODING_XLKOI8R  = wx.NewId()
-        self.ID_ENCODING_XLKOI8U  = wx.NewId()
-        self.ID_ENCODING_XLWIN    = wx.NewId()
-        self.ID_ENCODING_BSISO    = wx.NewId()
-        self.ID_ENCODING_BSWIN    = wx.NewId()
-        self.ID_ENCODING_GREISO   = wx.NewId()
-        self.ID_ENCODING_GREWIN   = wx.NewId()
-        self.ID_ENCODING_ARAASMO  = wx.NewId()
-        self.ID_ENCODING_ARADOS   = wx.NewId()
-        self.ID_ENCODING_ARAISO   = wx.NewId()
-        self.ID_ENCODING_ARAWI    = wx.NewId()
-        self.ID_ENCODING_HEBDOS   = wx.NewId()
-        self.ID_ENCODING_HEBISOLJ = wx.NewId()
-        self.ID_ENCODING_HEBISOVI = wx.NewId()
-        self.ID_ENCODING_HEBWIN   = wx.NewId()
-        self.ID_ENCODING_TURISO   = wx.NewId()
-        self.ID_ENCODING_TURWIN   = wx.NewId()
-        self.ID_ENCODING_VNWIN    = wx.NewId()
-        
         
     def make_toolbar(self):
         self.ID_TOOLBAR_MAIL_GET = wx.NewId()
@@ -348,44 +321,6 @@ class MainFrame(wx.Frame):
         encodingmenu.Append(self.ID_ENCODING_SHIFTJIS, u"日文(Shift-JIS)")
         encodingmenu.AppendSeparator()
         encodingmenu.Append(self.ID_ENCODING_KOREA, u"韩文")
-        '''
-        encodingmenu.AppendSeparator()
-        encodingmenu.Append(self.ID_ENCODING_OCCISO, u"西欧(ISO)")
-        encodingmenu.Append(self.ID_ENCODING_OCCWIN, u"西欧(Windows)")
-        encodingmenu.AppendSeparator()
-        encodingmenu.Append(self.ID_ENCODING_MDOS, u"中欧(DOS)")
-        encodingmenu.Append(self.ID_ENCODING_MISO, u"中欧(ISO)")
-        encodingmenu.Append(self.ID_ENCODING_MWIN, u"中欧(Windows)")
-        encodingmenu.AppendSeparator()
-        encodingmenu.Append(self.ID_ENCODING_THA, u"泰文(Windows)")
-        encodingmenu.AppendSeparator()
-        encodingmenu.Append(self.ID_ENCODING_XLDOS, u"西里尔文(DOS)")
-        encodingmenu.Append(self.ID_ENCODING_XLISO, u"西里尔文(ISO)")
-        encodingmenu.Append(self.ID_ENCODING_XLKOI8R, u"西里尔文(KOI8-R)")
-        encodingmenu.Append(self.ID_ENCODING_XLKOI8U, u"西里尔文(KOI8-U)")
-        encodingmenu.Append(self.ID_ENCODING_XLWIN, u"西里尔文(Windows)")
-        encodingmenu.AppendSeparator()
-        encodingmenu.Append(self.ID_ENCODING_BSISO, u"波罗的海文(ISO)")
-        encodingmenu.Append(self.ID_ENCODING_BSWIN, u"波罗的海文(Windws)")
-        encodingmenu.AppendSeparator()
-        encodingmenu.Append(self.ID_ENCODING_GREISO, u"希腊文(ISO)")
-        encodingmenu.Append(self.ID_ENCODING_GREWIN, u"希腊文(Windows)")
-        encodingmenu.AppendSeparator()
-        encodingmenu.Append(self.ID_ENCODING_ARAASMO, u"阿拉伯文(ASMO 798)")
-        encodingmenu.Append(self.ID_ENCODING_ARADOS, u"阿拉伯文(DOS)")
-        encodingmenu.Append(self.ID_ENCODING_ARAISO, u"阿拉伯文(ISO)")
-        encodingmenu.Append(self.ID_ENCODING_ARAWI, u"阿拉伯文(Windows)")
-        encodingmenu.AppendSeparator()
-        encodingmenu.Append(self.ID_ENCODING_HEBDOS, u"希伯来文(DOS)")
-        encodingmenu.Append(self.ID_ENCODING_HEBISOLJ, u"希伯来文(ISO-逻辑)")
-        encodingmenu.Append(self.ID_ENCODING_HEBISOVI, u"希伯来文(ISO-Visual)")
-        encodingmenu.Append(self.ID_ENCODING_HEBWIN, u"希伯来文(Windows)")
-        encodingmenu.AppendSeparator()
-        encodingmenu.Append(self.ID_ENCODING_TURISO, u"土耳其文(ISO)")
-        encodingmenu.Append(self.ID_ENCODING_TURWIN, u"土耳其文(Windows)")
-        encodingmenu.AppendSeparator()
-        encodingmenu.Append(self.ID_ENCODING_VNWIN, u"越南文(Windows)")
-        '''
         
         self.viewmenu = PicMenu(self)
         self.viewmenu.Append(self.ID_VIEW_MAIL, u"邮件内容", 'contents.png')        
@@ -428,17 +363,6 @@ class MainFrame(wx.Frame):
         self.toolmenu.AppendSeparator()
         self.toolmenu.Append(self.ID_TOOL_SETTING, u"设置", 'preferences.png')
         
-        self.usermenu = PicMenu(self)
-        self.usermenu.Append(self.ID_USER_NEW, u"新建", 'user.png')        
-        self.usermenu.Append(self.ID_USER_RENAME, u"更名", 'user.png')
-        self.usermenu.Append(self.ID_USER_DEL, u"删除", "Delete.png")
-        self.usermenu.AppendSeparator()
-        self.usermenu.Append(self.ID_USER_BWLIST_SETTING, u"黑白名单")
-        self.usermenu.Append(self.ID_USER_FILTER_SETTING, u"过滤器设置")
-        
-        self.usermenu.AppendSeparator()
-        self.usermenu.Append(self.ID_USER_OPTIONS, u"属性", 'preferences.png')       
-
         self.mailmenu = PicMenu(self)
         self.mailmenu.Append(self.ID_MAIL_WRITE, u"写新邮件", 'mail_new.png')
         self.mailmenu.Append(self.ID_MAIL_REPLY, u"回复邮件", 'mail_reply.png')
@@ -462,12 +386,25 @@ class MainFrame(wx.Frame):
         self.mailmenu.Append(self.ID_MAIL_OPTIONS, u"属性", 'preferences.png')
         
         self.mailboxmenu = PicMenu(self)
+        self.mailboxmenu.Append(self.ID_MAILBOX_USER_NEW, u"新建", 'user.png')        
+        self.mailboxmenu.Append(self.ID_MAILBOX_USER_RENAME, u"更名", 'user.png')
+        self.mailboxmenu.Append(self.ID_MAILBOX_USER_DEL, u"删除", "Delete.png")
+        self.mailboxmenu.AppendSeparator()
+
         self.mailboxmenu.Append(self.ID_MAILBOX_NEW, u"新建邮件夹", 'folder_open.png')
         self.mailboxmenu.Append(self.ID_MAILBOX_RENAME, u"邮件夹改名", 'folder_red.png')
         self.mailboxmenu.Append(self.ID_MAILBOX_DEL, u"删除邮件夹", 'folder_grey.png')
         self.mailboxmenu.AppendSeparator()
         self.mailboxmenu.Append(self.ID_MAILBOX_CLEAR_TRASH, u"清空删除邮件")
         self.mailboxmenu.Append(self.ID_MAILBOX_CLEAR_SPAM, u"清空垃圾邮件")   
+
+        self.mailboxmenu.AppendSeparator()
+        self.mailboxmenu.Append(self.ID_MAILBOX_USER_BWLIST_SETTING, u"黑白名单")
+        self.mailboxmenu.Append(self.ID_MAILBOX_USER_FILTER_SETTING, u"过滤器设置")
+        
+        self.mailboxmenu.AppendSeparator()
+        self.mailboxmenu.Append(self.ID_MAILBOX_USER_OPTIONS, u"属性", 'preferences.png')       
+
         
         self.helpmenu = PicMenu(self)
         self.helpmenu.Append(self.ID_HELP, u"帮助主题", 'help.png')      
@@ -480,7 +417,6 @@ class MainFrame(wx.Frame):
         self.menuBar.Append(self.filemenu,u"文件")        
         self.menuBar.Append(self.viewmenu,u"查看")
         self.menuBar.Append(self.toolmenu,u"工具")
-        self.menuBar.Append(self.usermenu,u"帐户")      
         self.menuBar.Append(self.mailmenu,u"邮件")
         self.menuBar.Append(self.mailboxmenu,u"邮箱")
         self.menuBar.Append(self.helpmenu,u"帮助")
@@ -526,12 +462,12 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnToolExport, id=self.ID_TOOL_EXPORT)
         self.Bind(wx.EVT_MENU, self.OnToolSetting, id=self.ID_TOOL_SETTING)
         
-        self.Bind(wx.EVT_MENU, self.OnUserNew, id=self.ID_USER_NEW)
-        self.Bind(wx.EVT_MENU, self.OnUserRename, id=self.ID_USER_RENAME)
-        self.Bind(wx.EVT_MENU, self.OnUserDel, id=self.ID_USER_DEL)
-        self.Bind(wx.EVT_MENU, self.OnUserBWListSetting, id=self.ID_USER_BWLIST_SETTING)
-        self.Bind(wx.EVT_MENU, self.OnUserFilterSetting, id=self.ID_USER_FILTER_SETTING)
-        self.Bind(wx.EVT_MENU, self.OnUserOptions, id=self.ID_USER_OPTIONS)
+        self.Bind(wx.EVT_MENU, self.OnMailboxUserNew, id=self.ID_MAILBOX_USER_NEW)
+        self.Bind(wx.EVT_MENU, self.OnMailboxUserRename, id=self.ID_MAILBOX_USER_RENAME)
+        self.Bind(wx.EVT_MENU, self.OnMailboxUserDel, id=self.ID_MAILBOX_USER_DEL)
+        self.Bind(wx.EVT_MENU, self.OnMailboxUserBWListSetting, id=self.ID_MAILBOX_USER_BWLIST_SETTING)
+        self.Bind(wx.EVT_MENU, self.OnMailboxUserFilterSetting, id=self.ID_MAILBOX_USER_FILTER_SETTING)
+        self.Bind(wx.EVT_MENU, self.OnMailboxUserOptions, id=self.ID_MAILBOX_USER_OPTIONS)
         
         self.Bind(wx.EVT_MENU, self.OnMailWrite, id=self.ID_MAIL_WRITE)
         self.Bind(wx.EVT_MENU, self.OnMailReply, id=self.ID_MAIL_REPLY)
@@ -631,7 +567,7 @@ class MainFrame(wx.Frame):
                         boxpanel.add_mail(item)
                         #mlist.add_item(item, mlist.today)
             elif task == 'alert':
-                wx.MessageBox(u'错误信息:' + item['message'], u'邮件发送错误!', wx.OK|wx.ICON_ERROR)
+                wx.MessageBox(u'发送返回信息:' + item['message'], u'邮件信息!', wx.OK|wx.ICON_ERROR)
                 
             else:
                 print 'uiq return error:', item
@@ -732,7 +668,7 @@ class MainFrame(wx.Frame):
         pass
         
         
-    def OnUserNew(self, event):
+    def OnMailboxUserNew(self, event):
         import images
         print 'run simple wizard...'
         wizard = wiz.Wizard(self, -1, u"新建用户向导", images.WizTest1.GetBitmap())
@@ -769,15 +705,15 @@ class MainFrame(wx.Frame):
                 self.tree.Refresh()
                 
         
-    def OnUserRename(self, event):
+    def OnMailboxUserRename(self, event):
         pass
-    def OnUserDel(self, event):
+    def OnMailboxUserDel(self, event):
         pass
-    def OnUserBWListSetting(self, event):
+    def OnMailboxUserBWListSetting(self, event):
         pass
-    def OnUserFilterSetting(self, event):
+    def OnMailboxUserFilterSetting(self, event):
         pass
-    def OnUserOptions(self, event):
+    def OnMailboxUserOptions(self, event):
         pass
         
     def OnMailWrite(self, event):
