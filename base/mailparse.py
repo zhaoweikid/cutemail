@@ -85,57 +85,48 @@ def get_content(msg, ret):
             aname = decode_string(msg.get_param('name'))
             ret['attach'].append([aname, cid])
 
+
+def decode_message(msg, ret):
+    ret['subject'] = decode_string(msg.get("subject"))
+    ret['from'] = email.utils.parseaddr(msg.get("from"))[1]
+    ret['to'].append(email.utils.parseaddr(msg.get("to"))[1])
+    ret['date'] = parsedate(msg.get('date'))
+
+    text = get_content(msg, ret)
+
+    oldstr = ret['subject']
+    if oldstr:
+        iscn = False
+        for x in oldstr: 
+            if ord(x) > 127:
+                iscn = True 
+        if iscn:
+            ret['subject'] = unicode(oldstr, ret['charset'])
+    else:
+        ret['subject'] = u'无主题'
+
+
+
 def decode_mail(mailfile):
-    ret = {'file':mailfile, 'from':'', 'to':'', 'subject':'', 'size':0, 'date':'', 'plain':'', 'html':'', 'charset':'gbk', 'attach':[]}
+    ret = {'file':mailfile, 'from':'', 'to':[], 'subject':'', 'size':0, 'date':'', 'plain':'', 'html':'', 'charset':'gbk', 'attach':[]}
     
     ret['size'] = os.path.getsize(mailfile)
     fp = open(mailfile, "r")
     msg = email.message_from_file(fp)
     
-    ret['subject'] = decode_string(msg.get("subject"))
-    ret['from'] = email.utils.parseaddr(msg.get("from"))[1]
-    ret['to']   = email.utils.parseaddr(msg.get("to"))[1]
-    ret['date'] = parsedate(msg.get('date'))
+    decode_message(msg, ret)
 
-    text = get_content(msg, ret)
     fp.close() 
-
-    fromstr = ret['from']
-    if fromstr:
-        iscn = False
-        for x in fromstr: 
-            if ord(x) > 127:
-                iscn = True 
-        if iscn:
-            ret['from'] = unicode(fromstr, ret['charset'])
-    else:
-        ret['from'] = u'无主题'
-
     return ret
 
 
 def decode_mail_string(mailstr):
-    ret = {'file':'', 'from':'', 'to':'', 'subject':'', 'size':0, 'date':'', 'plain':'', 'html':'', 'charset':'gbk', 'attach':[]}
+    ret = {'file':'', 'from':'', 'to':[], 'subject':'', 'size':0, 'date':'', 'plain':'', 'html':'', 'charset':'gbk', 'attach':[]}
     
     ret['size'] = len(mailstr)
     msg = email.message_from_string(mailstr)
     
-    ret['subject'] = decode_string(msg.get("subject"))
-    ret['from'] = email.utils.parseaddr(msg.get("from"))[1]
-    ret['to']   = email.utils.parseaddr(msg.get("to"))[1]
-    ret['date'] = parsedate(msg.get('date'))
-
-    text = get_content(msg, ret)
-    fromstr = ret['from']
-    if fromstr:
-        iscn = False
-        for x in fromstr: 
-            if ord(x) > 127:
-                iscn = True 
-        if iscn:
-            ret['from'] = unicode(fromstr, ret['charset'])
-    else:
-        ret['from'] = u'无主题'
+    decode_message(msg, ret)
 
     return ret
 

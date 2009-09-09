@@ -7,12 +7,12 @@ from picmenu import PicMenu
 from common import load_bitmap, load_image
 import images
 import viewhtml
-import createmail, config
+import createmail, config, dbope
 
 class WriterFrame (wx.Frame):
     def __init__(self, parent, rundir, maildata):
         wx.Frame.__init__(self, parent, title=u'写邮件 ' + maildata['from'], size=(800,600))
-        
+        self.parent = parent 
         self.maildata = maildata
         self.rundir = rundir 
         self.bmpdir = self.rundir + "/bitmaps"
@@ -232,6 +232,9 @@ class WriterFrame (wx.Frame):
         if not handler.SaveStream(self.rtc.GetBuffer(), htmlstream):
             return
         
+        self.header['from'] = self.maildata['from']
+        self.header['to'] = self.maildata['to']
+        self.header['subject'] = self.maildata['subject']
         creator = createmail.CreateEmail('', htmlstream.getvalue(), self.attachlist, self.header) 
         s = creator.generate_email()
         
@@ -249,6 +252,8 @@ class WriterFrame (wx.Frame):
     def save_mail(self, box):
         tostr = self.mailto.GetValue().strip()
         self.maildata['to'] = tostr.split(',')
+        self.maildata['subject'] = self.subject.GetValue().strip()
+
         s = str(time.time())+'.eml'
         filedir = os.path.join(config.cf.datadir, self.maildata['user'], box)
         filepath = os.path.join(filedir, s)
@@ -257,21 +262,34 @@ class WriterFrame (wx.Frame):
             os.mkdir(filedir)
         self.create_mail(filepath)
         self.maildata['filepath'] = filepath
-        sql = "insert into mailinfo(filename,subject,mailfrom,mailto,size,ctime,date,attach,mailbox) values ('%s','%s','%s','%s',%d,'%s','%s','%s','%s')" % \
-              (s, self.maildata['from'], self.maildata['to'], self.maildata['size'],
-               self.maildata['date'], self.maildata['attach'], box)
-        
+        sql = "insert into mailinfo(filename,subject,mailfrom,mailto,size,ctime,date,attach,mailbox) values ('%s','%s','%s','%s',%d,%s,'%s','%s','%s')" % \
+              (s, self.maildata['subject'], self.maildata['from'], ','.join(self.maildata['to']), self.maildata['size'],
+               'datetime()', self.maildata['date'], self.maildata['attach'], box)
+        print sql 
+        db = dbope.openuser(config.cf, self.maildata['user'])
+        db.execute(sql)
+        ret = db.query("select last_insert_rowid();", False)
+        rowid = ret[0][0]
+        db.close()
+
+        self.maildata['id'] = rowid
 
 
     def OnMailSend(self, evt):
         self.save_mail('send') 
-        msg = {'name':self.maildata['user'], 'task':'sendmail', 'to'=self.maildata['to'], 
+        msg = {'name':self.maildata['user'], 'task':'sendmail', 'to':self.maildata['to'], 
                'from':self.maildata['from'], 'path':self.maildata['filepath']}
         #sendmail.sendfile(self.maildata)
+        if self.maildata.has_key('id'):
+            self.parent.load_db_one(self.maildata['user'], self.maildata['id'])
+     
         config.taskq.put(msg)
 
     def OnMailSaveDraft(self, evt):
         self.save_mail('draft') 
+        
+        if self.maildata.has_key('id'):
+            self.parent.load_db_one(self.maildata['user'], self.maildata['id'])
         
     def OnMailExit(self, evt):
         self.Destroy()

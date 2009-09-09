@@ -6,7 +6,7 @@ from email.MIMEMultipart import MIMEMultipart
 from email.MIMEBase import MIMEBase
 from email import Utils, Encoders
 import mimetypes, sys, email, os
-import string, time
+import string, time, types
 
 class CreateEmail:
     def __init__(self, messagetext, messagehtml, filelist, headdict):
@@ -20,11 +20,26 @@ class CreateEmail:
 
     def generate_head(self):
         for k in self.headdict.keys():
-            k = k.lower()
-            if k == 'subject' or k == 'from' or k == 'to':
-                self.msg[k] = email.Header.Header(self.headdict[k], "UTF-8")
+            v = self.headdict[k]
+            newk = '-'.join(map(string.capitalize, k.lower().split('-')))
+
+            if newk == 'Subject':
+                self.msg[newk] = email.Header.Header(v, "UTF-8")
+            elif newk == 'From':
+                if type(v) == types.ListType:
+                    self.msg[newk] = '"%s" <%s>' % (email.Header.Header(v[0], 'utf-8'), v[1])
+                else:
+                    self.msg[newk] = v
+            elif newk == 'To':
+                s = []
+                for x in v:
+                    if type(x) == types.ListType:
+                        s.append('"%s" <%s>' % (email.Header.Header(x[0], 'utf-8'), x[1]))
+                    else:
+                        s.append(x)
+                self.msg[newk] = '\r\n\t'.join(s)
             else:
-                self.msg[k] = self.headdict[k]
+                self.msg[newk] = v
 
         self.msg['Date'] = Utils.formatdate(localtime = 1)
         self.msg['Message-Id'] = Utils.make_msgid()
@@ -61,7 +76,7 @@ class CreateEmail:
         return self.mail
        
 if __name__ == '__main__':
-    headdic = {'from': 'lanwenhong@eyou.net', 'to': 'rubbish_lan@sohu.com', 'subject': 'this is test email'}
+    headdic = {'from': 'lanwenhong@eyou.net', 'to': ['rubbish_lan@sohu.com'], 'subject': 'this is test email'}
     msg_text = 'plain text infomation'
     msg_html = '<font color="read">html text infomation</font>'
     filelist = []

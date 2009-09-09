@@ -124,7 +124,11 @@ class MainFrame(wx.Frame):
             row['user'] = user
             row['box'] = boxname
             row['filepath'] = os.path.join(config.cf.datadir, user, row['mailbox'], row['filename'].lstrip(os.sep))
-            item = [row['mailfrom'], att, 0, row['subject'], row['date'], str(row['size']/1024 + 1)+' K',
+
+            mailaddr = row['mailfrom']
+            if row['mailbox'] in ['send','draft','sendover']:
+                mailaddr = row['mailto']
+            item = [mailaddr, att, 0, row['subject'], row['date'], str(row['size']/1024 + 1)+' K',
                     wx.TreeItemData(row)]
                 #print item
             panel = self.mailboxs[boxname]
@@ -148,7 +152,12 @@ class MainFrame(wx.Frame):
                 row['user'] = u
                 row['box'] = boxname
                 row['filepath'] = os.path.join(config.cf.datadir, u, row['mailbox'], row['filename'].lstrip(os.sep))
-                item = [row['mailfrom'], att, 0, row['subject'], row['date'], str(row['size']/1024 + 1)+' K',
+
+                mailaddr = row['mailfrom']
+                if row['mailbox'] in ['send','draft','sendover']:
+                    mailaddr = row['mailto']
+ 
+                item = [mailaddr, att, 0, row['subject'], row['date'], str(row['size']/1024 + 1)+' K',
                         wx.TreeItemData(row)]
                 #print item
                 panel = self.mailboxs[boxname]
@@ -622,7 +631,8 @@ class MainFrame(wx.Frame):
                         boxpanel.add_mail(item)
                         #mlist.add_item(item, mlist.today)
             elif task == 'alert':
-                pass
+                wx.MessageBox(u'错误信息:' + item['message'], u'邮件发送错误!', wx.OK|wx.ICON_ERROR)
+                
             else:
                 print 'uiq return error:', item
         

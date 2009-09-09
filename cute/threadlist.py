@@ -2,7 +2,7 @@
 import string, os, sys
 import wx, threading, time, traceback, base64
 import config, dbope
-import pop3
+import pop3, sendmail
 
 class Schedule(threading.Thread):
     def __init__(self):
@@ -152,7 +152,7 @@ class Task(threading.Thread):
             
             sql = "insert into mailinfo(filename,subject,mailfrom,mailto,size,ctime,date,attach,mailbox) values " \
                   "('%s','%s','%s','%s',%d,%s,'%s','%s','%s')" % \
-                  (filename, subject, minfo['from'], minfo['to'], minfo['size'],
+                  (filename, subject, minfo['from'], ','.join(minfo['to']), minfo['size'],
                    minfo['ctime'], minfo['date'], attach, minfo['mailbox'])
             
             try:
@@ -177,7 +177,7 @@ class Task(threading.Thread):
         try:
             x.send(s)
         except Exception, why:
-            mesg = str(e)
+            mesg = str(why)
         else:
             mesg = u'发送成功'
         x = {'name': item['name'], 'task':'alert', 'message':mesg} 

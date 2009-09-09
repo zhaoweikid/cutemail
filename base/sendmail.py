@@ -1,6 +1,5 @@
 #coding: UTF-8
 import smtplib, base64, string
-import sys; sys.path.insert(0, './pydns-2.3.3')
 import DNS, socket, sys, traceback
 
 class MySMTP(smtplib.SMTP):
