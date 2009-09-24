@@ -122,6 +122,7 @@ class Task(threading.Thread):
         try:
             ucf = config.cf.users[name]
         except:
+            traceback.print_exc()
             print 'get user config error!'
             return
         print ucf

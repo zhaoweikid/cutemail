@@ -37,11 +37,11 @@ class UsernamePage(wiz.WizardPageSimple):
         wx.StaticText(panel, -1, u'请输入用户名:')
         self.boxname = wx.TextCtrl(panel, -1, size=(200,-1))
         
-        wx.StaticText(panel, -1, '') 
-        wx.StaticText(panel, -1, u'您需要设置一个该邮箱的信件存储位置，不填表示使用默认设置')
+        #wx.StaticText(panel, -1, '') 
+        #wx.StaticText(panel, -1, u'您需要设置一个该邮箱的信件存储位置，不填表示使用默认设置')
         
-        wx.StaticText(panel, -1, u'请输入存储路径:')
-        self.storage = wx.TextCtrl(panel, -1, size=(200,-1))
+        #wx.StaticText(panel, -1, u'请输入存储路径:')
+        #self.storage = wx.TextCtrl(panel, -1, size=(200,-1))
         
         wx.StaticText(panel, -1, '') 
         wx.StaticText(panel, -1, u'请输入您的姓名，这将出现在您发送的邮件的发件人中。')
@@ -114,13 +114,13 @@ class ServerPage(wiz.WizardPageSimple):
         wx.StaticText(panel, -1, u'请输入POP3账户密码')
         
         wx.StaticText(panel, -1, u'POP3密码:')
-        self.pop3pass = wx.TextCtrl(panel, -1, size=(200,-1))
+        self.pop3pass = wx.TextCtrl(panel, -1, size=(200,-1), style=wx.TE_PASSWORD )
         
         wx.StaticText(panel, -1, '') 
         wx.StaticText(panel, -1, u'请输入您使用的SMTP服务器地址，比如smtp.163.com')
         
         wx.StaticText(panel, -1, u'SMTP服务器地址:')
-        self.smtpserver = wx.TextCtrl(panel, -1, size=(200,-1))
+        self.smtpserver = wx.TextCtrl(panel, -1, size=(200,-1), style=wx.TE_PASSWORD )
         
         wx.StaticText(panel, -1, '') 
         wx.StaticText(panel, -1, u'请输入SMTP账户密码，不填写表示不需要密码')
@@ -158,7 +158,7 @@ class TestPanel(wx.Panel):
         if ret:
             wx.MessageBox("Wizard completed successfully", "That's all folks!")
             print 'boxname:', page1.boxname.GetValue()
-            print 'storage:', page1.storage.GetValue()
+            #print 'storage:', page1.storage.GetValue()
         else:
             wx.MessageBox("Wizard was cancelled", "That's all folks!")
     

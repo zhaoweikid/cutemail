@@ -9,13 +9,13 @@ from   picmenu import PicMenu
 from   listindex import *
 import treelist, viewhtml
 import config, common, dbope, useradd
-import viewer, writer
+import writer
 import cPickle as pickle
 import pop3
 
 class MainFrame(wx.Frame):
     def __init__(self, parent, id, title):
-        wx.Frame.__init__(self, parent, id, title, wx.DefaultPosition, wx.Size(800, 600), 
+        wx.Frame.__init__(self, parent, id, title, wx.DefaultPosition, wx.Size(1000, 618), 
                             name="CuteMail", style=wx.DEFAULT_FRAME_STYLE )
         
         self.mgr = wx.aui.AuiManager()
@@ -75,7 +75,7 @@ class MainFrame(wx.Frame):
                           Bottom().Layer(0).Position(3).CloseButton(True).MaximizeButton(True))
         
         self.mgr.AddPane(self.attachctl, wx.aui.AuiPaneInfo().Name("attachctl").Caption(u"附件内容").
-                          Bottom().Layer(0).Position(3).CloseButton(True).MaximizeButton(True))
+                          Bottom().Layer(0).Position(4).CloseButton(True).MaximizeButton(True))
         # 显示当前选择的邮件列表面板
         print 'show:', self.last_mailbox
         self.mgr.GetPane(self.last_mailbox).Show()
@@ -579,11 +579,11 @@ class MainFrame(wx.Frame):
     def OnFileSaveAs(self, event):
         pass
     def OnFileGetMail(self, event):
-        if self.last_mailbox == '/':
+        data = self.tree.last_item_data()
+        if not data:
             return
-        name = self.last_mailbox.split('/')
-        print 'last_mailbox:', name
-        x = {'name':name[1], 'task':'recvmail'}
+        print 'last_mailbox:', data['user']
+        x = {'name':data['user'], 'task':'recvmail'}
         config.taskq.put(x)
         
     def OnFileSendMail(self, event):
@@ -687,7 +687,8 @@ class MainFrame(wx.Frame):
         ret = wizard.RunWizard(page1)
         if ret:
             me = {'name': page1.boxname.GetValue(),
-                  'storage': page1.storage.GetValue(),
+                  #'storage': page1.storage.GetValue(),
+                  'storage':'',
                   'mailname': page1.username.GetValue(),
                   'email': page1.email.GetValue(),
                   'pop3_server': page2.pop3server.GetValue(),

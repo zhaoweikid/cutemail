@@ -25,7 +25,10 @@ class OptionsDialog(sc.SizedDialog):
         self.items = {}
         for i in range(0, len(keys)):
             wx.StaticText(pane, -1, vals[i])
-            x = wx.TextCtrl(pane, -1, usercf[keys[i]], size=(60, -1))
+            if keys[i].endswith('pass'):
+                x = wx.TextCtrl(pane, -1, usercf[keys[i]], size=(60, -1), style=wx.TE_PASSWORD)
+            else:
+                x = wx.TextCtrl(pane, -1, usercf[keys[i]], size=(60, -1))
             x.SetSizerProps(expand=True)
             self.items[keys[i]] = x
 

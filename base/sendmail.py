@@ -1,6 +1,6 @@
 #coding: UTF-8
 import smtplib, base64, string
-import DNS, socket, sys, traceback
+import socket, sys, traceback
 
 class MySMTP(smtplib.SMTP):
     def connect(self, host='localhost', port = 0):
@@ -118,6 +118,7 @@ class SendMailMX(SendMail):
         self.to_addr = toaddr
 
     def dns_analysis(self, domain):
+        import DNS
         DNS.ParseResolvConf()
 
         r = DNS.Request(qtype = 'mx')

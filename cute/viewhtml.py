@@ -4,9 +4,15 @@ import wx.html
 import  wx.lib.mixins.listctrl  as  listmix
 import mailparse, imagelist
 
-class AttachListCtrl (imagelist.ImageList):
-    def __init__(self, parent, rundir, size=wx.Size(-1,-1)):
-        imagelist.ImageList.__init__(self, parent, rundir)
+if sys.platform.startswith('win'):
+    class AttachListCtrl (imagelist.ImageListWin):
+        def __init__(self, parent, rundir, size=wx.Size(-1,-1)):
+            imagelist.ImageListWin.__init__(self, parent, rundir)
+else:
+    class AttachListCtrl (imagelist.ImageListUnix):
+        def __init__(self, parent, rundir, size=wx.Size(-1,-1)):
+            imagelist.ImageListUnix.__init__(self, parent, rundir)
+
         
 if wx.Platform == '__WXMSW__':
     import wx.lib.iewin as iewin
@@ -26,7 +32,24 @@ if wx.Platform == '__WXMSW__':
             
         def set_url(self, url):
             self.html.Navigate(url)
-
+elif wx.Platform == '__WXMAC__':
+    import wx.webkit
+    class ViewHtml (wx.Panel):
+        def __init__(self, parent):
+            wx.Panel.__init__(self, parent, -1)
+            
+            self.html = wx.webkit.WebKitCtrl(self, -1)
+            self.box = wx.BoxSizer(wx.VERTICAL)
+            self.box.Add(self.html, 1, wx.GROW)
+             
+            self.SetSizer(self.box)
+    
+        def set_text(self, text):
+            self.html.SetPageSource(text)
+            
+        def set_url(self, url):
+            self.html.LoadURL(url)
+ 
 else:
     class ViewHtml (wx.Panel):
         def __init__(self, parent):

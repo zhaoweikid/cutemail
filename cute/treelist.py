@@ -5,6 +5,7 @@ import  wx.lib.dialogs
 import cStringIO, types
 import config, common, dbope, utils, mailparse
 from optiondlg import OptionsDialog
+from common import load_bitmap
         
 class MailListPanel(wx.Panel):
     def __init__(self, parent, flag=''):       
@@ -28,7 +29,12 @@ class MailListPanel(wx.Panel):
         self.pngs = {self.image_attach:0, self.image_flag:0, self.image_mark:0}
         
         for k in self.pngs:
-            self.pngs[k] = self.il.Add(common.load_bitmap(k))
+            print 'load png:', k
+            try:
+                self.pngs[k] = self.il.Add(load_bitmap(k))
+            except:
+                testfile = os.path.join(config.cf.home , 'bitmaps/16/blender.png')
+                self.pngs[k] = self.il.Add(load_bitmap(testfile))
         
         for c in cols:        
             if c == 'attach':
@@ -250,6 +256,14 @@ class MailListPanel(wx.Panel):
             f = open(filepath, 'r')
             source = f.read()
             f.close()
+            
+            # fix me: use gbk and utf-8 is not a good idear
+            try:
+                source = unicode(source, 'gbk')
+            except:
+                source = unicode(source, 'utf-8')
+
+
             dlg = wx.lib.dialogs.ScrolledMessageDialog(self, source, u'信件原文',
                                 size = (800, 600), 
                                 style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX)
