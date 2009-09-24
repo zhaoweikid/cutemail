@@ -97,7 +97,7 @@ class POP3Client:
             filedata = '\n'.join(data[1])
             
             hashdir = '%02d' % (hash(k) % self.hashdir_count)
-            filename = self.time_path + os.sep + hashdir + os.sep + '%d.' % (int(time.time())) + k + '.eml'
+            filename = os.path.join(self.time_path, hashdir, '%d.' % (int(time.time())) + k + '.eml')
             print 'file:', filename, 'size:', len(filedata)
             
             

@@ -71,7 +71,7 @@ def get_content(msg, ret):
                 print >>sys.stderr, 'charset convert error:', e
  
             if subtype == 'plain':
-                ret['plain'] = cnt
+                ret['plain'] = ret['plain'] + '\r\n' + cnt
             elif subtype == 'html':
                 ret['html'] = cnt
         else:
