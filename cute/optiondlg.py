@@ -31,7 +31,7 @@ class OptionsDialog(sc.SizedDialog):
 
         self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL))
         
-        self.SetMinSize(wx.Size(400, 400))
+        self.SetMinSize(wx.Size(400, 350))
         self.Fit()
 
 

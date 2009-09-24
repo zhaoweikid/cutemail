@@ -17,10 +17,7 @@ class MailListPanel(wx.Panel):
         #self.idx = self.il.Add(images.getSmilesBitmap())
         
         self.tree.SetImageList(self.il)
-        if flag:
-            cols = [u'发件人','attach','mark',u'邮件主题',u'日期',u'邮件大小']
-        else:
-            cols = [u'发件人','attach','mark',u'邮件主题',u'日期',u'邮件大小']
+        cols = [u'发件人','attach','mark',u'邮件主题',u'日期',u'邮件大小']
         
         item = ['zhaowei@bobo.com', 1,1, u'呵呵我的测试', '20090210', '12873']
         self.lastitem = None
@@ -141,12 +138,14 @@ class MailListPanel(wx.Panel):
             self.ID_POPUP_SEND_SEC = wx.NewId()
             self.ID_POPUP_VIEW = wx.NewId()
             self.ID_POPUP_SOURCE = wx.NewId()
+            self.ID_POPUP_DELETE = wx.NewId()
             
             self.Bind(wx.EVT_MENU, self.OnPopupReply, id=self.ID_POPUP_REPLY) 
             self.Bind(wx.EVT_MENU, self.OnPopupForward, id=self.ID_POPUP_FORWARD) 
             self.Bind(wx.EVT_MENU, self.OnPopupSendSec, id=self.ID_POPUP_SEND_SEC) 
             self.Bind(wx.EVT_MENU, self.OnPopupView, id=self.ID_POPUP_VIEW) 
             self.Bind(wx.EVT_MENU, self.OnPopupSource, id=self.ID_POPUP_SOURCE) 
+            self.Bind(wx.EVT_MENU, self.OnPopupDelete, id=self.ID_POPUP_DELETE) 
             
         menu = wx.Menu()
         menu.Append(self.ID_POPUP_REPLY, u'回复邮件')
@@ -155,10 +154,21 @@ class MailListPanel(wx.Panel):
         menu.AppendSeparator()
         menu.Append(self.ID_POPUP_VIEW, u'查看邮件')
         menu.AppendSeparator()
+        menu.Append(self.ID_POPUP_DELETE, u'删除邮件')
+        menu.AppendSeparator()
         menu.Append(self.ID_POPUP_SOURCE, u'信件原文')
         
         self.PopupMenu(menu)
         menu.Destroy()
+
+    def get_item_data(self, item=None):
+        if not item:
+            item = self.lastitem
+        if not item:
+            raise ValueError, 'item must not None'
+        
+        data = self.tree.GetItemData(item).GetData()
+        return data 
 
     def get_item_content(self, item=None):
         if not item:
@@ -176,15 +186,59 @@ class MailListPanel(wx.Panel):
         
         return data
 
+    def change_box(self, newbox='trash'):
+        try:
+            info = self.get_item_data()
+        except Exception, e:
+            print 'get_item_content error:', str(e)
+            return
+            
+        id = info['id']
+        mailbox = info['mailbox'] 
+        if newbox == 'recv':
+            basepath = os.path.basename(info['filename'])
+            datestr = info['ctime'][:6]
+            hashstr = '%02d' % (hash(basepath) % 10)
+            newfilename = os.path.join(datestr, hashstr, basepath)
+        else:
+            newfilename = os.path.basename(info['filename'])
+
+        print 'change box from:', mailbox, ' to:', newbox
+        if mailbox == 'trash': 
+            sql = "delete from mailinfo where id=%s" % (str(id))
+        else:
+            sql = "update mailinfo set mailbox='%s',filename='%s' where id=%s" % (newbox, newfilename, str(id))
+        print 'delete:', sql
+        
+        username = info['user']
+        db = dbope.openuser(config.cf, username)
+        db.execute(sql)
+        db.close()
+        
+        self.remove_item()
+        self.parent.load_db_one(username, id)
+        
+        if mailbox == 'trash':
+            os.remove(info['filepath']) 
+        else:
+            newfile = os.path.join(config.cf.datadir, username, newbox, newfilename)
+            print 'newfile:', newfile
+            os.rename(info['filepath'], newfile)
+
+
+
     def OnPopupReply(self, evt):
-        pass
-    
+        self.parent.OnMailReply(evt)
+
     def OnPopupForward(self, evt):
-        pass
+        self.parent.OnMailForward(evt)
+    
     def OnPopupSendSec(self, evt):
-        pass
+        self.parent.OnMailSendSec(evt)
+
     def OnPopupView(self, evt):
         pass
+
     def OnPopupSource(self, evt):
         if self.lastitem:
             s = self.tree.GetItemData(self.lastitem).GetData()
@@ -200,7 +254,12 @@ class MailListPanel(wx.Panel):
                                 size = (800, 600), 
                                 style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX)
             dlg.ShowModal()
-        
+       
+    def OnPopupDelete(self, evt):
+        print 'delete mail'
+        self.change_box('trash')
+ 
+
     def OnActivate(self, evt):
         print 'OnActivate: %s' % self.tree.GetItemText(evt.GetItem())
         self.lastitem = evt.GetItem()
@@ -241,7 +300,7 @@ class MailListPanel(wx.Panel):
         item, flags, col = self.tree.HitTest(pos)
         if item:
             self.tree.SelectItem(item)
-            print 'Flags: %s, Col:%s, Text: %s' % (flags, col, self.tree.GetItemText(item, col))
+            #print 'Flags: %s, Col:%s, Text: %s' % (flags, col, self.tree.GetItemText(item, col))
             
         self.make_popup_menu()
 

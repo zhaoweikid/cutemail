@@ -74,6 +74,7 @@ class Schedule(threading.Thread):
             #print threadname, len(self.tasks)
             time.sleep(1)
             t1 = time.localtime()
+            # 分，小时，日，月，周
             t = [t1[4], t1[3], t1[2], t1[1], t1[6]]
             # 循环获取任务列表里的任务
             for x in range(0, len(self.tasks)):
@@ -179,7 +180,7 @@ class Task(threading.Thread):
             x.authsend(s, usercf['smtp_pass'])
         except Exception, why:
             traceback.print_exc()
-            mesg = str(why)
+            mesg = u'信件发送失败! ' + str(why)
         else:
             mesg = u'信件发送成功!'
         x = {'name': item['name'], 'task':'alert', 'message':mesg} 

@@ -386,9 +386,9 @@ class MainFrame(wx.Frame):
         self.mailmenu.Append(self.ID_MAIL_OPTIONS, u"属性", 'preferences.png')
         
         self.mailboxmenu = PicMenu(self)
-        self.mailboxmenu.Append(self.ID_MAILBOX_USER_NEW, u"新建", 'user.png')        
-        self.mailboxmenu.Append(self.ID_MAILBOX_USER_RENAME, u"更名", 'user.png')
-        self.mailboxmenu.Append(self.ID_MAILBOX_USER_DEL, u"删除", "Delete.png")
+        self.mailboxmenu.Append(self.ID_MAILBOX_USER_NEW, u"新建邮箱帐户", 'user.png')        
+        self.mailboxmenu.Append(self.ID_MAILBOX_USER_RENAME, u"更名邮箱帐户", 'user.png')
+        self.mailboxmenu.Append(self.ID_MAILBOX_USER_DEL, u"删除邮箱帐户", "user.png")
         self.mailboxmenu.AppendSeparator()
 
         self.mailboxmenu.Append(self.ID_MAILBOX_NEW, u"新建邮件夹", 'folder_open.png')
@@ -568,7 +568,8 @@ class MainFrame(wx.Frame):
                         #mlist.add_item(item, mlist.today)
             elif task == 'alert':
                 wx.MessageBox(u'发送返回信息:' + item['message'], u'邮件信息!', wx.OK|wx.ICON_ERROR)
-                
+            elif task == 'status':
+                pass
             else:
                 print 'uiq return error:', item
         
@@ -829,24 +830,7 @@ class MainFrame(wx.Frame):
         if not panel:
             return
         
-        try:
-            info = panel.get_item_content()
-        except Exception, e:
-            print 'get_item_content error:', str(e)
-            
-        id = info['id']
-        sql = "update mailinfo set mailbox='trash' where id=" + str(id)
-        print 'delete:', sql
-        
-        s = self.last_mailbox.split('/')
-        username = s[1]
-        db = dbope.openuser(config.cf, username)
-        db.execute(sql)
-        db.close()
-        
-        panel.remove_item()
-        
-        self.load_db_one(username, id)
+        panel.change_box('trash')
 
     def OnMailFlag(self, event):
         pass
