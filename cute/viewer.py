@@ -2,6 +2,8 @@
 import os, sys
 import wx
 import wx.lib.iewin as iewin
+import logfile
+from logfile import loginfo, logwarn, logerr
 
 rundir = os.path.dirname(os.path.dirname(os.path.abspath(sys.argv[0]))).replace("\\", "/")
 sys.path.insert(0, os.path.join(rundir, 'base'))

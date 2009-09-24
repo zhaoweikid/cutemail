@@ -7,7 +7,8 @@ from picmenu import PicMenu
 from common import load_bitmap, load_image
 import images
 import viewhtml
-import createmail, config, dbope
+import createmail, config, dbope, logfile
+from logfile import loginfo, logwarn, logerr
 
 class WriterFrame (wx.Frame):
     def __init__(self, parent, rundir, maildata):
@@ -257,7 +258,7 @@ class WriterFrame (wx.Frame):
         s = str(time.time())+'.eml'
         filedir = os.path.join(config.cf.datadir, self.maildata['user'], box)
         filepath = os.path.join(filedir, s)
-        print 'save file:', filepath
+        loginfo('save file:', filepath)
         if not os.path.isdir(filedir):
             os.mkdir(filedir)
         self.create_mail(filepath)
@@ -265,7 +266,7 @@ class WriterFrame (wx.Frame):
         sql = "insert into mailinfo(filename,subject,mailfrom,mailto,size,ctime,date,attach,mailbox) values ('%s','%s','%s','%s',%d,%s,'%s','%s','%s')" % \
               (s, self.maildata['subject'], self.maildata['from'], ','.join(self.maildata['to']), self.maildata['size'],
                'datetime()', self.maildata['date'], self.maildata['attach'], box)
-        print sql 
+        loginfo(sql)
         db = dbope.openuser(config.cf, self.maildata['user'])
         db.execute(sql)
         ret = db.query("select last_insert_rowid();", False)
@@ -317,7 +318,7 @@ class WriterFrame (wx.Frame):
         if dlg.ShowModal() == wx.ID_OK:
             paths = dlg.GetPaths()
             for path in paths:
-                print 'attach:', path
+                loginfo('attach:', path)
                 
                 self.attachlist.append(path)
                 self.attach.add_file(os.path.basename(path), {'path':path})

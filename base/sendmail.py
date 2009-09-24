@@ -1,6 +1,8 @@
 #coding: UTF-8
 import smtplib, base64, string
 import socket, sys, traceback
+import logfile
+from logfile import loginfo, logwarn, logerr
 
 class MySMTP(smtplib.SMTP):
     def connect(self, host='localhost', port = 0):
@@ -12,18 +14,18 @@ class MySMTP(smtplib.SMTP):
                 except ValueError:
                     raise socket.error, "nonnumeric port"
         if not port: port = SMTP_PORT
-        if self.debuglevel > 0: print>>stderr, 'connect:', (host, port)
+        if self.debuglevel > 0: logerr('connect:', (host, port))
         msg = "getaddrinfo returns an empty list"
         self.sock = None
         for res in socket.getaddrinfo(host, port, 0, socket.SOCK_STREAM):
             af, socktype, proto, canonname, sa = res
             try:
                 self.sock = socket.socket(af, socktype, proto)
-                if self.debuglevel > 0: print>>stderr, 'connect:', sa
+                if self.debuglevel > 0: logerr('connect:', sa)
                 self.sock.settimeout(30)
                 self.sock.connect(sa)
             except socket.error, msg:
-                if self.debuglevel > 0: print>>stderr, 'connect fail:', msg
+                if self.debuglevel > 0: logerr('connect fail:', msg)
                 if self.sock:
                     self.sock.close()
                 self.sock = None
@@ -32,7 +34,7 @@ class MySMTP(smtplib.SMTP):
         if not self.sock:
             raise socket.error, msg
         (code, msg) = self.getreply()
-        if self.debuglevel > 0: print>>stderr, "connect:", msg
+        if self.debuglevel > 0: logerr("connect:", msg)
         return (code, msg)
 
 class SessionError(Exception):
@@ -129,16 +131,12 @@ class SendMailMX(SendMail):
     #解析域名，并且对mx记录进行优先级排序，得到排序后mx记录列表
     def get_mx(self, domain):
         mx_list = self.dns_analysis(domain)
-        print "debug mx_list"
-        print mx_list
-
         #mx_dic结构：{域名：优先级}
         mx_dic = {}
         mx = []
         if mx_list:
             for item in mx_list:
-                print 'debug item'
-                print item 
+                loginfo(item)
                 mx_dic[item['data'][1]] = item['data'][0]
 
             m = mx_dic.items()
@@ -165,7 +163,7 @@ class SendMailMX(SendMail):
                     sendmail.send(message) 
                     break
                 except socket.error, e:
-                    traceback.print_exc()
+                    traceback.print_exc(file=logfile.logobj.log)
                     continue
 
 

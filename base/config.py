@@ -3,7 +3,8 @@ import os, string, sys, traceback, types
 import utils
 import threading, Queue
 import cPickle as pickle
-import dbope
+import dbope, logfile
+from logfile import loginfo, logwarn, logerr
 VERSION = " CuteMail 1.0"
 
 # 全局配置信息
@@ -100,7 +101,7 @@ class AppConfig:
         conf = self.conf_init()
         conf.update(incf)
         if not conf['mailbox']:
-            print 'add default mailbox'
+            loginfo('add default mailbox')
             boxs = []
             for x in self.mailbox_cn_names:
                 boxs.append([x, []])
@@ -153,7 +154,7 @@ class AppConfig:
             #userconf = {'config': conf, 'mailinfo':mailinfo}
             self.users[conf['name']] = conf
             self.mailboxs[conf['email']] = conf
-            print conf['mailbox']
+            loginfo(conf['mailbox'])
     
     def load_conf(self, name):
         conf_path = os.path.join(self.datadir, name, 'config.db')

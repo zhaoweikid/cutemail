@@ -14,6 +14,8 @@ from email.MIMEBase      import MIMEBase
 from email.MIMEMessage   import MIMEMessage
 from email.MIMEMultipart import MIMEMultipart
 import locale
+import logfile
+from logfile import loginfo, logwarn, logerr
 
 charset = locale.getdefaultlocale()[1]
 
@@ -24,7 +26,7 @@ def parsedate(s):
     try:
         t = time.strptime(' '.join(ns[:5]), "%a, %d %b %Y %H:%M:%S")
     except ValueError, e:
-        print e
+        logerr(e)
         return None
     return str(datetime.datetime(*t[:6]))
 
@@ -68,7 +70,7 @@ def get_content(msg, ret):
             try:
                 cnt = unicode(cnt, ret['charset'], 'ignore')
             except Exception, e:
-                print >>sys.stderr, 'charset convert error:', e
+                logerr('charset convert error:', e)
  
             if subtype == 'plain':
                 ret['plain'] = ret['plain'] + '\r\n' + cnt
@@ -147,14 +149,14 @@ def get_attach(msg, dirname, filename):
                     f.write(cnt)
                     f.close()
             else:
-                print 'aname:', type(aname), aname
-                print 'filename:', type(filename), filename
+                loginfo('aname:', type(aname), aname)
+                loginfo('filename:', type(filename), filename)
                 if aname == filename:
                     tmpfile = os.path.join(dirname, filename)
-                    print 'tmpfile:', tmpfile
+                    loginfo('tmpfile:', tmpfile)
                     f = open(tmpfile, "wb")
                     cnt = msg.get_payload(decode=True)
-                    print 'write:', len(cnt)
+                    loginfo('write:', len(cnt))
                     f.write(cnt)
                     f.close()
 

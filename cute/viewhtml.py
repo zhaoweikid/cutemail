@@ -2,15 +2,16 @@ import string, sys, os
 import wx
 import wx.html
 import  wx.lib.mixins.listctrl  as  listmix
-import mailparse, imagelist
+import mailparse, imagelist, logfile
+from logfile import loginfo, logwarn, logerr
 
 if sys.platform.startswith('win'):
     class AttachListCtrl (imagelist.ImageListWin):
-        def __init__(self, parent, rundir, size=wx.Size(-1,-1)):
+        def __init__(self, parent, rundir, size=wx.Size(48,100)):
             imagelist.ImageListWin.__init__(self, parent, rundir)
 else:
     class AttachListCtrl (imagelist.ImageListUnix):
-        def __init__(self, parent, rundir, size=wx.Size(-1,-1)):
+        def __init__(self, parent, rundir, size=wx.Size(48,100)):
             imagelist.ImageListUnix.__init__(self, parent, rundir)
 
         

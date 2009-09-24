@@ -3,6 +3,8 @@ import os, sys
 import wx
 import wx.wizard as wiz
 import wx.lib.sized_controls as sc
+import logfile
+from logfile import loginfo, logwarn, logerr
 
 tmpuser = {}
 
@@ -140,7 +142,7 @@ class TestPanel(wx.Panel):
     
     def OnRunSimpleWizard(self, evt):
         import images
-        print 'run simple wizard...'
+        loginfo('run simple wizard...')
         wizard = wiz.Wizard(self, -1, u"新建用户向导", images.WizTest1.GetBitmap())
 
         page1 = UsernamePage(wizard, "page 1")
@@ -154,10 +156,10 @@ class TestPanel(wx.Panel):
     
         wizard.GetPageAreaSizer().Add(page1)
         ret = wizard.RunWizard(page1)
-        print 'ret:', ret
+        loginfo('ret:', ret)
         if ret:
             wx.MessageBox("Wizard completed successfully", "That's all folks!")
-            print 'boxname:', page1.boxname.GetValue()
+            loginfo('boxname:', page1.boxname.GetValue())
             #print 'storage:', page1.storage.GetValue()
         else:
             wx.MessageBox("Wizard was cancelled", "That's all folks!")

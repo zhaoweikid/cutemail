@@ -6,6 +6,8 @@ import cStringIO, types
 import config, common, dbope, utils, mailparse
 from optiondlg import OptionsDialog
 from common import load_bitmap
+import logfile
+from logfile import loginfo, logwarn, logerr
         
 class MailListPanel(wx.Panel):
     def __init__(self, parent, flag=''):       
@@ -29,7 +31,7 @@ class MailListPanel(wx.Panel):
         self.pngs = {self.image_attach:0, self.image_flag:0, self.image_mark:0}
         
         for k in self.pngs:
-            print 'load png:', k
+            loginfo('load png:', k)
             try:
                 self.pngs[k] = self.il.Add(load_bitmap(k))
             except:
@@ -196,7 +198,7 @@ class MailListPanel(wx.Panel):
         try:
             info = self.get_item_data()
         except Exception, e:
-            print 'get_item_content error:', str(e)
+            logerr('get_item_content error:', str(e))
             return
             
         id = info['id']
@@ -209,12 +211,12 @@ class MailListPanel(wx.Panel):
         else:
             newfilename = os.path.basename(info['filename'])
 
-        print 'change box from:', mailbox, ' to:', newbox
+        loginfo('change box from:', mailbox, ' to:', newbox)
         if mailbox == 'trash': 
             sql = "delete from mailinfo where id=%s" % (str(id))
         else:
             sql = "update mailinfo set mailbox='%s',filename='%s' where id=%s" % (newbox, newfilename, str(id))
-        print 'delete:', sql
+        loginfo('delete:', sql)
         
         username = info['user']
         db = dbope.openuser(config.cf, username)
@@ -228,7 +230,7 @@ class MailListPanel(wx.Panel):
             os.remove(info['filepath']) 
         else:
             newfile = os.path.join(config.cf.datadir, username, newbox, newfilename)
-            print 'newfile:', newfile
+            loginfo('newfile:', newfile)
             os.rename(info['filepath'], newfile)
 
 
@@ -250,9 +252,9 @@ class MailListPanel(wx.Panel):
             s = self.tree.GetItemData(self.lastitem).GetData()
             if not s:
                 return
-            print 'Source:', s
+            loginfo('Source:', s)
             filepath = os.path.join(config.cf.datadir, s['user'], s['mailbox'], s['filename'].lstrip(os.sep))
-            print 'filepath:', filepath
+            loginfo('filepath:', filepath)
             f = open(filepath, 'r')
             source = f.read()
             f.close()
@@ -270,12 +272,12 @@ class MailListPanel(wx.Panel):
             dlg.ShowModal()
        
     def OnPopupDelete(self, evt):
-        print 'delete mail'
+        loginfo('delete mail')
         self.change_box('trash')
  
 
     def OnActivate(self, evt):
-        print 'OnActivate: %s' % self.tree.GetItemText(evt.GetItem())
+        loginfo('OnActivate: %s' % self.tree.GetItemText(evt.GetItem()))
         self.lastitem = evt.GetItem()
         row = self.tree.GetItemData(evt.GetItem()).GetData()
         if not row:
@@ -304,7 +306,7 @@ class MailListPanel(wx.Panel):
                     filename = os.path.join(config.cf.datadir, name, row['mailbox'], row['filename'].strip(os.sep))
                     homename = os.path.join(config.cf.datadir, name)
                     attachdata = {'file':filename, 'home':homename, 'attach':item[0]}
-                    print 'attachdata:', attachdata
+                    loginfo('attachdata:', attachdata)
                     attachctl.add_file(item[0], attachdata)
                     pos += 1
 
@@ -322,7 +324,7 @@ class MailListPanel(wx.Panel):
         self.tree.SetSize(self.GetSize())
 
     def OnColClick(self, evt):
-        print 'col click'
+        loginfo('col click')
 
 class MailboxTree(wx.TreeCtrl):
     def __init__(self, parent):
@@ -350,12 +352,12 @@ class MailboxTree(wx.TreeCtrl):
     
     def last_item_remove(self):
         data = self.last_item_data()
-        print 'data:', data
+        loginfo('data:', data)
         dlg = wx.MessageDialog(self, u'删除该邮件夹的同时会删除里面的所有邮件!', u'注意',
                                wx.YES_NO|wx.ICON_INFORMATION)
         if dlg.ShowModal() == wx.NO:
             dlg.Destroy()
-            print 'return, not remove'
+            loginfo('return, not remove')
             return
         dlg.Destroy() 
         usercf = config.cf.users[data['user']]
@@ -394,7 +396,7 @@ class MailboxTree(wx.TreeCtrl):
         config.cf.dump_conf(data['user'])
         newpath = '/' + '/'.join(parts)
         
-        print 'newpath:', newpath
+        loginfo('newpath:', newpath)
         oldpanel = self.parent.mailboxs[data['path']]
         del self.parent.mailboxs[data['path']]
         self.parent.mailboxs[newpath] = oldpanel
@@ -457,9 +459,9 @@ class MailboxTree(wx.TreeCtrl):
         return item
             
     def add_to_tree(self, parent, name, user, tpathls=[]):
-        print 'add_to_tree:', name
+        loginfo('add_to_tree:', name)
         tpath = '/' + '/'.join(tpathls) + '/' + name[0]
-        print 'tpath:', tpath
+        loginfo('tpath:', tpath)
         
         p = self.add_tree_node(parent, name[0], user, tpath)
         tpathls.append(name[0])
@@ -533,10 +535,10 @@ class MailboxTree(wx.TreeCtrl):
         self.item = evt.GetItem()
         if self.item:
             data = self.GetPyData(self.item)
-            print data
+            loginfo(data)
             
             tpath = data['path']
-            print 'OnSelChanged path:', tpath
+            loginfo('OnSelChanged path:', tpath)
             
             self.parent.display_mailbox(tpath)
             
@@ -545,7 +547,7 @@ class MailboxTree(wx.TreeCtrl):
         self.SetSize(self.GetSize())
 
     def OnRightUp(self, evt):
-        print 'tree right up...'
+        loginfo('tree right up...')
         pt = evt.GetPosition()
         item, flags = self.HitTest(pt)
         

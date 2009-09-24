@@ -2,7 +2,8 @@
 import os, sys
 import wx
 import wx.lib.sized_controls as sc
-import config
+import config, logfile
+from logfile import loginfo, logwarn, logerr
 
 class OptionsDialog(sc.SizedDialog):
     def __init__(self, parent, usercf):
@@ -14,7 +15,7 @@ class OptionsDialog(sc.SizedDialog):
             'pop3_server','pop3_pass','smtp_server','smtp_pass'] 
         vals = []
         for k in keys:
-            print 'find:', k
+            loginfo('find:', k)
             i = config.cf.mailuser_fields.index(k)
             vals.append(config.cf.mailuser_fields_cn[i])
        

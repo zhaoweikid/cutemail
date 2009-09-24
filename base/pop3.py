@@ -2,6 +2,8 @@
 import string, os, sys, time, random
 import traceback
 import poplib, config, mailparse, utils
+import logfile
+from logfile import loginfo, logwarn, logerr
 
 class POP3Client:
     def __init__(self, mailuser):
@@ -27,7 +29,7 @@ class POP3Client:
 
         self.mailuser = mailuser
         self.home = config.cf.datadir+os.sep+mailuser['name']
-        print 'home:', self.home
+        loginfo('home:', self.home)
         
         for n in config.cf.mailbox_map_cn2en.values():
             npath = self.home + os.sep + n
@@ -67,10 +69,10 @@ class POP3Client:
         for x in info1:
             x = string.strip(x)
             a = string.split(x)
-            print 'uidl:', a
+            loginfo('uidl:', a)
             if a[1] not in self.mailuser['uidls']:
                 self.uidls.append(a)
-        print 'uidl count:', len(self.uidls)
+        loginfo('uidl count:', len(self.uidls))
 
     def mails(self):
         name = self.mailuser['name']
@@ -79,13 +81,13 @@ class POP3Client:
         mailinfos = []
         for item in self.uidls:
             i, k = item
-            print 'uidl:', i, k
+            loginfo('uidl:', i, k)
             trycount = 0
             while True:
                 try:
                     data = self.pop3.retr(i)
                 except Exception, e:
-                    print e
+                    logerr(e)
                     trycount += 1
                     if trycount == 3:
                         break
@@ -98,13 +100,13 @@ class POP3Client:
             
             hashdir = '%02d' % (hash(k) % self.hashdir_count)
             filename = os.path.join(self.time_path, hashdir, '%d.' % (int(time.time())) + k + '.eml')
-            print 'file:', filename, 'size:', len(filedata)
+            loginfo('file:', filename, 'size:', len(filedata))
             
             
             try:
                 ret = mailparse.decode_mail_string(filedata)
             except Exception, e:
-                traceback.print_exc()
+                traceback.print_exc(file=logfile.logobj.log)
                 continue
             
             f = open(filename, 'w')
@@ -117,7 +119,7 @@ class POP3Client:
             ret['uidl'] = k
             mailinfos.append(ret)
             #print ret
-            print '======== count:', count, ' of ', len(self.uidls)
+            loginfo('======== count:', count, ' of ', len(self.uidls))
             #config.cf.mail_add(name, ret) 
         
             self.mailuser['uidls'].add(k)

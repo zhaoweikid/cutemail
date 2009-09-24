@@ -7,6 +7,8 @@ from email.MIMEBase import MIMEBase
 from email import Utils, Encoders
 import mimetypes, sys, email, os
 import string, time, types
+import logfile
+from logfile import loginfo, logwarn, logerr
 
 class CreateEmail:
     def __init__(self, messagetext, messagehtml, filelist, headdict):
@@ -60,9 +62,9 @@ class CreateEmail:
         #创建附件
         for filename in self.filelist:
             onlyfilename = os.path.basename(filename)
-            print 'type:', type(onlyfilename)
+            loginfo('type:', type(onlyfilename))
             onlyfilename = '=?utf-8?b?%s?=' % (base64.b64encode(onlyfilename.encode('utf-8')))
-            print 'onlyfilename:', onlyfilename
+            loginfo('onlyfilename:', onlyfilename)
             attachment = MIMEText(Encoders._bencode(open(filename, 'rb').read()))
             attachment.replace_header('Content-type', 'Application/octet-stream: name="' + onlyfilename + '"')
             attachment.replace_header('Content-Transfer-Encoding', 'base64')

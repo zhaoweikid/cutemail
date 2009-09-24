@@ -1,8 +1,9 @@
-# -*- encoding: utf-8 -*-
+#  -*- encoding: utf-8 -*-
 import string, os, sys
 import wx, threading, time, traceback, base64
 import config, dbope
-import pop3, sendmail
+import pop3, sendmail, logfile
+from logfile import loginfo, logwarn, logerr
 
 class Schedule(threading.Thread):
     def __init__(self):
@@ -95,7 +96,7 @@ class Schedule(threading.Thread):
                             continue 
                     
                     config.taskq.put(v)
-                    print 'put task ok!'
+                    loginfo('put task ok!')
                      
 class Task(threading.Thread):
     def __init__(self):
@@ -112,7 +113,7 @@ class Task(threading.Thread):
                 continue
             func = getattr(self, item['task'])
             if not func:
-                print 'task type not found'
+                loginfo('task type not found')
             else:
                 func(item)
             
@@ -122,10 +123,10 @@ class Task(threading.Thread):
         try:
             ucf = config.cf.users[name]
         except:
-            traceback.print_exc()
-            print 'get user config error!'
+            traceback.print_exc(file=logfile.logobj.log)
+            loginfo('get user config error!')
             return
-        print ucf
+        loginfo(ucf)
         mailinfos = []
         try:
             pop = pop3.POP3Client(ucf)
@@ -136,7 +137,7 @@ class Task(threading.Thread):
             pop.close()
         except Exception, e:
             error = str(e)
-            traceback.print_exc()
+            traceback.print_exc(file=logfile.logobj.log)
     
         dbpath = os.path.join(config.cf.datadir, name, 'mailinfo.db')
         conn = dbope.DBOpe(dbpath)
@@ -160,19 +161,19 @@ class Task(threading.Thread):
             try:
                 conn.execute(sql)
             except:
-                traceback.print_exc()
+                traceback.print_exc(file=logfile.logobj.log)
         conn.close()
-        print config.cf.users[name]
+        loginfo(config.cf.users[name])
         # 有可能有冲突
         config.cf.dump_conf(name)
-        print 'recvmali complete!'
+        loginfo('recvmali complete!')
         x = {'name':name, 'task':'updatebox', 'message':''}
         config.uiq.put(x, timeout=5)
     
     def sendmail(self, item):
         tos = item['to']
         usercf = config.cf.users[item['name']]
-        print 'smtp server:', usercf['smtp_server']
+        loginfo('smtp server:', usercf['smtp_server'])
         x = sendmail.SendMail(usercf['smtp_server'], item['from'], item['to'])
         f = open(item['path'], 'r')
         s = f.read()
@@ -180,7 +181,7 @@ class Task(threading.Thread):
         try:
             x.authsend(s, usercf['smtp_pass'])
         except Exception, why:
-            traceback.print_exc()
+            traceback.print_exc(file=logfile.logobj.log)
             mesg = u'信件发送失败! ' + str(why)
         else:
             mesg = u'信件发送成功!'

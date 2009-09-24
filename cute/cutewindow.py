@@ -8,10 +8,11 @@ import wx.lib.sized_controls as sc
 from   picmenu import PicMenu
 from   listindex import *
 import treelist, viewhtml
-import config, common, dbope, useradd
+import config, common, dbope, useradd, logfile
 import writer
 import cPickle as pickle
 import pop3
+from logfile import loginfo, logerr, logwarn
 
 class MainFrame(wx.Frame):
     def __init__(self, parent, id, title):
@@ -75,9 +76,10 @@ class MainFrame(wx.Frame):
                           Bottom().Layer(0).Position(3).CloseButton(True).MaximizeButton(True))
         
         self.mgr.AddPane(self.attachctl, wx.aui.AuiPaneInfo().Name("attachctl").Caption(u"附件内容").
-                          Bottom().Layer(0).Position(4).CloseButton(True).MaximizeButton(True))
+                          BestSize(wx.Size(48,100)).MinSize(wx.Size(48,100)).Bottom().
+                          Layer(0).Position(4).CloseButton(True).MaximizeButton(True))
         # 显示当前选择的邮件列表面板
-        print 'show:', self.last_mailbox
+        loginfo('show:', self.last_mailbox)
         self.mgr.GetPane(self.last_mailbox).Show()
         self.mgr.Update()
         
@@ -89,7 +91,7 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_SIZE, self.OnSize)
         
     def add_mailbox_panel(self, k, obj=None):
-        print 'add panel:', k
+        loginfo('add panel:', k)
         if not obj:
             obj = treelist.MailListPanel(self, k)
         obj.Hide()
@@ -101,7 +103,7 @@ class MainFrame(wx.Frame):
     def init_data(self):
         mailboxkeys = self.mailboxs.keys()
         for k in mailboxkeys:
-            print 'init data:', k
+            loginfo('init data:', k)
             if not self.mailboxs[k]:
                 self.add_mailbox_panel(k)
         k = u'/'
@@ -111,7 +113,7 @@ class MainFrame(wx.Frame):
         
     def load_db_one(self, user, mid):
         dbpath = os.path.join(config.cf.datadir, user, 'mailinfo.db')
-        print 'load db from path:', dbpath
+        loginfo('load db from path:', dbpath)
         conn = dbope.DBOpe(dbpath)
         ret = conn.query("select id,filename,subject,mailfrom,mailto,size,ctime,date,attach,mailbox,status from mailinfo where id=" + str(mid))
         conn.close()
@@ -139,7 +141,7 @@ class MainFrame(wx.Frame):
         for u in users:
             #mlist = self.mailboxs['/%s/' % (u) + u'收件箱']
             dbpath = os.path.join(config.cf.datadir, u, 'mailinfo.db')
-            print 'load db from path:', dbpath
+            loginfo('load db from path:', dbpath)
             conn = dbope.DBOpe(dbpath)
             ret = conn.query("select id,filename,subject,mailfrom,mailto,size,ctime,date,attach,mailbox,status from mailinfo order by date")
             conn.close()
@@ -503,14 +505,14 @@ class MainFrame(wx.Frame):
         self.SetStatusWidths([-1, -2, -2])
         
     def display_mailbox(self, name):
-        print 'display name:', name
+        loginfo('display name:', name)
         try:
             newobj = self.mailboxs[name]
         except Exception, e:
-            print e
+            logerr('mailbox error:', e)
             return False
         
-        print 'display:', self.last_mailbox, name
+        loginfo('display:', self.last_mailbox, name)
         
         try:
             if self.last_mailbox:
@@ -519,7 +521,7 @@ class MainFrame(wx.Frame):
             self.mgr.Update()
             self.last_mailbox = name       
         except Exception, e:
-            print 'display_mailbox:', e
+            logerr('display_mailbox:', e)
         return True
         
         
@@ -528,6 +530,7 @@ class MainFrame(wx.Frame):
         self.mgr.UnInit()
         del self.mgr
         self.Destroy()
+        sys.exit()
 
     def OnSize(self, event):
         self.Refresh()
@@ -542,7 +545,7 @@ class MainFrame(wx.Frame):
         except:
             pass
         else:
-            print 'uiq: ', item
+            loginfo('uiq: ', item)
             name = item['name']
             task = item['task']
             boxpanel = self.mailboxs['/%s/' % (name) + u'收件箱']
@@ -554,7 +557,7 @@ class MainFrame(wx.Frame):
                 conn.close()
                 if ret:
                     for info in ret:
-                        print info['filename']
+                        loginfo(info['filename'])
                         att = 0 
                         if info['attach']:
                             att = 1
@@ -571,7 +574,7 @@ class MainFrame(wx.Frame):
             elif task == 'status':
                 pass
             else:
-                print 'uiq return error:', item
+                logerr('uiq return error:', item)
         
     def OnFileOpen(self, event):
         pass 
@@ -582,7 +585,7 @@ class MainFrame(wx.Frame):
         data = self.tree.last_item_data()
         if not data:
             return
-        print 'last_mailbox:', data['user']
+        loginfo('last_mailbox:', data['user'])
         x = {'name':data['user'], 'task':'recvmail'}
         config.taskq.put(x)
         
@@ -601,6 +604,7 @@ class MainFrame(wx.Frame):
         self.mgr.UnInit()
         del self.mgr
         self.Destroy()
+        sys.exit()
             
     def OnViewMail(self, event):
         self.mgr.GetPane('listcnt').Show()
@@ -671,7 +675,6 @@ class MainFrame(wx.Frame):
         
     def OnMailboxUserNew(self, event):
         import images
-        print 'run simple wizard...'
         wizard = wiz.Wizard(self, -1, u"新建用户向导", images.WizTest1.GetBitmap())
 
         page1 = useradd.UsernamePage(wizard, u"输入用户信息")
@@ -696,7 +699,7 @@ class MainFrame(wx.Frame):
                   'smtp_server:': page2.smtpserver.GetValue(),
                   'smtp_pass': page2.smtppass.GetValue(),
                   }
-            print 'me:', me
+            loginfo('me:', me)
             try:
                 conf = config.cf.user_add(me)
             except Exception, e:
@@ -723,7 +726,7 @@ class MainFrame(wx.Frame):
         if not data:
             return
         user = data['user']
-        print 'user name:', user
+        loginfo('user name:', user)
         mailaddr = config.cf.users[user]['email']
         maildata = {'subject':'', 'from':mailaddr, 'to':'', 'text':'', 'user':user}
 
@@ -740,7 +743,7 @@ class MainFrame(wx.Frame):
         try:
             info = panel.get_item_content()
         except Exception, e:
-            print 'get_item_content error:', str(e)
+            logerr('get_item_content error:', str(e))
         
         mailaddr = config.cf.users[user]['email']
         text = info['plain']
@@ -765,7 +768,7 @@ class MainFrame(wx.Frame):
         try:
             info = panel.get_item_content()
         except Exception, e:
-            print 'get_item_content error:', str(e)
+            logerr('get_item_content error:', str(e))
            
         mailaddr = config.cf.users[user]['email']
         maildata = {'subject':'Re: '+info['subject'][:32], 'from':mailaddr, 'to':'', 
@@ -784,7 +787,7 @@ class MainFrame(wx.Frame):
         try:
             info = panel.get_item_content()
         except Exception, e:
-            print 'get_item_content error:', str(e)
+            logerr('get_item_content error:', str(e))
         
         mailaddr = config.cf.users[user]['email']
         maildata = {'subject':'Fw:'+info['subject'][:32], 'from':mailaddr, 'to':'', 
@@ -802,7 +805,7 @@ class MainFrame(wx.Frame):
         try:
             info = panel.get_item_content()
         except Exception, e:
-            print 'get_item_content error:', str(e)
+            logerr('get_item_content error:', str(e))
         mailaddr = config.cf.users[user]['email']
         maildata = {'subject':info['subject'], 'from':mailaddr, 'to':info['mailto'], 
                     'text':info['plain'], 'user':user}
@@ -823,7 +826,7 @@ class MainFrame(wx.Frame):
     def OnMailMoveTo(self, event):
         pass
     def OnMailDel(self, event):
-        print 'delete mail'
+        loginfo('delete mail')
         if self.last_mailbox == '/':
             return
         

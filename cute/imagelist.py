@@ -1,6 +1,5 @@
 # coding: utf-8
 import os, sys
-sys.path.insert(0, '../base')
 import threading
 import wx
 from common import load_bitmap, load_image

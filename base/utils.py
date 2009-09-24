@@ -1,4 +1,6 @@
 import string, sys, os
+import logfile
+from logfile import loginfo, logwarn, logerr
 
 def maildir_init(dpath, hash_count=10):
     if not os.path.isdir(dpath):
@@ -29,7 +31,7 @@ def mailbox_find_parent(mailbox, names):
 
 def mailbox_remove(mailbox, names):
     parent = mailbox_find_parent(mailbox, names)
-    print 'parent:', parent
+    loginfo('parent:', parent)
     box = names[-1]
     found = False
     childs = parent[1]
