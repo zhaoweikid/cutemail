@@ -106,7 +106,8 @@ class FileLogger:
             self.lasttime = timenow
 
         self.log.write(ss)
-
+        
+        self.log.flush()
 
     def info(self, *s):
         self.write('inf', *s)

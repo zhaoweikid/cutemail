@@ -502,7 +502,7 @@ class MainFrame(wx.Frame):
     def make_statusbar(self):
         self.statusbar = self.CreateStatusBar()
         self.statusbar.SetFieldsCount(3)
-        self.SetStatusWidths([-1, -2, -2])
+        self.SetStatusWidths([-1, -2, -1])
         
     def display_mailbox(self, name):
         loginfo('display name:', name)
@@ -545,7 +545,7 @@ class MainFrame(wx.Frame):
         except:
             pass
         else:
-            loginfo('uiq: ', item)
+            loginfo('timer get uiq: ', item)
             name = item['name']
             task = item['task']
             boxpanel = self.mailboxs['/%s/' % (name) + u'收件箱']
@@ -553,11 +553,12 @@ class MainFrame(wx.Frame):
                 usercf = config.cf.users[name]
                 dbpath = os.path.join(config.cf.datadir, name, 'mailinfo.db')
                 conn = dbope.DBOpe(dbpath)
+                count = conn.query('select count(*) as count from mailinfo')[0]['count']
                 ret = conn.query("select id,filename,subject,mailfrom,mailto,size,ctime,date,attach,mailbox,status from mailinfo where status='new'")
                 conn.close()
                 if ret:
                     for info in ret:
-                        loginfo(info['filename'])
+                        loginfo('get mail:', info['filename'])
                         att = 0 
                         if info['attach']:
                             att = 1
@@ -569,6 +570,8 @@ class MainFrame(wx.Frame):
                         #print item
                         boxpanel.add_mail(item)
                         #mlist.add_item(item, mlist.today)
+                    #self.statusbar.SetStatusText(u'信件数:' + str(count), 2)
+                self.statusbar.SetStatusText(u'最后收信时间: %d%-02d-%02d %02d:%02d:%02d' % time.localtime()[:6], 1)
             elif task == 'alert':
                 wx.MessageBox(u'发送返回信息:' + item['message'], u'邮件信息!', wx.OK|wx.ICON_ERROR)
             elif task == 'status':

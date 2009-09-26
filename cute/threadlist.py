@@ -1,6 +1,7 @@
 #  -*- encoding: utf-8 -*-
 import string, os, sys
 import wx, threading, time, traceback, base64
+import cPickle as pickle
 import config, dbope
 import pop3, sendmail, logfile
 from logfile import loginfo, logwarn, logerr
@@ -10,7 +11,11 @@ class Schedule(threading.Thread):
         threading.Thread.__init__(self)
         self.is_running = True
         self.last_uptime = 0
-        self.tasks = []
+        self.file_mtime = {}
+        # user: [{time:tasktime, param:task param, lasttime:lasttime}]
+        self.tasks = {}
+
+        self.load_config()
    
     def parse_time(self, timestr):
         ret = []
@@ -41,19 +46,33 @@ class Schedule(threading.Thread):
             ret.append(v) 
         return ret
 
-    def update_config(self):
-        '''
-        action:  id: xxxxx, alert: alter string
-                 desc: string
-                 type: [smtp, arg]/[recvmail,arg]/[msgbox,arg]
-        '''
-        # 每5分钟更新一次配置
-        if time.time() - self.last_uptime < 300:
-            return
-        #res = config.cf.db.select('schedule', ['timer', 'action'])
-        #for item in res:
-        #   ts = parse_time(res[0])
-        #   self.tasks.append([ts, json.read(res[1])])
+    def load_config(self):
+        userpath = os.path.join(config.cf.home, 'data')
+        users = os.listdir(userpath)
+        for u in users:
+            if u.endswith('.bak'):
+                continue
+            ufile = os.path.join(userpath, u, 'config.db')
+            mtime = int(os.path.getmtime(ufile))
+            if self.file_mtime.has_key(ufile) and self.file_mtime[ufile] == mtime:
+                continue
+            self.file_mtime[ufile] = mtime
+
+            loginfo('load user config:', u)
+            f = open(ufile, 'r')
+            s = f.read()
+            f.close()
+
+            x = pickle.loads(s)
+            
+            ts = []
+            self.tasks[ufile] = ts
+            ri = int(x['recv_interval'])
+            trm = range(1, 60, ri)
+            item = {'time':[trm,None,None,None,None], 'param':{'name':u, 'task':'recvmail'}, 'lastrun':int(time.time())}
+            loginfo('add task:', item)
+            ts.append(item)
+        
                 
     def check_time(self, taskt):
         t1 = time.localtime()
@@ -62,7 +81,7 @@ class Schedule(threading.Thread):
         for i in range(0, len(t)):
             if not taskt[i]:
                 continue
-            if t[i] not in taskt:
+            if t[i] not in taskt[i]:
                 return False
         return True
         
@@ -70,33 +89,29 @@ class Schedule(threading.Thread):
         threadname = threading.currentThread().getName()
         while self.is_running:
             # 读取任务
-            self.update_config()
+            self.load_config()
             
             #print threadname, len(self.tasks)
-            time.sleep(1)
+            time.sleep(10)
             t1 = time.localtime()
             # 分，小时，日，月，周
             t = [t1[4], t1[3], t1[2], t1[1], t1[6]]
             # 循环获取任务列表里的任务
-            for x in range(0, len(self.tasks)):
-                k = self.tasks[x][0] #任务执行时间
-                v = self.tasks[x][1] #任务参数
+            for x in self.tasks:
+                vals = self.tasks[x]
+                loginfo('values:', vals)
+                for item in vals:
+                    k = item['time'] #任务执行时间
+                    v = item['param'] #任务参数
                 
-                ispass = self.check_time(k)
-                
-                if ispass:
-                    # run task ...
-                    tid = int(time.time())*10 + x
-                    v['id'] = tid
-                    if v['alert']:
-                        req = {'id':tid, type:'alert', text:v['alert']}
-                        config.msgin.put(req)
-                        rep = config.msgout.get()
-                        if not rep['result']:
-                            continue 
+                    ispass = self.check_time(k)
                     
-                    config.taskq.put(v)
-                    loginfo('put task ok!')
+                    tnow = int(time.time())
+                    if ispass and tnow - item['lastrun'] >= 60:
+                        loginfo('scheduler run task')
+                        config.taskq.put(v)
+                        item['lastrun'] = tnow 
+                        loginfo('put task ok!')
                      
 class Task(threading.Thread):
     def __init__(self):
@@ -126,7 +141,7 @@ class Task(threading.Thread):
             traceback.print_exc(file=logfile.logobj.log)
             loginfo('get user config error!')
             return
-        loginfo(ucf)
+        loginfo('recv mail:', ucf)
         mailinfos = []
         try:
             pop = pop3.POP3Client(ucf)
@@ -163,7 +178,7 @@ class Task(threading.Thread):
             except:
                 traceback.print_exc(file=logfile.logobj.log)
         conn.close()
-        loginfo(config.cf.users[name])
+        #loginfo(config.cf.users[name])
         # 有可能有冲突
         config.cf.dump_conf(name)
         loginfo('recvmali complete!')
@@ -189,4 +204,9 @@ class Task(threading.Thread):
    
         config.uiq.put(x, timeout=5)
 
+
+if __name__ == '__main__':
+    s = Schedule()
+    s.start() 
+    s.join()
 

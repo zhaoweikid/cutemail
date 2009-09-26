@@ -21,7 +21,7 @@ class POP3Client:
             self.port = 110
         
         self.pop3 = poplib.POP3(self.server)
-        self.pop3.set_debuglevel(1)
+        self.pop3.set_debuglevel(0)
         
         # mailcount, mailsize
         self.info = [0, 0]
@@ -69,7 +69,7 @@ class POP3Client:
         for x in info1:
             x = string.strip(x)
             a = string.split(x)
-            loginfo('uidl:', a)
+            #loginfo('uidl:', a)
             if a[1] not in self.mailuser['uidls']:
                 self.uidls.append(a)
         loginfo('uidl count:', len(self.uidls))
