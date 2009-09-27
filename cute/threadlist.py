@@ -67,8 +67,11 @@ class Schedule(threading.Thread):
             
             ts = []
             self.tasks[ufile] = ts
-            ri = int(x['recv_interval'])
-            trm = range(1, 60, ri)
+            if x['recv_interval']:
+                ri = int(x['recv_interval'])
+                trm = range(1, 60, ri)
+            else:
+                trm = None
             item = {'time':[trm,None,None,None,None], 'param':{'name':u, 'task':'recvmail'}, 'lastrun':int(time.time())}
             loginfo('add task:', item)
             ts.append(item)
@@ -78,6 +81,12 @@ class Schedule(threading.Thread):
         t1 = time.localtime()
         t = [t1[4], t1[3], t1[2], t1[1], t1[6]]
         
+        ret = False
+        for x in taskt:
+            ret = ret or x
+        if not ret:
+            return False
+
         for i in range(0, len(t)):
             if not taskt[i]:
                 continue
@@ -200,7 +209,8 @@ class Task(threading.Thread):
             mesg = u'信件发送失败! ' + str(why)
         else:
             mesg = u'信件发送成功!'
-        x = {'name': item['name'], 'task':'alert', 'message':mesg} 
+ 
+        x = {'name': item['name'], 'task':'alert', 'message':mesg, 'runtask':item['task'], 'return':True} 
    
         config.uiq.put(x, timeout=5)
 

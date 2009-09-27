@@ -554,8 +554,7 @@ class MainFrame(wx.Frame):
                 dbpath = os.path.join(config.cf.datadir, name, 'mailinfo.db')
                 conn = dbope.DBOpe(dbpath)
                 count = conn.query('select count(*) as count from mailinfo')[0]['count']
-                ret = conn.query("select id,filename,subject,mailfrom,mailto,size,ctime,date,attach,mailbox,status from mailinfo where status='new'")
-                conn.close()
+                ret = conn.query("select id,filename,subject,mailfrom,mailto,size,ctime,date,attach,mailbox,status from mailinfo where status='new' and mailbox='recv'")
                 if ret:
                     for info in ret:
                         loginfo('get mail:', info['filename'])
@@ -569,11 +568,17 @@ class MainFrame(wx.Frame):
                                 wx.TreeItemData(info)]
                         #print item
                         boxpanel.add_mail(item)
+
+                        conn.execute("update mailinfo set status='noread' where id=" + str(info['id']))
                         #mlist.add_item(item, mlist.today)
                     #self.statusbar.SetStatusText(u'信件数:' + str(count), 2)
-                self.statusbar.SetStatusText(u'最后收信时间: %d%-02d-%02d %02d:%02d:%02d' % time.localtime()[:6], 1)
+                conn.close()
+
+                self.statusbar.SetStatusText(u'最后收信时间: %d-%02d-%02d %02d:%02d:%02d' % time.localtime()[:6], 1)
             elif task == 'alert':
                 wx.MessageBox(u'发送返回信息:' + item['message'], u'邮件信息!', wx.OK|wx.ICON_ERROR)
+                if item['runtask'] == 'sendmail' and item['return']:
+                    pass 
             elif task == 'status':
                 pass
             else:

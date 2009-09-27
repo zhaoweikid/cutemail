@@ -23,9 +23,14 @@ class FileLogger:
         self.open()
 
         x = locale.getdefaultlocale()
-        self.write("locale:", x) 
+        self.info("locale:", x) 
+        self.log.flush()
+
         if x and x[1]:
-            self.charset = x[1]
+            if x[1].find('MAC') >= 0:
+                self.charset = 'utf-8'
+            else:
+                self.charset = x[1]
 
 
     def open(self):
@@ -33,6 +38,8 @@ class FileLogger:
 
         if self.logfile:
             self.log = open(self.logfile, 'a+')
+            sys.stdout = self.log
+            sys.stderr = self.log
         
     def close(self):
         self.log.flush()
@@ -60,7 +67,7 @@ class FileLogger:
             #self.lasttime = time.time()
             self.open()
     
-    def write(self, level='inf', *s):
+    def writex(self, level='inf', *s):
         if level == 'inf':
             color = '\33[37m'
         elif level == 'warn':
@@ -110,15 +117,16 @@ class FileLogger:
         self.log.flush()
 
     def info(self, *s):
-        self.write('inf', *s)
+        self.writex('inf', *s)
 
     def warn(self, *s):
-        self.write('warn', *s)
+        self.writex('warn', *s)
 
     def err(self, *s):
-        self.write('err', *s)
+        self.writex('err', *s)
 
-
+    def write(self, s):
+        self.writex('info', s)
 
 def loginit(logfile='', logsize=10240000, count=10):
     global logobj
