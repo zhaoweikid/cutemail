@@ -578,7 +578,26 @@ class MainFrame(wx.Frame):
             elif task == 'alert':
                 wx.MessageBox(u'发送返回信息:' + item['message'], u'邮件信息!', wx.OK|wx.ICON_ERROR)
                 if item['runtask'] == 'sendmail' and item['return']:
-                    pass 
+                    boxpanel = self.mailboxs['/%s/' % (name) + u'发件箱']
+
+                    dbpath = os.path.join(config.cf.datadir, name, 'mailinfo.db')
+                    conn = dbope.DBOpe(dbpath)
+                    ret = conn.query("select id,filename,subject,mailfrom,mailto,size,ctime,date,attach,mailbox,status from mailinfo where filename='%s'" % (item['filename']))
+                    conn.close()
+                    
+                    if ret:
+                        info = ret[0]
+                        loginfo('get mail:', info['filename'])
+                        att = 0 
+                        if info['attach']:
+                            att = 1
+                        info['user'] = name
+                        info['box'] = '/%s/%s' % (name, info['mailbox'])
+                        info['filepath'] = os.path.join(config.cf.datadir, name, info['mailbox'], info['filename'].lstrip(os.sep))
+                        
+                        loginfo('info:', info)
+                        boxpanel.change_box(info, 'sendover') 
+
             elif task == 'status':
                 pass
             else:
@@ -842,7 +861,7 @@ class MainFrame(wx.Frame):
         if not panel:
             return
         
-        panel.change_box('trash')
+        panel.change_last_box('trash')
 
     def OnMailFlag(self, event):
         pass

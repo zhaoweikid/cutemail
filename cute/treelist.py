@@ -194,13 +194,15 @@ class MailListPanel(wx.Panel):
         
         return data
 
-    def change_box(self, newbox='trash'):
-        try:
-            info = self.get_item_data()
-        except Exception, e:
-            logerr('get_item_content error:', str(e))
-            return
-            
+    def get_item_by_id(self, idstr):
+        pass
+
+    def change_box(self, info, newbox='trash'):
+        #try:
+        #    info = self.get_item_data()
+        #except Exception, e:
+        #    logerr('get_item_content error:', str(e))
+        #    return
         id = info['id']
         mailbox = info['mailbox'] 
         if newbox == 'recv':
@@ -223,7 +225,8 @@ class MailListPanel(wx.Panel):
         db.execute(sql)
         db.close()
         
-        self.remove_item()
+        item = self.get_item_by_id(info['id'])
+        self.remove_item(item)
         self.parent.load_db_one(username, id)
         
         if mailbox == 'trash':
@@ -233,7 +236,14 @@ class MailListPanel(wx.Panel):
             loginfo('newfile:', newfile)
             os.rename(info['filepath'], newfile)
 
-
+    def change_last_box(self, newbox='trash'):
+        try:
+            info = self.get_item_data()
+        except Exception, e:
+            logerr('get_item_content error:', str(e))
+            return
+         
+        self.change_box(info, newbox)
 
     def OnPopupReply(self, evt):
         self.parent.OnMailReply(evt)
@@ -273,7 +283,7 @@ class MailListPanel(wx.Panel):
        
     def OnPopupDelete(self, evt):
         loginfo('delete mail')
-        self.change_box('trash')
+        self.change_last_box('trash')
  
 
     def OnActivate(self, evt):

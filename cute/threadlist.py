@@ -210,7 +210,8 @@ class Task(threading.Thread):
         else:
             mesg = u'信件发送成功!'
  
-        x = {'name': item['name'], 'task':'alert', 'message':mesg, 'runtask':item['task'], 'return':True} 
+        x = {'name': item['name'], 'task':'alert', 'message':mesg, 
+            'runtask':item['task'], 'return':True, 'filename':os.path.basename(item['path'])}
    
         config.uiq.put(x, timeout=5)
 
