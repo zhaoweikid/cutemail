@@ -22,7 +22,7 @@ class MailListPanel(wx.Panel):
         self.tree.SetImageList(self.il)
         cols = [u'发件人','attach','mark',u'邮件主题',u'日期',u'邮件大小']
         
-        item = ['zhaowei@bobo.com', 1,1, u'呵呵我的测试', '20090210', '12873']
+        #item = ['zhaowei@bobo.com', 1,1, u'呵呵我的测试', '20090210', '12873']
         self.lastitem = None
 
         self.image_attach = config.cf.home+'/bitmaps/16/attach.png'
@@ -74,11 +74,13 @@ class MailListPanel(wx.Panel):
         self.tree.SetMainColumn(0)
         self.root = self.tree.AddRoot("root")
         
-        self.earlier = self.add_item([u' 更早 ',0,0,'','','', wx.TreeItemData(None)])
-        self.month = self.add_item([u' 本月 ',0,0,'','','', wx.TreeItemData(None)]) 
-        self.week  = self.add_item([u' 本周 ',0,0,'','','', wx.TreeItemData(None)]) 
-        self.yestoday = self.add_item([u' 昨天 ',0,0,'','','', wx.TreeItemData(None)]) 
-        self.today = self.add_item([u' 今天 ',0,0,'','','', wx.TreeItemData(None)]) 
+        self.earlier = self.add_item([u' 更早 ',0,0,'','','', wx.TreeItemData({'new':0, 'all':0})])
+        self.month = self.add_item([u' 本月 ',0,0,'','','', wx.TreeItemData({'new':0, 'all':0})]) 
+        self.week  = self.add_item([u' 本周 ',0,0,'','','', wx.TreeItemData({'new':0, 'all':0})]) 
+        self.yestoday = self.add_item([u' 昨天 ',0,0,'','','', wx.TreeItemData({'new':0, 'all':0})]) 
+        self.today = self.add_item([u' 今天 ',0,0,'','','', wx.TreeItemData({'new':0, 'all':0})]) 
+
+        self.parent_items = [self.earlier, self.month, self.week, self.yestoday, self.today]
         
         timenow = time.localtime()
         self.time_today = time.mktime((timenow[0], timenow[1], timenow[2], 0, 0, 0, 0, 0, 0))
@@ -96,9 +98,41 @@ class MailListPanel(wx.Panel):
         self.tree.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnActivate)
         self.tree.Bind(wx.EVT_LIST_COL_CLICK, self.OnColClick)
 
+    def draw_category_text(self, item, parent, action='add'):
+        '''action: add/del/read'''
+        itemdata = self.tree.GetItemData(item).GetData()
+        text = self.tree.GetItemText(parent, 0)
+        loginfo('parent text:', text)
+        data = self.tree.GetItemData(parent).GetData()
+        loginfo('parent data:', data)
+        if action == 'add':
+            data['all'] += 1
+        elif action == 'del':
+            data['all'] -= 1
+
+        if itemdata['status'] == 'noread':
+            if action == 'add':
+                data['new'] += 1
+            elif action == 'del':
+                data['new'] -= 1
+            elif action == 'read':
+                data['new'] -= 1
+                itemdata['status'] = 'read'
+                #self.tree.SetItemBold(item, False) 
+        loginfo('draw category:', data)
+        s = text.split(' ')    
+        s[-1] = '%d/%d' % (data['new'], data['all'])
+        self.tree.SetItemText(parent, ' '.join(s), 0)
+
+
+    def draw_mail_status_read(self, item):
+        self.tree.SetItemBold(item, False) 
+
     def add_item(self, item, parent=None):
+        loginfo('add item:', item)
         if not parent:
             parent = self.root
+
         first = self.tree.PrependItem(parent, '')
         self.tree.SetItemText(first, item[0], 0)
         if item[1]:
@@ -111,7 +145,13 @@ class MailListPanel(wx.Panel):
         self.tree.SetItemText(first, item[4], 4)
         self.tree.SetItemText(first, item[5], 5)
         self.tree.SetItemData(first, item[6]) 
-            
+       
+        if parent != self.root:
+            self.draw_category_text(first, parent, 'add')
+            itemdata = item[6].GetData()
+            if itemdata['status'] == 'noread':
+                self.tree.SetItemBold(first, True)
+
         return first
        
     def add_mail(self, item):
@@ -122,21 +162,23 @@ class MailListPanel(wx.Panel):
         mtime = time.mktime(timels)
         #print 'make time:', mtime
         if mtime >= self.time_today:
-            self.add_item(item, self.today)
+            return self.add_item(item, self.today)
         elif mtime >= self.time_yestoday:
-            self.add_item(item, self.yestoday)
+            return self.add_item(item, self.yestoday)
         elif mtime >= self.time_week:
-            self.add_item(item, self.week)
+            return self.add_item(item, self.week)
         elif mtime >= self.time_month:
-            self.add_item(item, self.month)
+            return self.add_item(item, self.month)
         else:
-            self.add_item(item, self.earlier)
+            return self.add_item(item, self.earlier)
     
     def remove_item(self, item=None):
         if not item:
             item = self.lastitem
         if not item:
             raise ValueError, 'item must not None'
+    
+        self.draw_category_text(item, parent, 'del')
         self.tree.Delete(item) 
         
     def make_popup_menu(self):
@@ -198,11 +240,6 @@ class MailListPanel(wx.Panel):
         pass
 
     def change_box(self, info, newbox='trash'):
-        #try:
-        #    info = self.get_item_data()
-        #except Exception, e:
-        #    logerr('get_item_content error:', str(e))
-        #    return
         id = info['id']
         mailbox = info['mailbox'] 
         if newbox == 'recv':
@@ -225,7 +262,14 @@ class MailListPanel(wx.Panel):
         db.execute(sql)
         db.close()
         
-        item = self.get_item_by_id(info['id'])
+        #item = self.get_item_by_id(info['id'])
+        if info.has_key('item'):
+            loginfo('info item:', info['item'])
+            item = info['item']
+        else:
+            loginfo('not found item in info')
+            item = self.lastitem
+        loginfo('item: ', item)
         self.remove_item(item)
         self.parent.load_db_one(username, id)
         
@@ -296,7 +340,7 @@ class MailListPanel(wx.Panel):
         mid  = row['id']
         name = row['user']
         mbox = row['box']
-        
+
         info = mailparse.decode_mail(row['filepath'])
         
         htmldata = info['html']
@@ -319,6 +363,22 @@ class MailListPanel(wx.Panel):
                     loginfo('attachdata:', attachdata)
                     attachctl.add_file(item[0], attachdata)
                     pos += 1
+
+        if row['status'] == 'noread':
+            #row['status'] = 'read' 
+            item = evt.GetItem()
+            itemdata = self.tree.GetItemData(item).GetData()
+            loginfo('noread itemdata:', itemdata)
+            self.draw_category_text(item, self.tree.GetItemParent(item), 'read')
+            self.tree.SetItemBold(item, False)
+        
+            sql = "update mailinfo set status='read' where id=" + str(itemdata['id'])
+            loginfo('read:', sql)
+            db = dbope.openuser(config.cf, name)
+            db.execute(sql)
+            db.close()
+ 
+ 
 
     def OnRightUp(self, evt):
         pos = evt.GetPosition()

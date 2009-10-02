@@ -110,6 +110,25 @@ class MainFrame(wx.Frame):
         obj = viewhtml.ViewHtml(self)
         obj.set_url('http://www.pythonid.com')
         self.add_mailbox_panel(k, obj)
+ 
+    def load_db_info(self, user, row):
+        att = 0
+        if row['attach']:
+            att = 1
+                
+        boxname = '/%s/' % (user) + config.cf.mailbox_map_en2cn[row['mailbox']]
+        row['user'] = user
+        row['box'] = boxname
+        row['filepath'] = os.path.join(config.cf.datadir, user, row['mailbox'], row['filename'].lstrip(os.sep))
+
+        mailaddr = row['mailfrom']
+        if row['mailbox'] in ['send','draft','sendover']:
+            mailaddr = row['mailto']
+        item = [mailaddr, att, 0, row['subject'], row['date'], str(row['size']/1024 + 1)+' K',
+                wx.TreeItemData(row)]
+            #print item
+        panel = self.mailboxs[boxname]
+        return panel.add_mail(item)
         
     def load_db_one(self, user, mid):
         dbpath = os.path.join(config.cf.datadir, user, 'mailinfo.db')
@@ -117,25 +136,12 @@ class MainFrame(wx.Frame):
         conn = dbope.DBOpe(dbpath)
         ret = conn.query("select id,filename,subject,mailfrom,mailto,size,ctime,date,attach,mailbox,status from mailinfo where id=" + str(mid))
         conn.close()
-        for row in ret:
-            att = 0
-            if row['attach']:
-                att = 1
-                
-            boxname = '/%s/' % (user) + config.cf.mailbox_map_en2cn[row['mailbox']]
-            row['user'] = user
-            row['box'] = boxname
-            row['filepath'] = os.path.join(config.cf.datadir, user, row['mailbox'], row['filename'].lstrip(os.sep))
-
-            mailaddr = row['mailfrom']
-            if row['mailbox'] in ['send','draft','sendover']:
-                mailaddr = row['mailto']
-            item = [mailaddr, att, 0, row['subject'], row['date'], str(row['size']/1024 + 1)+' K',
-                    wx.TreeItemData(row)]
-                #print item
-            panel = self.mailboxs[boxname]
-            panel.add_mail(item)
-            
+        if not ret:
+            return None
+        #for row in ret:
+        row = ret[0]
+        return self.load_db_info(user, row)
+        
     def load_db_data(self):
         users = config.cf.users
         for u in users:
@@ -146,24 +152,8 @@ class MainFrame(wx.Frame):
             ret = conn.query("select id,filename,subject,mailfrom,mailto,size,ctime,date,attach,mailbox,status from mailinfo order by date")
             conn.close()
             for row in ret:
-                att = 0
-                if row['attach']:
-                    att = 1
-                    
-                boxname = '/%s/' % (u) + config.cf.mailbox_map_en2cn[row['mailbox']]
-                row['user'] = u
-                row['box'] = boxname
-                row['filepath'] = os.path.join(config.cf.datadir, u, row['mailbox'], row['filename'].lstrip(os.sep))
+                self.load_db_info(u, row) 
 
-                mailaddr = row['mailfrom']
-                if row['mailbox'] in ['send','draft','sendover']:
-                    mailaddr = row['mailto']
- 
-                item = [mailaddr, att, 0, row['subject'], row['date'], str(row['size']/1024 + 1)+' K',
-                        wx.TreeItemData(row)]
-                #print item
-                panel = self.mailboxs[boxname]
-                panel.add_mail(item)
 
     def init_const(self):
         self.ID_FILE_OPEN          = wx.NewId()
@@ -563,13 +553,14 @@ class MainFrame(wx.Frame):
                             att = 1
                         info['user'] = name
                         info['box'] = '/%s/%s' % (name, info['mailbox'])
+                        info['status'] = 'noread'
                         info['filepath'] = os.path.join(config.cf.datadir, name, info['mailbox'], info['filename'].lstrip(os.sep))
                         item = [info['mailfrom'], att,1, info['subject'], info['date'], str(info['size']/1024 + 1)+' K',
                                 wx.TreeItemData(info)]
                         #print item
-                        boxpanel.add_mail(item)
-
                         conn.execute("update mailinfo set status='noread' where id=" + str(info['id']))
+
+                        boxpanel.add_mail(item)
                         #mlist.add_item(item, mlist.today)
                     #self.statusbar.SetStatusText(u'信件数:' + str(count), 2)
                 conn.close()
@@ -592,6 +583,7 @@ class MainFrame(wx.Frame):
                         if info['attach']:
                             att = 1
                         info['user'] = name
+                        info['item'] = item['item']
                         info['box'] = '/%s/%s' % (name, info['mailbox'])
                         info['filepath'] = os.path.join(config.cf.datadir, name, info['mailbox'], info['filename'].lstrip(os.sep))
                         

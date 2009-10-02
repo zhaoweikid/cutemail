@@ -207,11 +207,14 @@ class Task(threading.Thread):
         except Exception, why:
             traceback.print_exc(file=logfile.logobj.log)
             mesg = u'信件发送失败! ' + str(why)
+            retval = False
         else:
             mesg = u'信件发送成功!'
+            retval = True
  
         x = {'name': item['name'], 'task':'alert', 'message':mesg, 
-            'runtask':item['task'], 'return':True, 'filename':os.path.basename(item['path'])}
+            'runtask':item['task'], 'return':retval, 'filename':os.path.basename(item['path']),
+            'item': item['item']}
    
         config.uiq.put(x, timeout=5)
 

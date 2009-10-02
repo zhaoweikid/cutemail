@@ -279,11 +279,13 @@ class WriterFrame (wx.Frame):
     def OnMailSend(self, evt):
         self.save_mail('send') 
         msg = {'name':self.maildata['user'], 'task':'sendmail', 'to':self.maildata['to'], 
-               'from':self.maildata['from'], 'path':self.maildata['filepath']}
+               'from':self.maildata['from'], 'path':self.maildata['filepath'], 'item':None}
         #sendmail.sendfile(self.maildata)
         if self.maildata.has_key('id'):
-            self.parent.load_db_one(self.maildata['user'], self.maildata['id'])
-     
+            item = self.parent.load_db_one(self.maildata['user'], self.maildata['id'])
+            if not item:
+                return
+        msg['item'] = item 
         config.taskq.put(msg)
 
     def OnMailSaveDraft(self, evt):
