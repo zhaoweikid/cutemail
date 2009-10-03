@@ -88,6 +88,8 @@ class MailListPanel(wx.Panel):
         self.time_week = self.time_today - 86400 * timenow[6]
         self.time_month = time.mktime((timenow[0], timenow[1], 1, 0, 0, 0, 0, 0, 0))
         
+        self.mail_new = 0
+        self.mail_all = 0
         #self.add_item(item, self.week)
         #self.add_item(item, self.yestoday)
         #self.add_item(item, self.today)
@@ -107,16 +109,21 @@ class MailListPanel(wx.Panel):
         loginfo('parent data:', data)
         if action == 'add':
             data['all'] += 1
+            self.mail_all += 1
         elif action == 'del':
             data['all'] -= 1
+            self.mail_all -= 1
 
         if itemdata['status'] == 'noread':
             if action == 'add':
                 data['new'] += 1
+                self.mail_new += 1
             elif action == 'del':
                 data['new'] -= 1
+                self.mail_new -= 1
             elif action == 'read':
                 data['new'] -= 1
+                self.mail_new -= 1
                 itemdata['status'] = 'read'
                 #self.tree.SetItemBold(item, False) 
         loginfo('draw category:', data)
@@ -412,7 +419,10 @@ class MailboxTree(wx.TreeCtrl):
         self.il = il
         
         self.load()
-        
+       
+    def display_info(self, boxitem, newnum, allnum):
+        pass 
+
     def last_item(self):
         return self.GetSelection()
     
