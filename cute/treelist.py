@@ -10,12 +10,16 @@ import logfile
 from logfile import loginfo, logwarn, logerr
         
 class MailListPanel(wx.Panel):
-    def __init__(self, parent, flag=''):       
+    def __init__(self, parent, path):       
         wx.Panel.__init__(self, parent, -1)
         self.parent = parent
         self.Bind(wx.EVT_SIZE, self.OnSize)
         self.tree = wx.gizmos.TreeListCtrl(self, -1, style = wx.TR_DEFAULT_STYLE|wx.TR_HIDE_ROOT|wx.TR_FULL_ROW_HIGHLIGHT)
-        
+            
+        self.path = path
+        self.user = path.split('/')[1]
+        self.boxname = path.split('/')[2]
+        loginfo('boxname:', self.boxname)
         self.il = wx.ImageList(16, 16)
         #self.idx = self.il.Add(images.getSmilesBitmap())
         
@@ -100,13 +104,14 @@ class MailListPanel(wx.Panel):
         self.tree.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnActivate)
         self.tree.Bind(wx.EVT_LIST_COL_CLICK, self.OnColClick)
 
-    def draw_category_text(self, item, parent, action='add'):
-        '''action: add/del/read'''
+    def draw_category_text(self, item, action='add'):
+        '''action: add/del/read/display'''
+        parent = self.tree.GetItemParent(item)
         itemdata = self.tree.GetItemData(item).GetData()
         text = self.tree.GetItemText(parent, 0)
-        loginfo('parent text:', text)
+        #loginfo('parent text:', text)
         data = self.tree.GetItemData(parent).GetData()
-        loginfo('parent data:', data)
+        #loginfo('parent data:', data)
         if action == 'add':
             data['all'] += 1
             self.mail_all += 1
@@ -130,11 +135,40 @@ class MailListPanel(wx.Panel):
         s = text.split(' ')    
         s[-1] = '%d/%d' % (data['new'], data['all'])
         self.tree.SetItemText(parent, ' '.join(s), 0)
+        
+        #if self.boxname == u'收件箱': 
+        #    self.parent.tree.display_info(self.user, u'收件箱', self.mail_new, self.mail_all)
+        self.parent.tree.display_info(self.user, self.boxname, self.mail_new, self.mail_all)
 
 
     def draw_mail_status_read(self, item):
         self.tree.SetItemBold(item, False) 
 
+    def select_all_items(self):
+        items = []
+        for item in self.parent_items:
+            ret = self.get_all_children(item)
+            if ret:
+                items.extend(ret)
+        #loginfo('select items:', items)
+        if items:
+            for item in items:
+                loginfo('try select:', item)
+                self.tree.ToggleItemSelection(item)
+
+    def get_all_children(self, parent):
+        ret = []
+        child,cookie = self.tree.GetFirstChild(parent)
+        if not child:
+            return ret
+        ret.append(child)
+        while True:
+            other, cookie = self.tree.GetNextChild(parent, cookie)
+            if not other:
+                return ret
+            ret.append(other)
+
+    
     def add_item(self, item, parent=None):
         loginfo('add item:', item)
         if not parent:
@@ -154,7 +188,7 @@ class MailListPanel(wx.Panel):
         self.tree.SetItemData(first, item[6]) 
        
         if parent != self.root:
-            self.draw_category_text(first, parent, 'add')
+            self.draw_category_text(first, 'add')
             itemdata = item[6].GetData()
             if itemdata['status'] == 'noread':
                 self.tree.SetItemBold(first, True)
@@ -185,7 +219,7 @@ class MailListPanel(wx.Panel):
         if not item:
             raise ValueError, 'item must not None'
     
-        self.draw_category_text(item, parent, 'del')
+        self.draw_category_text(item, 'del')
         self.tree.Delete(item) 
         
     def make_popup_menu(self):
@@ -243,9 +277,6 @@ class MailListPanel(wx.Panel):
         
         return data
 
-    def get_item_by_id(self, idstr):
-        pass
-
     def change_box(self, info, newbox='trash'):
         id = info['id']
         mailbox = info['mailbox'] 
@@ -269,7 +300,6 @@ class MailListPanel(wx.Panel):
         db.execute(sql)
         db.close()
         
-        #item = self.get_item_by_id(info['id'])
         if info.has_key('item'):
             loginfo('info item:', info['item'])
             item = info['item']
@@ -335,13 +365,15 @@ class MailListPanel(wx.Panel):
     def OnPopupDelete(self, evt):
         loginfo('delete mail')
         self.change_last_box('trash')
- 
 
     def OnActivate(self, evt):
+        #loginfo('event:', evt)
         loginfo('OnActivate: %s' % self.tree.GetItemText(evt.GetItem()))
         self.lastitem = evt.GetItem()
         row = self.tree.GetItemData(evt.GetItem()).GetData()
+        #loginfo('active row:', row)
         if not row:
+            logerr('not found row.')
             return
         #mid, name, mbox = s
         mid  = row['id']
@@ -376,7 +408,7 @@ class MailListPanel(wx.Panel):
             item = evt.GetItem()
             itemdata = self.tree.GetItemData(item).GetData()
             loginfo('noread itemdata:', itemdata)
-            self.draw_category_text(item, self.tree.GetItemParent(item), 'read')
+            self.draw_category_text(item, 'read')
             self.tree.SetItemBold(item, False)
         
             sql = "update mailinfo set status='read' where id=" + str(itemdata['id'])
@@ -384,8 +416,6 @@ class MailListPanel(wx.Panel):
             db = dbope.openuser(config.cf, name)
             db.execute(sql)
             db.close()
- 
- 
 
     def OnRightUp(self, evt):
         pos = evt.GetPosition()
@@ -418,10 +448,23 @@ class MailboxTree(wx.TreeCtrl):
         self.SetImageList(il)
         self.il = il
         
+        self.usertree = {}
         self.load()
        
-    def display_info(self, boxitem, newnum, allnum):
-        pass 
+    def display_info(self, user, boxname, newnum, allnum):
+        child = self.GetFirstChild(self.root)
+        curitem = child[0]
+        #loginfo('curitem:', curitem)
+        while True:
+            text = self.GetItemText(curitem)
+            loginfo('sibling text:', text)
+            if text.startswith(boxname):
+                break
+            curitem = self.GetNextSibling(curitem)
+            if not curitem:
+                break
+        s = '%s %d/%d' % (boxname, newnum, allnum)
+        self.SetItemText(self.usertree[user][boxname], s)
 
     def last_item(self):
         return self.GetSelection()
@@ -521,7 +564,8 @@ class MailboxTree(wx.TreeCtrl):
             usercf = config.cf.users[k]
             #print 'user:', k, usercf
             mbox = usercf['mailbox']
-            #tpathls = [] 
+            #tpathls = []
+            self.usertree[k] = {}
             self.add_to_tree(self.root, mbox, k)
         
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnSelChanged, self) 
@@ -532,6 +576,7 @@ class MailboxTree(wx.TreeCtrl):
         panel = self.parent.add_mailbox_panel(tpath)
         
         data = {'path':tpath, 'user':user, 'boxname':name, 'item':item, 'panel':panel}
+        loginfo('tree node data:', data)
         self.SetPyData(item, data)
         self.SetItemImage(item, self.ridx, wx.TreeItemIcon_Normal)
         self.SetItemImage(item, self.openidx, wx.TreeItemIcon_Expanded)
@@ -540,10 +585,13 @@ class MailboxTree(wx.TreeCtrl):
             
     def add_to_tree(self, parent, name, user, tpathls=[]):
         loginfo('add_to_tree:', name)
+        loginfo('tpathls:', tpathls)
         tpath = '/' + '/'.join(tpathls) + '/' + name[0]
         loginfo('tpath:', tpath)
         
         p = self.add_tree_node(parent, name[0], user, tpath)
+        if len(tpathls) == 1:
+            self.usertree[tpathls[0]][name[0]] = p
         tpathls.append(name[0])
         for child in name[1]:
             self.add_to_tree(p, child, user, tpathls)
@@ -560,48 +608,41 @@ class MailboxTree(wx.TreeCtrl):
             self.ID_POPUP_SEND = wx.NewId()
             self.ID_POPUP_MAILBOX_NEW = wx.NewId()
             self.ID_POPUP_MAILBOX_RENAME = wx.NewId()
-            self.ID_POPUP_PASSWORD = wx.NewId()
-            self.ID_POPUP_FILTER = wx.NewId()
             self.ID_POPUP_SETTING = wx.NewId()
             
             self.Bind(wx.EVT_MENU, self.OnPopupRecv, id=self.ID_POPUP_RECV)
             self.Bind(wx.EVT_MENU, self.OnPopupSend, id=self.ID_POPUP_SEND)
             self.Bind(wx.EVT_MENU, self.OnPopupMailboxNew, id=self.ID_POPUP_MAILBOX_NEW)
             self.Bind(wx.EVT_MENU, self.OnPopupMailboxRename, id=self.ID_POPUP_MAILBOX_RENAME)
-            self.Bind(wx.EVT_MENU, self.OnPopupPassword, id=self.ID_POPUP_PASSWORD)
-            self.Bind(wx.EVT_MENU, self.OnPopupFilter, id=self.ID_POPUP_FILTER)
             self.Bind(wx.EVT_MENU, self.OnPopupSetting, id=self.ID_POPUP_SETTING)
             
         menu = wx.Menu()
         menu.Append(self.ID_POPUP_RECV, u'收取邮件')
         menu.Append(self.ID_POPUP_SEND, u'发送发件箱内邮件')
         menu.AppendSeparator()
-        menu.Append(self.ID_POPUP_MAILBOX_NEW, u'新建邮箱')
-        menu.Append(self.ID_POPUP_MAILBOX_RENAME, u'重命名邮箱')
-        menu.AppendSeparator()
-        menu.Append(self.ID_POPUP_PASSWORD, u'设置密码')
-        menu.Append(self.ID_POPUP_FILTER, u'设置过滤器')
+        menu.Append(self.ID_POPUP_MAILBOX_NEW, u'新建邮件夹')
+        menu.Append(self.ID_POPUP_MAILBOX_RENAME, u'重命名邮件夹')
         menu.AppendSeparator()
         menu.Append(self.ID_POPUP_SETTING, u'属性设置')
         self.PopupMenu(menu)
         menu.Destroy()
     
     def OnPopupRecv(self, evt):
-        pass
+        self.parent.OnFileGetMail(evt)
     
     def OnPopupSend(self, evt):
-        pass
+        self.parent.OnFileSendMail(evt)
     
     def OnPopupMailboxNew(self, evt):
-        pass
-    def OnPopupMailboxRename(self, evt):
-        pass
-    def OnPopupPassword(self, evt):
-        pass
-    def OnPopupFilter(self, evt):
-        pass
+        self.parent.OnMailboxNew(evt)
     
+    def OnPopupMailboxRename(self, evt):
+        self.parent.OnMailboxRename(evt)
+        
     def OnPopupSetting(self, evt):
+        self.popup_setting()
+        
+    def popup_setting(self):
         data = self.last_item_data()
         usercf = config.cf.users[data['user']]
         dlg = OptionsDialog(self, usercf)

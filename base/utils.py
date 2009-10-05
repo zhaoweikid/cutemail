@@ -1,6 +1,8 @@
-import string, sys, os
-import logfile
+import string, sys, os, shutil
+import uuid, time
+import logfile, config, mailparse, utils, dbope
 from logfile import loginfo, logwarn, logerr
+import wx
 
 def maildir_init(dpath, hash_count=10):
     if not os.path.isdir(dpath):
@@ -58,6 +60,55 @@ def mailbox_path_to_list(path):
     parts = path.split('/')
     del parts[0]
     return parts
+    
+    
+def mail_import(user, boxnode, filename):
+    hashdir_count = 10
+    info = mailparse.decode_mail(filename)
+    
+    attachs = []
+    for x in info['attach']:
+        attachs.append('::'.join(x))
+    attachstr = '||'.join(attachs)
+        
+    att = 0
+    if len(info['attach']) > 0:
+        att = 1
+    if boxnode['boxname'].find('/') == -1:
+        mailbox = config.cf.mailbox_map_cn2en[boxnode['boxname']]
+    else:
+        return
+    info['mailbox'] = mailbox
+    info['ctime'] = 'datetime()'
+    info['user'] = user
+
+    fname = uuid.uuid1().urn[9:]
+    hashdir = '%02d' % (hash(fname) % hashdir_count)
+    timepath = '%d%02d' % time.localtime()[:2]
+    newdir = os.path.join(config.cf.datadir, user, mailbox, timepath, hashdir)
+    if not os.path.isdir(newdir):
+        os.makedirs(newdir)
+    newfilename = os.sep + os.path.join(timepath, hashdir, '%d.' % (int(time.time())) + fname + '.eml')
+    dstfile = os.path.join(newdir, '%d.' % (int(time.time())) + fname + '.eml')
+    
+    info['filename'] = newfilename
+    subject = info['subject'].replace("'", "''")
+    attach = attachstr.replace("'", "''")
+    
+    sql = "insert into mailinfo(filename,subject,mailfrom,mailto,size,ctime,date,attach,mailbox,status) values " \
+          "('%s','%s','%s','%s',%d,%s,'%s','%s','%s','noread')" % \
+          (newfilename, subject, info['from'], ','.join(info['to']), info['size'],
+           info['ctime'], info['date'], attach, info['mailbox'])
+    conn = dbope.openuser(config.cf, user)
+    conn.execute(sql)
+    conn.close()
+    shutil.copyfile(filename, dstfile)
+    info['box'] = '/%s/%s' % (user, info['mailbox'])
+    info['status'] = 'noread'
+    info['filepath'] = os.path.join(config.cf.datadir, user, info['mailbox'], info['filename'].lstrip(os.sep))
+    item = [info['from'], att,1, info['subject'], info['date'], str(info['size']/1024 + 1)+' K',wx.TreeItemData(info)]
+    panel = boxnode['panel']
+    panel.add_mail(item)
     
 if __name__ == '__main__':
     import pprint
