@@ -146,7 +146,8 @@ def logerr(*s):
     global logobj
     logobj.err(*s)
 
-loginit('cutemail.log')
+#loginit('cutemail.log')
+loginit()
 
 def test():
     for x in xrange(0, 10):

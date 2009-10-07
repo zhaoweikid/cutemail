@@ -8,7 +8,7 @@ import wx.lib.sized_controls as sc
 from wx.lib.wordwrap import wordwrap
 from   picmenu import PicMenu
 from   listindex import *
-import treelist, viewhtml
+import treelist, viewhtml, contact
 import config, common, dbope, useradd, logfile
 import writer
 import cPickle as pickle
@@ -68,9 +68,19 @@ class MainFrame(wx.Frame):
         # 附件显示控件
         self.attachctl = viewhtml.AttachListCtrl(self, self.rundir)
         self.attachctl.Hide()
+        # 联系人 
+        self.contacts = {}
+        for k in config.cf.users:
+            ct = contact.ContactTree(self, self.rundir, k)
+            ct.Hide()
+            self.contacts[k] = ct
+
+            self.mgr.AddPane(ct, wx.aui.AuiPaneInfo().Name("contact_"+k).Caption(u"联系人").
+                    Left().Layer(1).Position(1).CloseButton(True).MaximizeButton(False))
+
         # 为面板管理器增加用户邮箱树形结构
         self.mgr.AddPane(self.tree, wx.aui.AuiPaneInfo().Name("tree").Caption(u"用户").
-                          Left().Layer(1).Position(1).CloseButton(True).MaximizeButton(True))
+                          Left().Layer(1).Position(1).CloseButton(True).MaximizeButton(False))
             
         # 把邮件内容面板添加到面板管理器
         self.mgr.AddPane(self.listcnt, wx.aui.AuiPaneInfo().Name("listcnt").Caption(u"邮件内容").
@@ -170,6 +180,7 @@ class MainFrame(wx.Frame):
 
         self.ID_VIEW_MAIL    = wx.NewId()
         self.ID_VIEW_ATTACH  = wx.NewId()
+        self.ID_VIEW_CONTACT = wx.NewId()
         self.ID_VIEW_SEARCH  = wx.NewId()
         self.ID_VIEW_ENCODE  = wx.NewId()
         self.ID_VIEW_SOURCE  = wx.NewId()
@@ -303,6 +314,7 @@ class MainFrame(wx.Frame):
         self.viewmenu = PicMenu(self)
         self.viewmenu.Append(self.ID_VIEW_MAIL, u"邮件内容窗口", 'contents.png')        
         self.viewmenu.Append(self.ID_VIEW_ATTACH, u"附件内容窗口", 'attach.png')        
+        self.viewmenu.Append(self.ID_VIEW_CONTACT, u"联系人窗口", 'chat.png')        
         self.viewmenu.Append(self.ID_VIEW_SOURCE, u"信件原文", 'note.png')
         self.viewmenu.Append(self.ID_VIEW_SEARCH, u"查找邮件", 'mail_find.png')
         self.viewmenu.AppendSeparator()
@@ -393,6 +405,7 @@ class MainFrame(wx.Frame):
         
         self.Bind(wx.EVT_MENU, self.OnViewMail, id=self.ID_VIEW_MAIL)
         self.Bind(wx.EVT_MENU, self.OnViewAttach, id=self.ID_VIEW_ATTACH)
+        self.Bind(wx.EVT_MENU, self.OnViewContact, id=self.ID_VIEW_CONTACT)
         self.Bind(wx.EVT_MENU, self.OnViewSource, id=self.ID_VIEW_SOURCE)
         self.Bind(wx.EVT_MENU, self.OnMailSearch, id=self.ID_VIEW_SEARCH)
         self.Bind(wx.EVT_MENU, self.OnViewEncode, id=self.ID_VIEW_ENCODE)
@@ -718,7 +731,20 @@ class MainFrame(wx.Frame):
     def OnViewAttach(self, event):
         self.mgr.GetPane('attachctl').Show()
         self.mgr.Update()
+       
+    def OnViewContact(self, event):
+        item = self.tree.last_item_data()
+        if not item:
+            return
+        user  = item['user']
         
+        for u in self.contacts:
+            x = self.contacts[u]
+            if u == user:
+                x.Show()
+            else:
+                x.Hide()
+
     def OnViewSource(self, event):
         self.mailboxs[self.last_mailbox].OnPopupSource(event)
     

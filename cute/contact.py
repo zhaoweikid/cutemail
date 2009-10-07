@@ -1,22 +1,27 @@
 # coding: utf-8
-import os, sys
+import os, sys, time
 rundir = os.path.dirname(os.path.dirname(os.path.abspath(sys.argv[0]))).replace("\\", "/")
 sys.path.insert(0, os.path.join(rundir, 'base'))
-
-import linkman, logfile
+import Queue
+import linkman, logfile, chat
 import wx
 from logfile import loginfo, logwarn, logerr
 from common import load_bitmap, load_image
 from picmenu import PicMenu
 
 class ChatWindow(wx.Frame):
-    def __init__(self, parent, rundir, title):
+    def __init__(self, parent, rundir, chatx, frommail, tomail, title):
         wx.Frame.__init__(self, parent, -1, title=u'聊天: '+title, size=(500, 400))
-        self.rundir = rundir
+        self.rundir   = rundir
+        self.fromaddr = frommail
+        self.toaddr   = tomail
+        
+        self.chat = chatx
+        chat.receq[self.toaddr] = Queue.Queue()
 
         self.make_menu()
         self.init()
-
+        loginfo('ChatWindow init ok.')
 
     def init(self):
         self.statusbar = self.CreateStatusBar()
@@ -24,13 +29,17 @@ class ChatWindow(wx.Frame):
         self.SetStatusWidths([-1])
         
         self.splitter = wx.SplitterWindow(self, -1, style=wx.SP_3DSASH)
-        p1 = wx.TextCtrl(self.splitter, -1, style=wx.TE_MULTILINE|wx.TE_READONLY) 
+        self.output = wx.TextCtrl(self.splitter, -1, style=wx.TE_MULTILINE|wx.TE_READONLY) 
         self.input = wx.TextCtrl(self.splitter, -1, style=wx.TE_PROCESS_ENTER) 
         self.input.SetFocus()
         self.splitter.SetMinimumPaneSize(20)
-        self.splitter.SplitHorizontally(p1, self.input, -80)
+        self.splitter.SplitHorizontally(self.output, self.input, -80)
 
         self.input.Bind(wx.EVT_TEXT_ENTER, self.OnEnter)
+
+        self.timer = wx.Timer(self)
+        self.timer.Start(1000)
+        self.Bind(wx.EVT_TIMER, self.OnTimer)
        
     def make_menu(self):
         self.ID_MENU_EXIT = wx.NewId()
@@ -46,6 +55,8 @@ class ChatWindow(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnFileExit, id=self.ID_MENU_EXIT)
         
     def OnFileExit(self, event):
+        del chat.receq[self.toaddr]
+        del self.parent.chatwin[self.toaddr]
         self.Destroy()
 
     def OnEnter(self, event):
@@ -53,6 +64,22 @@ class ChatWindow(wx.Frame):
         text = self.input.GetValue()
         loginfo('input:', text)
         self.input.SetValue('')
+        x = {'from':self.fromaddr, 'to':self.toaddr, 'cmd':'msg', 'msg':text, 'time':int(time.time())}
+        ts = '%d-%02d-%02d %02d:%02d:%02d' % time.localtime()[:6]
+        s = '%s %s\n%s\n' % (self.fromaddr, ts, text)
+        self.output.AppendText(s)
+        
+        chat.receq[self.toaddr].put(x)
+
+    def OnTimer(self, event):
+        try:
+            x = chat.receq[self.toaddr].get(block=False)
+        except:
+            return
+        if x['cmd'] == 'msg':
+            ts = '%d-%02d-%02d %02d:%02d:%02d' % time.localtime()[:6]
+            s = '%s %s\n%s\n' % (x['to'], ts, x['msg'])
+            self.output.AppendText(s)
 
 class ContactTree(wx.TreeCtrl):
     def __init__(self, parent, rundir, user):
@@ -64,6 +91,11 @@ class ContactTree(wx.TreeCtrl):
         self.user   = user
         self.linkman = linkman.LinkMan(user)
         self.linkman.load() 
+
+        self.chat = chat.Chat(self.user)
+        loginfo('chat create ok.')
+        #chat.receq[self.toaddr] = Queue.Queue()
+        self.chatwin = {}
 
         self.init()
 
@@ -112,8 +144,10 @@ class ContactTree(wx.TreeCtrl):
             self.Expand(item)
             return
 
-        frame = ChatWindow(self, self.rundir, data[0] + ' ' + data[1])
+        frame = ChatWindow(self, self.rundir, self.chat, self.user, data[1], data[0] + ' ' + data[1])
+        self.chatwin[data[1]] = frame
         frame.Show()
+        loginfo('left double click ok.')
 
               
 class TestFrame(wx.Frame):
