@@ -1,31 +1,28 @@
 # coding: utf-8
 import os, sys
-import wx
-import wx.lib.iewin as iewin
-import logfile
-from logfile import loginfo, logwarn, logerr
-
 rundir = os.path.dirname(os.path.dirname(os.path.abspath(sys.argv[0]))).replace("\\", "/")
 sys.path.insert(0, os.path.join(rundir, 'base'))
-
+import wx
+import wx.lib.iewin as iewin
+import logfile, config
+from logfile import loginfo, logwarn, logerr
 import viewhtml, mailparse
 from common import load_bitmap, load_image
 from picmenu import PicMenu
 
 class MailViewFrame(wx.Frame):
-    def __init__(self, parent, rundir, maildata):
-        '''
-        mailfile - ['text/file', content]
-        '''
+    def __init__(self, parent, rundir, user, mailfile):
         self.rundir = rundir 
         self.bmpdir = self.rundir + "/bitmaps"
+        self.mailfile = mailfile
+        self.user = user
         
         wx.Frame.__init__(self, parent, title=u'查看邮件', size=(800,600))
         self.parent = parent
         
         self.make_menu()
         self.make_toolbar()
-        self.make_viewer(maildata)
+        self.make_viewer(mailfile)
         self.make_statusbar()
         
     def make_menu(self):
@@ -77,30 +74,28 @@ class MailViewFrame(wx.Frame):
         self.statusbar.SetFieldsCount(2)
         self.SetStatusWidths([-1, -2])
         
-    def make_viewer(self, maildata):
-        if maildata[0] == 'text':
-            text = maildata
-        elif maildata[0] == 'file':
-            text = ''
-            ret = mailparse.decode_mail(maildata[1])
-            if ret:
-                if ret['html']:
-                    text = ret['html']
-                else:
-                    text = ret['plain']
-        else:
-            text = 'no text'
+    def make_viewer(self, mailfile):
+        text = ''
+        ret = mailparse.decode_mail(mailfile)
+        if ret:
+            if ret['html']:
+                text = ret['html']
+            else:
+                text = ret['plain']
         #panel = wx.Panel(self)
-        #sizer = wx.BoxSizer(wx.VERTICAL)
-        #self.viewer = viewhtml.ViewHtml(self)
-        #sizer.Add(self.viewer, flag=wx.ALL|wx.EXPAND, border=0, proportion=1)
-        
-        #self.viewer.set_text('aaaaaa')
-        #self.SetSizer(sizer)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        self.viewer = viewhtml.ViewHtml(self)
+        self.viewer.set_text(text)
+        sizer.Add(self.viewer, flag=wx.ALL|wx.EXPAND, border=0, proportion=1)
             
-        self.html = iewin.IEHtmlWindow(self)
-        self.html.LoadString('11111111')
+        if ret['attach']:
+            self.attachctl = viewhtml.AttachListCtrl(self, self.rundir, wx.Size(-1,100))
+            sizer.Add(self.attachctl, flag=wx.ALL|wx.EXPAND, border=0, proportion=0)
+            homepath = os.path.join(config.cf.datadir, self.user)
+            for item in ret['attach']:
+                self.attachctl.add_file(item[0], {'home':homepath, 'file':mailfile, 'attach':item[0]})
         
+        self.SetSizer(sizer)
         
     def OnFileExit(self, evt):
         self.Destroy()
@@ -121,7 +116,7 @@ class TestApp(wx.App):
     def OnInit(self):
         rundir = os.path.dirname(os.path.dirname(os.path.abspath(sys.argv[0]))).replace("\\", "/")
         mailfile = sys.argv[1]
-        frame = MailViewFrame(None, rundir, ['file', mailfile])    
+        frame = MailViewFrame(None, rundir, 'zhaowei', mailfile)    
         frame.Show(True)
         self.SetTopWindow(frame)
         

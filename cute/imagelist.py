@@ -3,7 +3,8 @@ import os, sys
 import threading
 import wx
 from common import load_bitmap, load_image
-import mailparse
+import mailparse, logfile
+from logfile import loginfo, logwarn, logerr
 
 #class ImageList (wx.Frame):
 class ImageList (wx.Panel):
@@ -82,7 +83,7 @@ class ImageListWin (wx.Panel):
     def remove_file(self, filename):
         item = self.list.FindItem(-1, filename)
         if not item:
-            print 'not found:', filename
+            logerr('not found:', filename)
             return
 
         data = self.list.GetItemData(item)
@@ -149,41 +150,39 @@ class ImageListWin (wx.Panel):
         return bmp
     
     def OnItemActivated(self, event):
-        print 'actived'
         itemidx = event.m_itemIndex
         dataidx = self.list.GetItemData(itemidx)
-        if not dataidx:
+        loginfo('dataidx:', dataidx)
+        if dataidx < 0:
+            loginfo('not found dataidx.')
             return
         data = self.data[dataidx]
         if not data.has_key('home'):
+            loginfo('not found home in data')
             return
 
         tmpdir = os.path.join(data['home'], 'tmp')
-        print 'file:', data['file']
+        loginfo('file:', data['file'], ' attach:', data['attach'])
         tmpdir = os.path.join(data['home'], 'tmp')
         mailparse.decode_attach(data['file'], data['attach'], tmpdir)
         
         attachfile = os.path.join(tmpdir, data['attach'])
         if os.path.isfile(attachfile):
             #wx.Execute(attachfile)
-            print 'execute:', attachfile
+            loginfo('execute:', attachfile)
             self.Execute(attachfile)
         
     def Execute(self, cmd):
-        def myexecute(cmd):
-            cmd = '"' + cmd.encode('gbk') + '"'
-            print 'myexecute:', cmd
-            os.system(cmd)
-        th = threading.Thread(target=myexecute, args=(cmd, ))
-        th.start() 
+        import subprocess
+        subprocess.Popen(cmd.encode('gbk'), shell=True)
     
     def OnItemSelected(self, event):
         self.lastitem = event.m_itemIndex
-        print 'imagelist last item:', self.lastitem
+        loginfo('imagelist last item:', self.lastitem)
 
 
     def OnKeyUp(self, evt):
-        print 'key up:', evt.GetKeyCode()
+        loginfo('key up:', evt.GetKeyCode())
         if 127 == evt.GetKeyCode():
             self.remove_item()                
 
@@ -218,7 +217,6 @@ class ImageListUnix (wx.Panel):
         
         self.SetSizer(sizer)
         
-        
         self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnItemActivated, self.list)
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnItemSelected, self.list)
         self.list.Bind(wx.EVT_KEY_UP, self.OnKeyUp)
@@ -245,7 +243,7 @@ class ImageListUnix (wx.Panel):
     def remove_file(self, filename):
         item = self.list.FindItem(-1, filename)
         if not item:
-            print 'not found:', filename
+            logerr('not found:', filename)
             return
 
         data = self.list.GetItemData(item)
@@ -269,10 +267,8 @@ class ImageListUnix (wx.Panel):
     
     def load_unix_icon(self, extname):
         return load_bitmap(os.path.join(self.rundir, 'bitmaps', '32', 'www.png'))
-
     
     def OnItemActivated(self, event):
-        print 'actived'
         itemidx = event.m_itemIndex
         dataidx = self.list.GetItemData(itemidx)
         if not dataidx:
@@ -282,31 +278,26 @@ class ImageListUnix (wx.Panel):
             return
 
         tmpdir = os.path.join(data['home'], 'tmp')
-        print 'file:', data['file']
+        loginfo('file:', data['file'])
         tmpdir = os.path.join(data['home'], 'tmp')
         mailparse.decode_attach(data['file'], data['attach'], tmpdir)
         
         attachfile = os.path.join(tmpdir, data['attach'])
         if os.path.isfile(attachfile):
             #wx.Execute(attachfile)
-            print 'execute:', attachfile
+            loginfo('execute:', attachfile)
             self.Execute(attachfile)
         
     def Execute(self, cmd):
-        def myexecute(cmd):
-            cmd = '"' + cmd.encode('gbk') + '"'
-            print 'myexecute:', cmd
-            os.system(cmd)
-        th = threading.Thread(target=myexecute, args=(cmd, ))
-        th.start() 
+        import subprocess
+        subprocess.Popen(cmd.encode(mailparse.charset), shell=True)
     
     def OnItemSelected(self, event):
         self.lastitem = event.m_itemIndex
-        print 'imagelist last item:', self.lastitem
-
+        loginfo('imagelist last item:', self.lastitem)
 
     def OnKeyUp(self, evt):
-        print 'key up:', evt.GetKeyCode()
+        loginfo('key up:', evt.GetKeyCode())
         if 127 == evt.GetKeyCode():
             self.remove_item()                
 

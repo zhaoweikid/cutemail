@@ -1,6 +1,9 @@
 # coding: utf-8
 import os, sys
+import cPickle as pickle
 import config
+import logfile
+from logfile import loginfo, logwarn, logerr
 
 class LinkManSync:
     def __init__(self):
@@ -18,19 +21,20 @@ class LinkMan:
         self.defuserinfo = [u'head', u'手机', u'qq', u'msn', u'家庭电话', u'单位电话', u'生日']
         # {'groupname':[], u'最近联系人':[[u'赵威', 'zhaoewikid@163.com', {'head':'',u'手机':'',u'qq':'','msn':'','家庭电话':'','单位电话':''}], ], }
         self.groups = {}
-
         self.index_email = {}
     
     def load(self):
-        fpath = os.path.join(config.cf.home, user, 'linkman.cf')
-        if not os.path.isfile(fpath):
+        fpath = os.path.join(config.cf.datadir, self.user, 'linkman.cf')
+        if not os.path.isfile(fpath) or os.path.getsize(fpath) == 0:
+            self.groups['groupname'] = self.defgroups
+            for k in self.defgroups:
+                self.groups[k] = []
             return
         f = open(fpath ,'r')
         x = pickle.load(f)
         f.close()
 
         self.groups = x
-
         for k in x:
             if k == 'groupname':
                 continue
@@ -39,12 +43,12 @@ class LinkMan:
                 self.index_email[item[1]] = item
 
     def dump(self):
-        fpath = os.path.join(config.cf.home, user, 'linkman.cf')
+        fpath = os.path.join(config.cf.datadir, self.user, 'linkman.cf')
         f = open(fpath, 'w')
-        pickle.dump(f, self.groups)
+        pickle.dump(self.groups, f)
         f.close()
    
-    def add(self, name, email, other=None, group=None):
+    def add(self, name, email, group=None, other=None):
         if self.index_email.has_key(email):
             raise ValueError, 'email is exists'
         info = zip(self.defuserinfo, ['']*len(self.defuserinfo))
@@ -55,7 +59,8 @@ class LinkMan:
             gpname = group
         else:
             gpname = u'其他联系人'
-
+        loginfo('groups:', self.groups)
+        loginfo('gpname:', gpname)
         self.groups[gpname].append(x)
         self.index_email[email] = x
 
@@ -109,10 +114,17 @@ class LinkMan:
         return ret
 
 def test():
-    pass
-
+    import pprint
+    print 'test linkman'
+    m = LinkMan('zhaowei')
+    m.load()
+    pprint.pprint(m.groups)
+    m.add('bobo', 'rabbit_haobobo@163.com', u'我的好友')
+    pprint.pprint(m.groups)
+    m.dump()
 
 if __name__ == '__main__':
+    print '-'*60
     test()
 
 
