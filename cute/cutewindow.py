@@ -76,7 +76,7 @@ class MainFrame(wx.Frame):
             self.contacts[k] = ct
 
             self.mgr.AddPane(ct, wx.aui.AuiPaneInfo().Name("contact_"+k).Caption(u"联系人").
-                    Left().Layer(1).Position(1).CloseButton(True).MaximizeButton(False))
+                    Left().Layer(1).Position(2).CloseButton(True).MaximizeButton(False))
 
         # 为面板管理器增加用户邮箱树形结构
         self.mgr.AddPane(self.tree, wx.aui.AuiPaneInfo().Name("tree").Caption(u"用户").
@@ -84,10 +84,11 @@ class MainFrame(wx.Frame):
             
         # 把邮件内容面板添加到面板管理器
         self.mgr.AddPane(self.listcnt, wx.aui.AuiPaneInfo().Name("listcnt").Caption(u"邮件内容").
+                          MinSize(wx.Size(-1, 200)).
                           Bottom().Layer(0).Position(3).CloseButton(True).MaximizeButton(True))
         
         self.mgr.AddPane(self.attachctl, wx.aui.AuiPaneInfo().Name("attachctl").Caption(u"附件内容").
-                          BestSize(wx.Size(48,100)).MinSize(wx.Size(48,100)).Bottom().
+                          MinSize(wx.Size(48,-1)).Bottom().
                           Layer(0).Position(4).CloseButton(True).MaximizeButton(True))
         # 显示当前选择的邮件列表面板
         loginfo('show:', self.last_mailbox)
