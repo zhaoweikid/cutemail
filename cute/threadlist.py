@@ -141,55 +141,6 @@ class Task(threading.Thread):
             else:
                 func(item)
             
-    
-    def recvmail_old(self, item):
-        name = item['name']
-        try:
-            ucf = config.cf.users[name]
-        except:
-            traceback.print_exc(file=logfile.logobj.log)
-            loginfo('get user config error!')
-            return
-        loginfo('recv mail:', ucf)
-        mailinfos = []
-        try:
-            pop = pop3.POP3Client(ucf)
-            pop.init()
-            pop.login()
-            pop.infos()
-            mailinfos = pop.mails()
-            pop.close()
-        except exception, e:
-            error = str(e)
-            traceback.print_exc(file=logfile.logobj.log)
-    
-        dbpath = os.path.join(config.cf.datadir, name, 'mailinfo.db')
-        conn = dbope.DBOpe(dbpath)
-        for minfo in mailinfos:
-            attachstr = simplejson.dumps(minfo['attach'])
-            
-            filename = minfo['filename'].replace("'", "''")
-            subject = minfo['subject'].replace("'", "''")
-            #plain = minfo['plain'].replace("'", "''")
-            #html  = minfo['html'].replace("'", "''")
-            attach = attachstr.replace("'", "''")
-            
-            sql = "insert into mailinfo(filename,subject,mailfrom,mailto,size,ctime,date,attach,mailbox) values " \
-                  "('%s','%s','%s','%s',%d,%s,'%s','%s','%s')" % \
-                  (filename, subject, minfo['from'], ','.join(minfo['to']), minfo['size'],
-                   minfo['ctime'], minfo['date'], attach, minfo['mailbox'])
-            
-            try:
-                conn.execute(sql)
-            except:
-                traceback.print_exc(file=logfile.logobj.log)
-        conn.close()
-        #loginfo(config.cf.users[name])
-        # 有可能有冲突
-        config.cf.dump_conf(name)
-        loginfo('recvmali complete!')
-        x = {'name':name, 'task':'updatebox', 'message':''}
-        config.uiq.put(x, timeout=5)
 
     def recvmail(self, item):
         name = item['name']
@@ -206,7 +157,10 @@ class Task(threading.Thread):
             pop.init()
             pop.login()
             pop.infos()
+            allcount = len(pop.uidls)
+            rcount = 0
             while True:
+                rcount += 1
                 try:
                     minfo = pop.mail()
                     if minfo is None:
@@ -214,7 +168,7 @@ class Task(threading.Thread):
                 except:
                     traceback.print_exc(file=logfile.logobj.log)
                     continue
-                self.recvmail_one_result(name, minfo)
+                self.recvmail_one_result(name, minfo, rcount, allcount)
 
             pop.close()
         except Exception, e:
@@ -228,7 +182,7 @@ class Task(threading.Thread):
         #config.uiq.put(x, timeout=5)
    
 
-    def recvmail_one_result(self, name, minfo):
+    def recvmail_one_result(self, name, minfo, rcount, allcount):
         dbpath = os.path.join(config.cf.datadir, name, 'mailinfo.db')
         conn = dbope.DBOpe(dbpath)
  
@@ -251,7 +205,7 @@ class Task(threading.Thread):
             traceback.print_exc(file=logfile.logobj.log)
      
         conn.close()
-        x = {'name':name, 'task':'newmail', 'message':'', 'filename':filename, 'count':count}
+        x = {'name':name, 'task':'newmail', 'message':'', 'filename':filename, 'allcount':allcount, 'count':rcount}
         config.uiq.put(x, timeout=5)
         config.cf.dump_conf(name)
 

@@ -139,8 +139,10 @@ class MainFrame(wx.Frame):
         self.add_mailbox_panel(k, obj)
  
     def load_db_info(self, user, row):
+        row['attach'] = simplejson.loads(row['attach'])
         att = 0
-        if row['attach']:
+        loginfo('load_db_info:', row['attach'])
+        if len(row['attach']) > 0:
             att = 1
                 
         boxname = '/%s/' % (user) + config.cf.mailbox_map_en2cn[row['mailbox']]
@@ -151,7 +153,7 @@ class MainFrame(wx.Frame):
         mailaddr = row['mailfrom']
         if row['mailbox'] in ['send','draft','sendover']:
             mailaddr = row['mailto']
-        item = [mailaddr, att, 1, row['subject'], row['date'], str(row['size']/1024 + 1)+' K',
+        item = [mailaddr, att, row['subject'], 1, row['date'], str(row['size']/1024 + 1)+' K',
                 wx.TreeItemData(row)]
             #print item
         panel = self.mailboxs[boxname]
@@ -200,7 +202,6 @@ class MainFrame(wx.Frame):
         self.ID_VIEW_ENCODE  = wx.NewId()
         self.ID_VIEW_SOURCE  = wx.NewId()
         
-        self.ID_VIEW_LINKMAN    = wx.NewId()
         self.ID_VIEW_TEMPLATE   = wx.NewId()
         
         self.ID_MAIL_WRITE     = wx.NewId()
@@ -294,7 +295,7 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_TOOL, self.OnMailReply, id=self.ID_TOOLBAR_MAIL_REPLY)
         self.Bind(wx.EVT_TOOL, self.OnMailForward, id=self.ID_TOOLBAR_MAIL_FORWARD)
         self.Bind(wx.EVT_TOOL, self.OnMailDel, id=self.ID_TOOLBAR_MAIL_DELETE)
-        self.Bind(wx.EVT_TOOL, self.OnViewLinkman, id=self.ID_TOOLBAR_ADDR)
+        self.Bind(wx.EVT_TOOL, self.OnViewContact, id=self.ID_TOOLBAR_ADDR)
         self.Bind(wx.EVT_TOOL, self.OnMailSearch, id=self.ID_TOOLBAR_FIND)
         self.Bind(wx.EVT_TOOL, self.OnWebsite, id=self.ID_TOOLBAR_WWW)
         
@@ -329,11 +330,10 @@ class MainFrame(wx.Frame):
         self.viewmenu = PicMenu(self)
         self.viewmenu.Append(self.ID_VIEW_MAIL, u"邮件内容窗口", 'contents.png')        
         self.viewmenu.Append(self.ID_VIEW_ATTACH, u"附件内容窗口", 'attach.png')        
-        self.viewmenu.Append(self.ID_VIEW_CONTACT, u"联系人窗口", 'chat.png')        
+        self.viewmenu.Append(self.ID_VIEW_CONTACT, u"联系人窗口", 'contact.png')        
         self.viewmenu.Append(self.ID_VIEW_SOURCE, u"信件原文", 'note.png')
         self.viewmenu.Append(self.ID_VIEW_SEARCH, u"查找邮件", 'mail_find.png')
         self.viewmenu.AppendSeparator()
-        self.viewmenu.Append(self.ID_VIEW_LINKMAN, u"联系人", 'note.png')
         self.viewmenu.Append(self.ID_VIEW_TEMPLATE, u"模板管理", "template.png")
 
         self.viewmenu.AppendSeparator()
@@ -439,7 +439,6 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnExportCuteMailbox, id=self.ID_EXPORT_MAB_MAILBOX)
         self.Bind(wx.EVT_MENU, self.OnExportCuteLinkman, id=self.ID_EXPORT_MAB_LINKMAN)
         
-        self.Bind(wx.EVT_MENU, self.OnViewLinkman, id=self.ID_VIEW_LINKMAN)
         self.Bind(wx.EVT_MENU, self.OnViewTemplate, id=self.ID_VIEW_TEMPLATE)
 
         self.Bind(wx.EVT_MENU, self.OnMailboxUserNew, id=self.ID_MAILBOX_USER_NEW)
@@ -550,6 +549,8 @@ class MainFrame(wx.Frame):
                     conn.close()
 
                     self.statusbar.SetStatusText(u'最后收信时间: %d-%02d-%02d %02d:%02d:%02d' % time.localtime()[:6], 1)
+                    s = u'用户%s收信中 %d/%d' % (name, item['count'], item['allcount'])
+                    self.statusbar.SetStatusText(s, 0)
 
                 elif task == 'alert':
                     wx.MessageBox(u'发送返回信息:' + item['message'], u'邮件信息!', wx.OK|wx.ICON_ERROR)
@@ -565,7 +566,8 @@ class MainFrame(wx.Frame):
                             info = ret[0]
                             loginfo('get mail:', info['filename'])
                             att = 0 
-                            if info['attach']:
+                            loginfo('attach:', info['attach'])
+                            if len(info['attach']) > 0:
                                 att = 1
                             info['user'] = name
                             info['item'] = item['item']
@@ -797,8 +799,6 @@ class MainFrame(wx.Frame):
         pass
         
         
-    def OnViewLinkman(self, event):
-        pass
     def OnViewTemplate(self, event):
         pass
     

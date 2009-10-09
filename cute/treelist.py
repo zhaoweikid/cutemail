@@ -24,7 +24,7 @@ class MailListPanel(wx.Panel):
         #self.idx = self.il.Add(images.getSmilesBitmap())
         
         self.tree.SetImageList(self.il)
-        cols = [u'发件人','attach','mark',u'邮件主题',u'日期',u'邮件大小']
+        cols = [u'发件人','attach',u'邮件主题','mark',u'日期',u'邮件大小']
         
         #item = ['zhaowei@bobo.com', 1,1, u'呵呵我的测试', '20090210', '12873']
         self.lastitem = None
@@ -78,11 +78,11 @@ class MailListPanel(wx.Panel):
         self.tree.SetMainColumn(0)
         self.root = self.tree.AddRoot("root")
         
-        self.earlier = self.add_item([u' 更早 ',0,0,'','','', wx.TreeItemData({'new':0, 'all':0})])
-        self.month = self.add_item([u' 本月 ',0,0,'','','', wx.TreeItemData({'new':0, 'all':0})]) 
-        self.week  = self.add_item([u' 本周 ',0,0,'','','', wx.TreeItemData({'new':0, 'all':0})]) 
-        self.yestoday = self.add_item([u' 昨天 ',0,0,'','','', wx.TreeItemData({'new':0, 'all':0})]) 
-        self.today = self.add_item([u' 今天 ',0,0,'','','', wx.TreeItemData({'new':0, 'all':0})]) 
+        self.earlier = self.add_item([u' 更早 ',0,'',0,'','', wx.TreeItemData({'new':0, 'all':0})])
+        self.month = self.add_item([u' 本月 ',0,'',0,'','', wx.TreeItemData({'new':0, 'all':0})]) 
+        self.week  = self.add_item([u' 本周 ',0,'',0,'','', wx.TreeItemData({'new':0, 'all':0})]) 
+        self.yestoday = self.add_item([u' 昨天 ',0,'',0,'','', wx.TreeItemData({'new':0, 'all':0})]) 
+        self.today = self.add_item([u' 今天 ',0,'',0,'','', wx.TreeItemData({'new':0, 'all':0})]) 
 
         self.parent_items = [self.earlier, self.month, self.week, self.yestoday, self.today]
         
@@ -180,9 +180,9 @@ class MailListPanel(wx.Panel):
             self.tree.SetItemImage(first, self.pngs[self.image_attach], 1)
         #if item[2]:
         #    self.tree.SetItemImage(first, self.pngs[self.image_flag], 2)
-        if item[2]:
-            self.tree.SetItemImage(first, self.pngs[self.image_mark], 2)
-        self.tree.SetItemText(first, item[3], 3)
+        self.tree.SetItemText(first, item[2], 2)
+        if item[3]:
+            self.tree.SetItemImage(first, self.pngs[self.image_mark], 3)
         self.tree.SetItemText(first, item[4], 4)
         self.tree.SetItemText(first, item[5], 5)
         self.tree.SetItemData(first, item[6]) 
@@ -390,16 +390,15 @@ class MailListPanel(wx.Panel):
             self.parent.listcnt.set_text(plaindata.replace('\r\n', '<br>').replace('\n', '<br>'))
         attachctl = self.parent.attachctl
         attachctl.clear()
+        
+        #row['attach'] = simplejson.loads(row['attach'])
 
-        if row['attach']:
-            attachs = simplejson.loads(row['attach'])
-
-            for item in attachs:
-                filename = os.path.join(config.cf.datadir, name, row['mailbox'], row['filename'].strip(os.sep))
-                homename = os.path.join(config.cf.datadir, name)
-                attachdata = {'file':filename, 'home':homename, 'attach':item[0]}
-                loginfo('attachdata:', attachdata)
-                attachctl.add_file(item[0], attachdata)
+        for item in row['attach']:
+            filename = os.path.join(config.cf.datadir, name, row['mailbox'], row['filename'].strip(os.sep))
+            homename = os.path.join(config.cf.datadir, name)
+            attachdata = {'file':filename, 'home':homename, 'attach':item[0]}
+            loginfo('attachdata:', attachdata)
+            attachctl.add_file(item[0], attachdata)
 
         if row['status'] == 'noread':
             #row['status'] = 'read' 

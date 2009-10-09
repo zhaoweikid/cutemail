@@ -106,7 +106,7 @@ def mail_import(user, boxnode, filename):
     info['box'] = '/%s/%s' % (user, info['mailbox'])
     info['status'] = 'noread'
     info['filepath'] = os.path.join(config.cf.datadir, user, info['mailbox'], info['filename'].lstrip(os.sep))
-    item = [info['from'], att,1, info['subject'], info['date'], str(info['size']/1024 + 1)+' K',wx.TreeItemData(info)]
+    item = [info['from'], att, info['subject'], 1, info['date'], str(info['size']/1024 + 1)+' K',wx.TreeItemData(info)]
     panel = boxnode['panel']
     panel.add_mail(item)
    
