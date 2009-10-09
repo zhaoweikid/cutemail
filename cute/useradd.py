@@ -122,13 +122,13 @@ class ServerPage(wiz.WizardPageSimple):
         wx.StaticText(panel, -1, u'请输入您使用的SMTP服务器地址，比如smtp.163.com')
         
         wx.StaticText(panel, -1, u'SMTP服务器地址:')
-        self.smtpserver = wx.TextCtrl(panel, -1, size=(200,-1), style=wx.TE_PASSWORD )
+        self.smtpserver = wx.TextCtrl(panel, -1, size=(200,-1))
         
         wx.StaticText(panel, -1, '') 
         wx.StaticText(panel, -1, u'请输入SMTP账户密码，不填写表示不需要密码')
         
         wx.StaticText(panel, -1, u'SMTP密码:')
-        self.smtppass = wx.TextCtrl(panel, -1, size=(200,-1))
+        self.smtppass = wx.TextCtrl(panel, -1, size=(200,-1), style=wx.TE_PASSWORD)
         
         self.SetAutoLayout(True)
 

@@ -109,7 +109,10 @@ def mail_import(user, boxnode, filename):
     item = [info['from'], att,1, info['subject'], info['date'], str(info['size']/1024 + 1)+' K',wx.TreeItemData(info)]
     panel = boxnode['panel']
     panel.add_mail(item)
-    
+   
+
+
+
 if __name__ == '__main__':
     import pprint
     a = ['root', [['test1', [['111', ['1111111']],

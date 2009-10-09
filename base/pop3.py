@@ -11,6 +11,7 @@ class POP3Client:
         self.password = mailuser['pop3_pass']
         host = mailuser['pop3_server']
         self.hashdir_count = 10 
+        self.uidl_pos = 0
 
         pos = string.find(host, ':')
         if pos > 0:
@@ -127,6 +128,61 @@ class POP3Client:
             count += 1
         
         return mailinfos
+
+
+    def mail(self):
+        if self.uidl_pos >= len(self.uidls):
+            return None
+
+        name = self.mailuser['name']
+        count = 0
+
+        item = self.uidls[self.uidl_pos]
+        self.uidl_pos += 1
+            
+        i, k = item
+        loginfo('uidl:', i, k)
+        trycount = 0
+        while True:
+            try:
+                data = self.pop3.retr(i)
+            except Exception, e:
+                logerr(e)
+                trycount += 1
+                if trycount == 3:
+                    raise ValueError, 'pop3 retr error:', i
+                continue
+            trycount = 0
+            break
+        filedata = '\n'.join(data[1])
+          
+        hashdir = '%02d' % (hash(k) % self.hashdir_count)
+        filename = os.path.join(self.time_path, hashdir, '%d.' % (int(time.time())) + k + '.eml')
+        loginfo('file:', filename, 'size:', len(filedata))
+            
+            
+        try:
+            ret = mailparse.decode_mail_string(filedata)
+        except Exception, e:
+            traceback.print_exc(file=logfile.logobj.log)
+            raise
+            
+        f = open(filename, 'w')
+        f.write(filedata)
+        f.close()
+            
+        ret['filename'] = filename[len(self.recvpath):]
+        ret['mailbox'] = 'recv'
+        ret['ctime'] = 'datetime()'
+        ret['uidl'] = k
+        #print ret
+        loginfo('======== pos:', self.uidl_pos, ' of ', len(self.uidls))
+        #config.cf.mail_add(name, ret) 
+        
+        self.mailuser['uidls'].add(k)
+        
+        return ret
+
 def test():
     for k in config.cf.users:
         print '---------- name:', k
@@ -135,7 +191,7 @@ def test():
         p.init()
         p.login() 
         p.infos()
-        p.mails()
+        p.mail()
 
 
 if __name__ == '__main__':

@@ -49,7 +49,7 @@ class Chat:
         self.localudp.sendto(simplejson.dumps(x), ('<broadcast>', 10010)) 
 
         while self.isrunning:
-            loginfo('recevied get.')
+            #loginfo('recevied get.')
             data, addr = self.localudp.recvfrom(4096)
             loginfo('recv:', data, 'addr:', addr)
             x = simplejson.loads(data)

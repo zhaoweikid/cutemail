@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # coding: utf-8
 import os, sys, cStringIO, string, time
+import simplejson
 import wx
 import wx.aui
 import wx.wizard as wiz
@@ -77,6 +78,7 @@ class MainFrame(wx.Frame):
 
             self.mgr.AddPane(ct, wx.aui.AuiPaneInfo().Name("contact_"+k).Caption(u"联系人").
                     Left().Layer(1).Position(2).CloseButton(True).MaximizeButton(False))
+            self.mgr.GetPane('contact_'+k).Hide()
 
         # 为面板管理器增加用户邮箱树形结构
         self.mgr.AddPane(self.tree, wx.aui.AuiPaneInfo().Name("tree").Caption(u"用户").
@@ -102,6 +104,18 @@ class MainFrame(wx.Frame):
         
         self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
         self.Bind(wx.EVT_SIZE, self.OnSize)
+
+
+        self.mail_writer_item = ['subject', 'from', 'to', 'text', 'user', 'attach']
+
+    def add_user(self, user):
+        ct = contact.ContactTree(self, self.rundir, user)
+        ct.Hide()
+        self.contacts[user] = ct
+        self.mgr.AddPane(ct, wx.aui.AuiPaneInfo().Name("contact_"+user).Caption(u"联系人").
+                Left().Layer(1).Position(2).CloseButton(True).MaximizeButton(False))
+
+
         
     def add_mailbox_panel(self, k, obj=None):
         loginfo('add panel:', k)
@@ -137,7 +151,7 @@ class MainFrame(wx.Frame):
         mailaddr = row['mailfrom']
         if row['mailbox'] in ['send','draft','sendover']:
             mailaddr = row['mailto']
-        item = [mailaddr, att, 0, row['subject'], row['date'], str(row['size']/1024 + 1)+' K',
+        item = [mailaddr, att, 1, row['subject'], row['date'], str(row['size']/1024 + 1)+' K',
                 wx.TreeItemData(row)]
             #print item
         panel = self.mailboxs[boxname]
@@ -498,70 +512,73 @@ class MainFrame(wx.Frame):
         定时任务
         '''
         #print 'time now', time.ctime()
-        try:
-            item = config.uiq.get(0)
-        except:
-            pass
-        else:
-            loginfo('timer get uiq: ', item)
-            name = item['name']
-            task = item['task']
-            boxpanel = self.mailboxs['/%s/' % (name) + u'收件箱']
-            if task == 'updatebox':
-                usercf = config.cf.users[name]
-                dbpath = os.path.join(config.cf.datadir, name, 'mailinfo.db')
-                conn = dbope.DBOpe(dbpath)
-                count = conn.query('select count(*) as count from mailinfo')[0]['count']
-                ret = conn.query("select id,filename,subject,mailfrom,mailto,size,ctime,date,attach,mailbox,status from mailinfo where status='new' and mailbox='recv'")
-                if ret:
-                    for info in ret:
-                        loginfo('get mail:', info['filename'])
-                        att = 0 
-                        if info['attach']:
-                            att = 1
-                        info['user'] = name
-                        info['box'] = '/%s/%s' % (name, info['mailbox'])
-                        info['status'] = 'noread'
-                        info['filepath'] = os.path.join(config.cf.datadir, name, info['mailbox'], info['filename'].lstrip(os.sep))
-                        item = [info['mailfrom'], att,1, info['subject'], info['date'], str(info['size']/1024 + 1)+' K',
-                                wx.TreeItemData(info)]
-                        #print item
-                        conn.execute("update mailinfo set status='noread' where id=" + str(info['id']))
-
-                        boxpanel.add_mail(item)
-                        #mlist.add_item(item, mlist.today)
-                    #self.statusbar.SetStatusText(u'信件数:' + str(count), 2)
-                conn.close()
-
-                self.statusbar.SetStatusText(u'最后收信时间: %d-%02d-%02d %02d:%02d:%02d' % time.localtime()[:6], 1)
-            elif task == 'alert':
-                wx.MessageBox(u'发送返回信息:' + item['message'], u'邮件信息!', wx.OK|wx.ICON_ERROR)
-                if item['runtask'] == 'sendmail' and item['return']:
-                    boxpanel = self.mailboxs['/%s/' % (name) + u'发件箱']
-
+        for i in range(0,5):
+            try:
+                item = config.uiq.get(0)
+            except:
+                break
+            else:
+                loginfo('timer get uiq: ', item)
+                name = item['name']
+                task = item['task']
+                boxpanel = self.mailboxs['/%s/' % (name) + u'收件箱']
+                if task == 'updatebox':
+                    usercf = config.cf.users[name]
                     dbpath = os.path.join(config.cf.datadir, name, 'mailinfo.db')
                     conn = dbope.DBOpe(dbpath)
-                    ret = conn.query("select id,filename,subject,mailfrom,mailto,size,ctime,date,attach,mailbox,status from mailinfo where filename='%s'" % (item['filename']))
-                    conn.close()
-                    
+                    count = conn.query('select count(*) as count from mailinfo')[0]['count']
+                    ret = conn.query("select id,filename,subject,mailfrom,mailto,size,ctime,date,attach,mailbox,status from mailinfo where status='new' and mailbox='recv'")
                     if ret:
-                        info = ret[0]
-                        loginfo('get mail:', info['filename'])
-                        att = 0 
-                        if info['attach']:
-                            att = 1
-                        info['user'] = name
-                        info['item'] = item['item']
-                        info['box'] = '/%s/%s' % (name, info['mailbox'])
-                        info['filepath'] = os.path.join(config.cf.datadir, name, info['mailbox'], info['filename'].lstrip(os.sep))
-                        
-                        loginfo('info:', info)
-                        boxpanel.change_box(info, 'sendover') 
+                        for info in ret:
+                            loginfo('get mail:', info['filename'])
+                            self.load_db_info(name, info)
+                            conn.execute("update mailinfo set status='noread' where id=" + str(info['id']))
+                    conn.close()
 
-            elif task == 'status':
-                pass
-            else:
-                logerr('uiq return error:', item)
+                    self.statusbar.SetStatusText(u'最后收信时间: %d-%02d-%02d %02d:%02d:%02d' % time.localtime()[:6], 1)
+                elif task == 'newmail':
+                    filename = item['filename']
+                    usercf = config.cf.users[name]
+                    dbpath = os.path.join(config.cf.datadir, name, 'mailinfo.db')
+                    conn = dbope.DBOpe(dbpath)
+                    ret = conn.query("select id,filename,subject,mailfrom,mailto,size,ctime,date,attach,mailbox,status from mailinfo where filename='%s'" % (filename))
+                    if ret:
+                        for info in ret:
+                            loginfo('get mail:', info['filename'])
+                            self.load_db_info(name, info)
+                            conn.execute("update mailinfo set status='noread' where id=" + str(info['id']))
+                    conn.close()
+
+                    self.statusbar.SetStatusText(u'最后收信时间: %d-%02d-%02d %02d:%02d:%02d' % time.localtime()[:6], 1)
+
+                elif task == 'alert':
+                    wx.MessageBox(u'发送返回信息:' + item['message'], u'邮件信息!', wx.OK|wx.ICON_ERROR)
+                    if item['runtask'] == 'sendmail' and item['return']:
+                        boxpanel = self.mailboxs['/%s/' % (name) + u'发件箱']
+
+                        dbpath = os.path.join(config.cf.datadir, name, 'mailinfo.db')
+                        conn = dbope.DBOpe(dbpath)
+                        ret = conn.query("select id,filename,subject,mailfrom,mailto,size,ctime,date,attach,mailbox,status from mailinfo where filename='%s'" % (item['filename']))
+                        conn.close()
+                    
+                        if ret:
+                            info = ret[0]
+                            loginfo('get mail:', info['filename'])
+                            att = 0 
+                            if info['attach']:
+                                att = 1
+                            info['user'] = name
+                            info['item'] = item['item']
+                            info['box'] = '/%s/%s' % (name, info['mailbox'])
+                            info['filepath'] = os.path.join(config.cf.datadir, name, info['mailbox'], info['filename'].lstrip(os.sep))
+                        
+                            loginfo('info:', info)
+                            boxpanel.change_box(info, 'sendover') 
+
+                elif task == 'status':
+                    pass
+                else:
+                    logerr('uiq return error:', item)
         
     def OnFileOpen(self, event):
         dlg = wx.FileDialog(
@@ -739,12 +756,12 @@ class MainFrame(wx.Frame):
             return
         user  = item['user']
         
-        for u in self.contacts:
-            x = self.contacts[u]
+        for u in config.cf.users:
+            k = 'contact_' + u
             if u == user:
-                x.Show()
+                self.mgr.GetPane(k).Show()
             else:
-                x.Hide()
+                self.mgr.GetPane(k).Hide()
 
     def OnViewSource(self, event):
         self.mailboxs[self.last_mailbox].OnPopupSource(event)
@@ -818,7 +835,7 @@ class MainFrame(wx.Frame):
                 wx.MessageBox(u"用户添加失败!"+str(e), u"欢迎使用CuteMail")
             else:
                 #wx.MessageBox(u"用户添加成功!", u"欢迎使用CuteMail")
-                self.tree.append(conf['mailbox'], me)
+                self.tree.append(conf['mailbox'], me['name'])
                 self.tree.Refresh()
                 
         
@@ -850,7 +867,12 @@ class MainFrame(wx.Frame):
         user = data['user']
         loginfo('user name:', user)
         mailaddr = config.cf.users[user]['email']
-        maildata = {'subject':'', 'from':mailaddr, 'to':'', 'text':'', 'user':user}
+        maildata = dict(zip(self.mail_writer_item, ['']*len(self.mail_writer_item)))
+        maildata['from'] = mailaddr
+        maildata['user'] = user
+        maildata['attach'] = []
+        #maildata = {'subject':'', 'from':mailaddr, 'to':'', 'text':'', 'user':user, 'attach':[]}
+
 
         frame = writer.WriterFrame(self, self.rundir, maildata)
         frame.Show(True)
@@ -875,7 +897,7 @@ class MainFrame(wx.Frame):
             parts[i] = ">>" + parts[i]
         text = '\r\n'.join(parts)
         maildata = {'subject':'Re: '+info['subject'][:32], 'from':mailaddr, 'to':info['mailfrom'],
-                    'text': text, 'user':user}
+                    'text': text, 'user':user, 'attach':[]}
         #print 'reply:', maildata 
         frame = writer.WriterFrame(self, self.rundir, maildata)
         frame.Show(True)
@@ -893,8 +915,15 @@ class MainFrame(wx.Frame):
             logerr('get_item_content error:', str(e))
            
         mailaddr = config.cf.users[user]['email']
-        maildata = {'subject':'Re: '+info['subject'][:32], 'from':mailaddr, 'to':'', 
-                    'text':info['plain'], 'user':user}
+        #maildata = {'subject':'Re: '+info['subject'][:32], 'from':mailaddr, 'to':'', 
+        #            'text':info['plain'], 'user':user, 'attach':[]}
+        
+        maildata = dict(zip(self.mail_writer_item, ['']*len(self.mail_writer_item)))
+        maildata['subject'] = 'Re: ' + info['subject'][:32]
+        maildata['from'] = mailaddr
+        maildata['user'] = user
+        maildata['text'] = info['plain']
+        maildata['attach'] = []
  
         frame = writer.WriterFrame(self, self.rundir, maildata)
         frame.Show(True)
@@ -912,8 +941,16 @@ class MainFrame(wx.Frame):
             logerr('get_item_content error:', str(e))
         
         mailaddr = config.cf.users[user]['email']
-        maildata = {'subject':'Fw:'+info['subject'][:32], 'from':mailaddr, 'to':'', 
-                    'text':info['plain'], 'user':user}
+        #maildata = {'subject':'Fw:'+info['subject'][:32], 'from':mailaddr, 'to':'', 
+        #            'text':info['plain'], 'user':user, 'attach':[]}
+        attachs = [] 
+        maildata = dict(zip(self.mail_writer_item, ['']*len(self.mail_writer_item)))
+        maildata['subject'] = 'Fw: ' + info['subject'][:32]
+        maildata['from'] = mailaddr
+        maildata['user'] = user
+        maildata['text'] = info['plain']
+        maildata['attach'] = attachs
+ 
         frame = writer.WriterFrame(self, self.rundir, maildata)
         frame.Show(True)
 
@@ -931,13 +968,31 @@ class MainFrame(wx.Frame):
             logerr('get_item_content error:', str(e))
         mailaddr = config.cf.users[user]['email']
         maildata = {'subject':info['subject'], 'from':mailaddr, 'to':info['mailto'], 
-                    'text':info['plain'], 'user':user}
+                    'text':info['plain'], 'user':user, 'attach':[]}
  
         frame = writer.WriterFrame(self, self.rundir, maildata)
         frame.Show(True)
 
     def OnMailAttach(self, event):
-        pass
+        data = self.tree.last_item_data()
+        if not data:
+            wx.MessageBox(u"作为附件发送邮件失败！无法获取到当前邮件箱。", u"再次发送邮件")
+            return
+        user  = data['user']
+        panel = data['panel']
+
+        try:
+            info = panel.get_item_content()
+        except Exception, e:
+            logerr('get_item_content error:', str(e))
+        mailaddr = config.cf.users[user]['email']
+        maildata = {'subject':info['subject'], 'from':mailaddr, 'to':info['mailto'], 
+                    'text':info['plain'], 'user':user, 'attach':[]}
+ 
+        frame = writer.WriterFrame(self, self.rundir, maildata)
+        frame.Show(True)
+
+
 
     def OnMailSelectAll(self, event):
         data = self.tree.last_item_data()

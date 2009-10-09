@@ -1,5 +1,5 @@
 # coding: utf-8
-import os, sys, time
+import os, sys, time, simplejson
 import wx, wx.gizmos
 import  wx.lib.dialogs
 import cStringIO, types
@@ -131,7 +131,7 @@ class MailListPanel(wx.Panel):
                 self.mail_new -= 1
                 itemdata['status'] = 'read'
                 #self.tree.SetItemBold(item, False) 
-        loginfo('draw category:', data)
+        #loginfo('draw category:', data)
         s = text.split(' ')    
         s[-1] = '%d/%d' % (data['new'], data['all'])
         self.tree.SetItemText(parent, ' '.join(s), 0)
@@ -153,7 +153,7 @@ class MailListPanel(wx.Panel):
         #loginfo('select items:', items)
         if items:
             for item in items:
-                loginfo('try select:', item)
+                #loginfo('try select:', item)
                 self.tree.ToggleItemSelection(item)
 
     def get_all_children(self, parent):
@@ -390,18 +390,16 @@ class MailListPanel(wx.Panel):
             self.parent.listcnt.set_text(plaindata.replace('\r\n', '<br>').replace('\n', '<br>'))
         attachctl = self.parent.attachctl
         attachctl.clear()
+
         if row['attach']:
-            attach = row['attach'].split('||')
-            if attach:
-                pos = 0
-                for a in attach:
-                    item = a.split('::')
-                    filename = os.path.join(config.cf.datadir, name, row['mailbox'], row['filename'].strip(os.sep))
-                    homename = os.path.join(config.cf.datadir, name)
-                    attachdata = {'file':filename, 'home':homename, 'attach':item[0]}
-                    loginfo('attachdata:', attachdata)
-                    attachctl.add_file(item[0], attachdata)
-                    pos += 1
+            attachs = simplejson.loads(row['attach'])
+
+            for item in attachs:
+                filename = os.path.join(config.cf.datadir, name, row['mailbox'], row['filename'].strip(os.sep))
+                homename = os.path.join(config.cf.datadir, name)
+                attachdata = {'file':filename, 'home':homename, 'attach':item[0]}
+                loginfo('attachdata:', attachdata)
+                attachctl.add_file(item[0], attachdata)
 
         if row['status'] == 'noread':
             #row['status'] = 'read' 
@@ -591,6 +589,8 @@ class MailboxTree(wx.TreeCtrl):
         
         p = self.add_tree_node(parent, name[0], user, tpath)
         if len(tpathls) == 1:
+            if not self.usertree.has_key(tpathls[0]):
+                self.usertree[tpathls[0]] = {}
             self.usertree[tpathls[0]][name[0]] = p
         tpathls.append(name[0])
         for child in name[1]:

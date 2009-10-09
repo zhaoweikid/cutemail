@@ -1,5 +1,5 @@
 #  -*- encoding: utf-8 -*-
-import string, os, sys
+import string, os, sys, simplejson
 import wx, threading, time, traceback, base64
 import cPickle as pickle
 import config, dbope
@@ -142,7 +142,7 @@ class Task(threading.Thread):
                 func(item)
             
     
-    def recvmail(self, item):
+    def recvmail_old(self, item):
         name = item['name']
         try:
             ucf = config.cf.users[name]
@@ -159,17 +159,14 @@ class Task(threading.Thread):
             pop.infos()
             mailinfos = pop.mails()
             pop.close()
-        except Exception, e:
+        except exception, e:
             error = str(e)
             traceback.print_exc(file=logfile.logobj.log)
     
         dbpath = os.path.join(config.cf.datadir, name, 'mailinfo.db')
         conn = dbope.DBOpe(dbpath)
         for minfo in mailinfos:
-            attachs = []
-            for x in minfo['attach']:
-                attachs.append('::'.join(x))
-            attachstr = '||'.join(attachs)
+            attachstr = simplejson.dumps(minfo['attach'])
             
             filename = minfo['filename'].replace("'", "''")
             subject = minfo['subject'].replace("'", "''")
@@ -193,7 +190,71 @@ class Task(threading.Thread):
         loginfo('recvmali complete!')
         x = {'name':name, 'task':'updatebox', 'message':''}
         config.uiq.put(x, timeout=5)
+
+    def recvmail(self, item):
+        name = item['name']
+        try:
+            ucf = config.cf.users[name]
+        except:
+            traceback.print_exc(file=logfile.logobj.log)
+            loginfo('get user config error!')
+            return
+        loginfo('recv mail:', ucf)
+        mailinfos = []
+        try:
+            pop = pop3.POP3Client(ucf)
+            pop.init()
+            pop.login()
+            pop.infos()
+            while True:
+                try:
+                    minfo = pop.mail()
+                    if minfo is None:
+                        break
+                except:
+                    traceback.print_exc(file=logfile.logobj.log)
+                    continue
+                self.recvmail_one_result(name, minfo)
+
+            pop.close()
+        except Exception, e:
+            error = str(e)
+            traceback.print_exc(file=logfile.logobj.log)
     
+        # 有可能有冲突
+        #config.cf.dump_conf(name)
+        loginfo('recvmali complete!')
+        #x = {'name':name, 'task':'updatebox', 'message':''}
+        #config.uiq.put(x, timeout=5)
+   
+
+    def recvmail_one_result(self, name, minfo):
+        dbpath = os.path.join(config.cf.datadir, name, 'mailinfo.db')
+        conn = dbope.DBOpe(dbpath)
+ 
+        attachstr = simplejson.dumps(minfo['attach'])
+            
+        filename = minfo['filename'].replace("'", "''")
+        subject = minfo['subject'].replace("'", "''")
+        #plain = minfo['plain'].replace("'", "''")
+        #html  = minfo['html'].replace("'", "''")
+        attach = attachstr.replace("'", "''")
+            
+        sql = "insert into mailinfo(filename,subject,mailfrom,mailto,size,ctime,date,attach,mailbox) values " \
+              "('%s','%s','%s','%s',%d,%s,'%s','%s','%s')" % \
+              (filename, subject, minfo['from'], ','.join(minfo['to']), minfo['size'],
+               minfo['ctime'], minfo['date'], attach, minfo['mailbox'])
+            
+        try:
+            conn.execute(sql)
+        except:
+            traceback.print_exc(file=logfile.logobj.log)
+     
+        conn.close()
+        x = {'name':name, 'task':'newmail', 'message':'', 'filename':filename, 'count':count}
+        config.uiq.put(x, timeout=5)
+        config.cf.dump_conf(name)
+
     def sendmail(self, item):
         tos = item['to']
         usercf = config.cf.users[item['name']]
