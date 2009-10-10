@@ -3,7 +3,6 @@ import os, sys
 rundir = os.path.dirname(os.path.dirname(os.path.abspath(sys.argv[0]))).replace("\\", "/")
 sys.path.insert(0, os.path.join(rundir, 'base'))
 import wx
-import wx.lib.iewin as iewin
 import logfile, config
 from logfile import loginfo, logwarn, logerr
 import viewhtml, mailparse
