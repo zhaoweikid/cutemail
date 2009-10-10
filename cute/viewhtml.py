@@ -1,7 +1,7 @@
 import string, sys, os
 import wx
 import wx.html
-import  wx.lib.mixins.listctrl  as  listmix
+import wx.lib.mixins.listctrl  as  listmix
 import mailparse, imagelist, logfile
 from logfile import loginfo, logwarn, logerr
 

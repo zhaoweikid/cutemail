@@ -51,20 +51,23 @@ class LinkMan:
     def add(self, name, email, group=None, other=None):
         if self.index_email.has_key(email):
             raise ValueError, 'email is exists'
-        info = zip(self.defuserinfo, ['']*len(self.defuserinfo))
+        info = dict(zip(self.defuserinfo, ['']*len(self.defuserinfo)))
         if other:
             info.update(other)
-        x = [name, email, info] 
         if group:
             gpname = group
         else:
             gpname = u'其他联系人'
+        x = [name, email, gpname, info] 
+
         loginfo('groups:', self.groups)
         loginfo('gpname:', gpname)
         self.groups[gpname].append(x)
         self.index_email[email] = x
 
         self.dump()
+
+        return x
 
     def delete(self, email):
         if not self.index_email.has_key(email):

@@ -108,7 +108,7 @@ class Schedule(threading.Thread):
             # 循环获取任务列表里的任务
             for x in self.tasks:
                 vals = self.tasks[x]
-                loginfo('values:', vals)
+                #loginfo('values:', vals)
                 for item in vals:
                     k = item['time'] #任务执行时间
                     v = item['param'] #任务参数

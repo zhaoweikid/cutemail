@@ -3,7 +3,7 @@ import os, sys, time
 rundir = os.path.dirname(os.path.dirname(os.path.abspath(sys.argv[0]))).replace("\\", "/")
 sys.path.insert(0, os.path.join(rundir, 'base'))
 import Queue
-import linkman, logfile, chat
+import linkman, logfile, chat, config
 import wx
 from logfile import loginfo, logwarn, logerr
 from common import load_bitmap, load_image
@@ -40,6 +40,10 @@ class ChatWindow(wx.Frame):
         self.timer = wx.Timer(self)
         self.timer.Start(1000)
         self.Bind(wx.EVT_TIMER, self.OnTimer)
+
+        x = {'from':self.fromaddr, 'to':self.toaddr, 'cmd':'onlinestatus', 'msg':'', 'time':int(time.time())}
+        chat.sendq.put(x)
+
        
     def make_menu(self):
         self.ID_MENU_EXIT = wx.NewId()
@@ -80,6 +84,14 @@ class ChatWindow(wx.Frame):
             ts = '%d-%02d-%02d %02d:%02d:%02d' % time.localtime()[:6]
             s = '%s %s\n%s\n' % (x['to'], ts, x['msg'])
             self.output.AppendText(s)
+        elif x['cmd'] == 'onlinestatus':
+            ts = '%d-%02d-%02d %02d:%02d:%02d' % time.localtime()[:6]
+            status = x['msg']
+            if status == 'offline':
+                s = u'%s 对方不在线' % (ts)
+            else:
+                s = u'%s 对方在线' % (ts)
+            self.output.AppendText(s)
 
 class ContactTree(wx.TreeCtrl):
     def __init__(self, parent, rundir, user):
@@ -89,7 +101,8 @@ class ContactTree(wx.TreeCtrl):
         
         self.rundir = rundir
         self.user   = user
-        self.linkman = linkman.LinkMan(user)
+        #self.linkman = linkman.LinkMan(user)
+        self.linkman = config.cf.linkmans[user]
         self.linkman.load() 
 
         self.chat = chat.Chat(self.user)
@@ -125,6 +138,31 @@ class ContactTree(wx.TreeCtrl):
         self.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.OnActivate)
         self.Bind(wx.EVT_LEFT_DCLICK, self.OnLeftDClick)
 
+    def add(self, lmitem):
+        gpname = lmitem[2]
+        node = self.find_child(self.root, gpname)
+        if not node:
+            return
+
+        item = self.AppendItem(node, lmitem[0])
+        self.SetPyData(item, lmitem)
+        self.SetItemImage(item, self.offline, wx.TreeItemIcon_Normal)
+        
+            
+    def find_child(self, parent, childvalue):
+        child,cookie = self.GetFirstChild(parent)
+        if not child:
+            return None
+
+        while True:
+            other, cookie = self.GetNextChild(parent, cookie)
+            if not other:
+                return None
+            val = self.GetItemText(other)
+            if val == childvalue:
+                return other
+  
+
     def OnActivate(self, event):
         item = event.GetItem()
         data = self.GetPyData(item)
@@ -143,10 +181,14 @@ class ContactTree(wx.TreeCtrl):
             loginfo('left double click data is None.')
             self.Expand(item)
             return
-
-        frame = ChatWindow(self, self.rundir, self.chat, self.user, data[1], data[0] + ' ' + data[1])
-        self.chatwin[data[1]] = frame
-        frame.Show()
+        
+        if self.chatwin.has_key(data[1]):
+            frame = self.chatwin[data[1]]
+            frame.Show()
+        else:
+            frame = ChatWindow(self, self.rundir, self.chat, self.user, data[1], data[0] + ' ' + data[1])
+            self.chatwin[data[1]] = frame
+            frame.Show()
         loginfo('left double click ok.')
 
               

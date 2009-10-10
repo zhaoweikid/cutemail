@@ -11,7 +11,7 @@ from   picmenu import PicMenu
 from   listindex import *
 import treelist, viewhtml, contact
 import config, common, dbope, useradd, logfile
-import writer
+import writer, userbox
 import cPickle as pickle
 import pop3, mailparse, utils
 from logfile import loginfo, logerr, logwarn
@@ -82,7 +82,7 @@ class MainFrame(wx.Frame):
 
         # 为面板管理器增加用户邮箱树形结构
         self.mgr.AddPane(self.tree, wx.aui.AuiPaneInfo().Name("tree").Caption(u"用户").
-                          Left().Layer(1).Position(1).CloseButton(True).MaximizeButton(False))
+                          Left().Layer(1).Position(1).CloseButton(False).MaximizeButton(False))
             
         # 把邮件内容面板添加到面板管理器
         self.mgr.AddPane(self.listcnt, wx.aui.AuiPaneInfo().Name("listcnt").Caption(u"邮件内容").
@@ -120,7 +120,10 @@ class MainFrame(wx.Frame):
     def add_mailbox_panel(self, k, obj=None):
         loginfo('add panel:', k)
         if not obj:
-            obj = treelist.MailListPanel(self, k)
+            if k.count('/') == 1:
+                obj = userbox.UserBoxInfo(self, k)
+            else:
+                obj = treelist.MailListPanel(self, k)
         obj.Hide()
         self.mailboxs[k] = obj
         self.mgr.AddPane(obj, wx.aui.AuiPaneInfo().Name(k).CenterPane().Hide())
@@ -141,7 +144,7 @@ class MainFrame(wx.Frame):
     def load_db_info(self, user, row):
         row['attach'] = simplejson.loads(row['attach'])
         att = 0
-        loginfo('load_db_info:', row['attach'])
+        #loginfo('load_db_info:', row['attach'])
         if len(row['attach']) > 0:
             att = 1
                 
@@ -549,7 +552,7 @@ class MainFrame(wx.Frame):
                     conn.close()
 
                     self.statusbar.SetStatusText(u'最后收信时间: %d-%02d-%02d %02d:%02d:%02d' % time.localtime()[:6], 1)
-                    s = u'用户%s收信中 %d/%d' % (name, item['count'], item['allcount'])
+                    s = u'%s 收信 %d/%d' % (name, item['count'], item['allcount'])
                     self.statusbar.SetStatusText(s, 0)
 
                 elif task == 'alert':
@@ -761,9 +764,11 @@ class MainFrame(wx.Frame):
         for u in config.cf.users:
             k = 'contact_' + u
             if u == user:
-                self.mgr.GetPane(k).Show()
+                loginfo('display contact:', u)
+                self.mgr.GetPane(k).Caption(u'联系人 '+u).Show()
             else:
                 self.mgr.GetPane(k).Hide()
+        self.mgr.Update()
 
     def OnViewSource(self, event):
         self.mailboxs[self.last_mailbox].OnPopupSource(event)
@@ -831,6 +836,7 @@ class MainFrame(wx.Frame):
             loginfo('me:', me)
             try:
                 conf = config.cf.user_add(me)
+                self.add_user(me['name'])
             except Exception, e:
                 wx.MessageBox(u"用户添加失败!"+str(e), u"欢迎使用CuteMail")
             else:

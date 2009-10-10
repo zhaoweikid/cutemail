@@ -55,27 +55,40 @@ class Chat:
             x = simplejson.loads(data)
             cmd = x['cmd']
             if cmd == 'me':
+                loginfo('add to clients:', x['from'], addr)
                 self.clients[x['from']] = addr
             elif cmd == 'msg':
                 receq[x['from']].put(x)
             elif cmd == 'new':
+                loginfo('add to clients:', x['from'], addr)
                 self.clients[x['from']] = addr
 
     def sender(self):
         while self.isrunning:
-            loginfo('sender  get.')
+            #loginfo('sender  get.')
             try:
                 x = sendq.get(timeout=5)
             except:
                 continue
             loginfo('send:', x)
-            if not self.clients.has_key(x['to']):
-                x['error'] = 'not found user'
+
+            if x['cmd'] == 'onlinestatus':
+                #x['cmd'] = 'onlinestatus'
+                loginfo('check clients:', self.clients)
+                if self.clients.has_key(x['to']):
+                    x['msg'] = 'online' 
+                else:
+                    x['msg'] = 'offline' 
+
                 receq[x['to']].put(x)
-                continue
-            addr = self.clients[x['to']]
-            msg = simplejson.dumps(x)
-            self.localudp.sendto(msg, addr)
+            elif x['cmd'] == 'msg':
+                if not self.clients.has_key(x['to']):
+                    x['error'] = 'not found user'
+                    receq[x['to']].put(x)
+                    continue
+                addr = self.clients[x['to']]
+                msg = simplejson.dumps(x)
+                self.localudp.sendto(msg, addr)
 
 def test():
     email = 'zhaoweikid@163.com'

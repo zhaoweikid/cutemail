@@ -27,7 +27,7 @@ def parsedate(s):
         t = time.strptime(' '.join(ns[:5]), "%a, %d %b %Y %H:%M:%S")
     except ValueError, e:
         logerr(e)
-        return None
+        return '%d-%02d-%02d %02d:%02d:%02d' % time.localtime()[:6]
     return str(datetime.datetime(*t[:6]))
 
 

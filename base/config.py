@@ -3,7 +3,7 @@ import os, string, sys, traceback, types
 import utils
 import threading, Queue
 import cPickle as pickle
-import dbope, logfile
+import dbope, logfile, linkman
 from logfile import loginfo, logwarn, logerr
 VERSION = " CuteMail 1.0"
 
@@ -25,7 +25,8 @@ class AppConfig:
         self.users = {}
         # 以邮件地址为索引的用户配置信息
         self.mailboxs = {}
-        
+        self.linkmans = {}
+
         self.mailbox_cn_names = [u'收件箱', u'发件箱', u'草稿箱', u'已发送邮件', u'垃圾邮件', u'删除邮件']
         self.mailbox_en_names = ['recv', 'send', 'draft', 'sendover', 'spam', 'trash']
         
@@ -121,6 +122,8 @@ class AppConfig:
         
         self.users[name] = conf
         self.mailboxs[email] = conf
+        self.linkmans[name] = linkman.LinkMan(name)
+
         return conf
      
     def user_delete(self, name):
@@ -154,6 +157,9 @@ class AppConfig:
             #userconf = {'config': conf, 'mailinfo':mailinfo}
             self.users[conf['name']] = conf
             self.mailboxs[conf['email']] = conf
+
+            self.linkmans[conf['name']] = linkman.LinkMan(conf['name'])
+
             loginfo(conf['mailbox'])
     
     def load_conf(self, name):

@@ -6,7 +6,7 @@ import cStringIO, types
 import config, common, dbope, utils, mailparse
 from optiondlg import OptionsDialog
 from common import load_bitmap
-import logfile
+import logfile, viewer
 from logfile import loginfo, logwarn, logerr
         
 class MailListPanel(wx.Panel):
@@ -17,8 +17,13 @@ class MailListPanel(wx.Panel):
         self.tree = wx.gizmos.TreeListCtrl(self, -1, style = wx.TR_DEFAULT_STYLE|wx.TR_HIDE_ROOT|wx.TR_FULL_ROW_HIGHLIGHT)
             
         self.path = path
-        self.user = path.split('/')[1]
-        self.boxname = path.split('/')[2]
+
+        parts = path.split('/')
+        self.user = parts[1]
+        if len(parts) > 2:
+            self.boxname = parts[2]
+        else:
+            self.boxname = ''
         loginfo('boxname:', self.boxname)
         self.il = wx.ImageList(16, 16)
         #self.idx = self.il.Add(images.getSmilesBitmap())
@@ -35,7 +40,7 @@ class MailListPanel(wx.Panel):
         self.pngs = {self.image_attach:0, self.image_flag:0, self.image_mark:0}
         
         for k in self.pngs:
-            loginfo('load png:', k)
+            #loginfo('load png:', k)
             try:
                 self.pngs[k] = self.il.Add(load_bitmap(k))
             except:
@@ -170,7 +175,7 @@ class MailListPanel(wx.Panel):
 
     
     def add_item(self, item, parent=None):
-        loginfo('add item:', item)
+        #loginfo('add item:', item)
         if not parent:
             parent = self.root
 
@@ -227,6 +232,7 @@ class MailListPanel(wx.Panel):
             self.ID_POPUP_REPLY = wx.NewId()
             self.ID_POPUP_FORWARD = wx.NewId()
             self.ID_POPUP_SEND_SEC = wx.NewId()
+            self.ID_POPUP_CONTACT_ADD = wx.NewId()
             self.ID_POPUP_VIEW = wx.NewId()
             self.ID_POPUP_SOURCE = wx.NewId()
             self.ID_POPUP_DELETE = wx.NewId()
@@ -234,6 +240,7 @@ class MailListPanel(wx.Panel):
             self.Bind(wx.EVT_MENU, self.OnPopupReply, id=self.ID_POPUP_REPLY) 
             self.Bind(wx.EVT_MENU, self.OnPopupForward, id=self.ID_POPUP_FORWARD) 
             self.Bind(wx.EVT_MENU, self.OnPopupSendSec, id=self.ID_POPUP_SEND_SEC) 
+            self.Bind(wx.EVT_MENU, self.OnPopupContactAdd, id=self.ID_POPUP_CONTACT_ADD) 
             self.Bind(wx.EVT_MENU, self.OnPopupView, id=self.ID_POPUP_VIEW) 
             self.Bind(wx.EVT_MENU, self.OnPopupSource, id=self.ID_POPUP_SOURCE) 
             self.Bind(wx.EVT_MENU, self.OnPopupDelete, id=self.ID_POPUP_DELETE) 
@@ -242,6 +249,8 @@ class MailListPanel(wx.Panel):
         menu.Append(self.ID_POPUP_REPLY, u'回复邮件')
         menu.Append(self.ID_POPUP_FORWARD, u'转发邮件')
         menu.Append(self.ID_POPUP_SEND_SEC, u'再次发送邮件')
+        menu.AppendSeparator()
+        menu.Append(self.ID_POPUP_CONTACT_ADD, u'添加发件人为联系人')
         menu.AppendSeparator()
         menu.Append(self.ID_POPUP_VIEW, u'查看邮件')
         menu.AppendSeparator()
@@ -335,8 +344,25 @@ class MailListPanel(wx.Panel):
     def OnPopupSendSec(self, evt):
         self.parent.OnMailSendSec(evt)
 
+    def OnPopupContactAdd(self, evt):
+        if self.lastitem:
+            s = self.tree.GetItemData(self.lastitem).GetData()
+            if not s:
+                return
+            loginfo('Source:', s)
+            mfrom = s['mailfrom'] 
+            item = config.cf.linkmans[s['user']].add(mfrom, mfrom)
+            ctree = self.parent.contacts[s['user']]
+            ctree.add(item)
+
     def OnPopupView(self, evt):
-        pass
+        if self.lastitem:
+            s = self.tree.GetItemData(self.lastitem).GetData()
+            if not s:
+                return
+        filepath = s['filepath']
+        frame = viewer.MailViewFrame(self, self.parent.rundir, s['user'], filepath)
+        frame.Show()
 
     def OnPopupSource(self, evt):
         if self.lastitem:
@@ -374,6 +400,9 @@ class MailListPanel(wx.Panel):
         #loginfo('active row:', row)
         if not row:
             logerr('not found row.')
+            return
+        if not row.has_key('id'):
+            loginfo('is category.')
             return
         #mid, name, mbox = s
         mid  = row['id']
@@ -454,7 +483,7 @@ class MailboxTree(wx.TreeCtrl):
         #loginfo('curitem:', curitem)
         while True:
             text = self.GetItemText(curitem)
-            loginfo('sibling text:', text)
+            #loginfo('sibling text:', text)
             if text.startswith(boxname):
                 break
             curitem = self.GetNextSibling(curitem)
@@ -573,7 +602,7 @@ class MailboxTree(wx.TreeCtrl):
         panel = self.parent.add_mailbox_panel(tpath)
         
         data = {'path':tpath, 'user':user, 'boxname':name, 'item':item, 'panel':panel}
-        loginfo('tree node data:', data)
+        #loginfo('tree node data:', data)
         self.SetPyData(item, data)
         self.SetItemImage(item, self.ridx, wx.TreeItemIcon_Normal)
         self.SetItemImage(item, self.openidx, wx.TreeItemIcon_Expanded)
@@ -581,10 +610,14 @@ class MailboxTree(wx.TreeCtrl):
         return item
             
     def add_to_tree(self, parent, name, user, tpathls=[]):
-        loginfo('add_to_tree:', name)
-        loginfo('tpathls:', tpathls)
-        tpath = '/' + '/'.join(tpathls) + '/' + name[0]
-        loginfo('tpath:', tpath)
+        #loginfo('add_to_tree:', name)
+        #loginfo('tpathls:', tpathls)
+        if tpathls:
+            tpath = '/' + '/'.join(tpathls) + '/' + name[0]
+        else:
+            tpath = '/' + name[0]
+
+        #loginfo('tpath:', tpath)
         
         p = self.add_tree_node(parent, name[0], user, tpath)
         if len(tpathls) == 1:
@@ -655,7 +688,7 @@ class MailboxTree(wx.TreeCtrl):
         self.item = evt.GetItem()
         if self.item:
             data = self.GetPyData(self.item)
-            loginfo(data)
+            #loginfo(data)
             
             tpath = data['path']
             loginfo('OnSelChanged path:', tpath)

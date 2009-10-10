@@ -92,7 +92,7 @@ class FileLogger:
         filename = ifs[-1]
         line = infos[1]
 
-        if self.log == sys.stdout:
+        if not self.logfile:
             ss = '%d%02d%02d %02d:%02d:%02d '  % time.localtime()[:6]
             ss = '%s%s%s %s:%d [%s] %s\33[0m%s' % (color, ss, threading.currentThread().getName(), filename, line, level, ' '.join(s), self.end)
         else:
@@ -146,8 +146,8 @@ def logerr(*s):
     global logobj
     logobj.err(*s)
 
-#loginit('cutemail.log')
-loginit()
+loginit('cutemail.log')
+#loginit()
 
 def test():
     for x in xrange(0, 10):
