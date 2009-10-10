@@ -112,9 +112,11 @@ class MainFrame(wx.Frame):
         ct = contact.ContactTree(self, self.rundir, user)
         ct.Hide()
         self.contacts[user] = ct
-        self.mgr.AddPane(ct, wx.aui.AuiPaneInfo().Name("contact_"+user).Caption(u"联系人").
+        k = "contact_"+user
+        self.mgr.AddPane(ct, wx.aui.AuiPaneInfo().Name(k).Caption(u"联系人").
                 Left().Layer(1).Position(2).CloseButton(True).MaximizeButton(False))
 
+        self.mgr.GetPane(k).Hide()
 
         
     def add_mailbox_panel(self, k, obj=None):
