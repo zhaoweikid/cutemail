@@ -86,7 +86,7 @@ class MainFrame(wx.Frame):
             
         # 把邮件内容面板添加到面板管理器
         self.mgr.AddPane(self.listcnt, wx.aui.AuiPaneInfo().Name("listcnt").Caption(u"邮件内容").
-                          MinSize(wx.Size(300,-1)).
+                          MinSize(wx.Size(200,-1)).
                           Right().Layer(0).Position(1).CloseButton(True).MaximizeButton(True))
         
         self.mgr.AddPane(self.attachctl, wx.aui.AuiPaneInfo().Name("attachctl").Caption(u"附件内容").
@@ -203,7 +203,7 @@ class MainFrame(wx.Frame):
         self.ID_VIEW_MAIL    = wx.NewId()
         self.ID_VIEW_ATTACH  = wx.NewId()
         self.ID_VIEW_CONTACT = wx.NewId()
-        self.ID_VIEW_SEARCH  = wx.NewId()
+        #self.ID_VIEW_SEARCH  = wx.NewId()
         self.ID_VIEW_ENCODE  = wx.NewId()
         self.ID_VIEW_SOURCE  = wx.NewId()
         
@@ -273,7 +273,7 @@ class MainFrame(wx.Frame):
         self.ID_TOOLBAR_MAIL_FORWARD = wx.NewId()
         self.ID_TOOLBAR_MAIL_DELETE = wx.NewId()
         self.ID_TOOLBAR_ADDR = wx.NewId()
-        self.ID_TOOLBAR_FIND = wx.NewId()
+        #self.ID_TOOLBAR_FIND = wx.NewId()
         self.ID_TOOLBAR_WWW = wx.NewId()
         
         self.toolbar = wx.ToolBar(self, -1, wx.DefaultPosition, wx.Size(48, 48), wx.TB_HORIZONTAL|wx.TB_FLAT|wx.TB_TEXT)
@@ -288,7 +288,7 @@ class MainFrame(wx.Frame):
         self.toolbar.AddLabelTool(self.ID_TOOLBAR_MAIL_DELETE, u'删除', common.load_bitmap('bitmaps/32/mail_delete.png'), shortHelp=u"删除", longHelp=u"删除")
         self.toolbar.AddSeparator()
         self.toolbar.AddLabelTool(self.ID_TOOLBAR_ADDR, u'联系人', common.load_bitmap('bitmaps/32/toggle_log.png'), shortHelp=u"地址薄", longHelp=u"地址薄")
-        self.toolbar.AddLabelTool(self.ID_TOOLBAR_FIND, u'查找', common.load_bitmap('bitmaps/32/filefind.png'), shortHelp=u"查找", longHelp=u"查找")
+        #self.toolbar.AddLabelTool(self.ID_TOOLBAR_FIND, u'查找', common.load_bitmap('bitmaps/32/filefind.png'), shortHelp=u"查找", longHelp=u"查找")
         self.toolbar.AddSeparator()
         self.toolbar.AddLabelTool(self.ID_TOOLBAR_WWW, u'主页', common.load_bitmap('bitmaps/32/home.png'), shortHelp=u"主页", longHelp=u"主页")
         self.toolbar.AddSeparator()
@@ -306,7 +306,7 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_TOOL, self.OnMailForward, id=self.ID_TOOLBAR_MAIL_FORWARD)
         self.Bind(wx.EVT_TOOL, self.OnMailDel, id=self.ID_TOOLBAR_MAIL_DELETE)
         self.Bind(wx.EVT_TOOL, self.OnViewContact, id=self.ID_TOOLBAR_ADDR)
-        self.Bind(wx.EVT_TOOL, self.OnMailSearch, id=self.ID_TOOLBAR_FIND)
+        #self.Bind(wx.EVT_TOOL, self.OnMailSearch, id=self.ID_TOOLBAR_FIND)
         self.Bind(wx.EVT_TOOL, self.OnWebsite, id=self.ID_TOOLBAR_WWW)
         
     def make_menu(self):        
@@ -342,7 +342,7 @@ class MainFrame(wx.Frame):
         self.viewmenu.Append(self.ID_VIEW_ATTACH, u"附件内容窗口", 'attach.png')        
         self.viewmenu.Append(self.ID_VIEW_CONTACT, u"联系人窗口", 'contact.png')        
         self.viewmenu.Append(self.ID_VIEW_SOURCE, u"信件原文", 'note.png')
-        self.viewmenu.Append(self.ID_VIEW_SEARCH, u"查找邮件", 'mail_find.png')
+        #self.viewmenu.Append(self.ID_VIEW_SEARCH, u"查找邮件", 'mail_find.png')
         self.viewmenu.AppendSeparator()
         self.viewmenu.Append(self.ID_VIEW_TEMPLATE, u"模板管理", "template.png")
 
@@ -432,7 +432,7 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnViewAttach, id=self.ID_VIEW_ATTACH)
         self.Bind(wx.EVT_MENU, self.OnViewContact, id=self.ID_VIEW_CONTACT)
         self.Bind(wx.EVT_MENU, self.OnViewSource, id=self.ID_VIEW_SOURCE)
-        self.Bind(wx.EVT_MENU, self.OnMailSearch, id=self.ID_VIEW_SEARCH)
+        #self.Bind(wx.EVT_MENU, self.OnMailSearch, id=self.ID_VIEW_SEARCH)
         self.Bind(wx.EVT_MENU, self.OnViewEncode, id=self.ID_VIEW_ENCODE)
         
         self.Bind(wx.EVT_MENU, self.OnImportOutlookUser, id=self.ID_IMPORT_OUTLOOK_USER)
@@ -467,7 +467,7 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnMailMoveTo, id=self.ID_MAIL_MOVETO)
         self.Bind(wx.EVT_MENU, self.OnMailDel, id=self.ID_MAIL_DEL)
         self.Bind(wx.EVT_MENU, self.OnMailFlag, id=self.ID_MAIL_FLAG)
-        self.Bind(wx.EVT_MENU, self.OnMailSearch, id=self.ID_MAIL_SEARCH)
+        #self.Bind(wx.EVT_MENU, self.OnMailSearch, id=self.ID_MAIL_SEARCH)
         
         self.Bind(wx.EVT_MENU, self.OnMailboxNew, id=self.ID_MAILBOX_NEW)
         self.Bind(wx.EVT_MENU, self.OnMailboxRename, id=self.ID_MAILBOX_RENAME)
@@ -1041,8 +1041,8 @@ class MainFrame(wx.Frame):
     def OnMailFlag(self, event):
         pass
     
-    def OnMailSearch(self, event):
-        pass
+    #def OnMailSearch(self, event):
+    #    pass
 
     def OnMailboxNew(self, event):
         self.tree.last_item_add_child()
