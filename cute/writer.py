@@ -243,12 +243,10 @@ class WriterFrame (wx.Frame):
         f.write(s)
         f.close()
         
-        aa = []
-        for x in self.attachlist:
-            aa.append(x + '::')
         self.maildata['size'] = len(s)
         self.maildata['date'] = '%d-%02d-%02d %02d:%02d:%02d' % (time.localtime()[:6])
-        self.maildata['attach'] = '||'.join(aa)
+        attachs = [ [k, ''] for k in self.attachlist ]
+        self.maildata['attach'] = simplejson.dumps(attachs)
     
     def save_mail(self, box):
         tostr = self.mailto.GetValue().strip()

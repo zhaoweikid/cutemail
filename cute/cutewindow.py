@@ -11,7 +11,7 @@ from   picmenu import PicMenu
 from   listindex import *
 import treelist, viewhtml, contact
 import config, common, dbope, useradd, logfile
-import writer, userbox
+import writer, userbox, search
 import cPickle as pickle
 import pop3, mailparse, utils
 from logfile import loginfo, logerr, logwarn
@@ -77,7 +77,7 @@ class MainFrame(wx.Frame):
             self.contacts[k] = ct
 
             self.mgr.AddPane(ct, wx.aui.AuiPaneInfo().Name("contact_"+k).Caption(u"联系人").
-                    Left().Layer(1).Position(2).CloseButton(True).MaximizeButton(False))
+                    Left().Layer(0).Position(2).CloseButton(True).MaximizeButton(False))
             self.mgr.GetPane('contact_'+k).Hide()
 
         # 为面板管理器增加用户邮箱树形结构
@@ -86,8 +86,8 @@ class MainFrame(wx.Frame):
             
         # 把邮件内容面板添加到面板管理器
         self.mgr.AddPane(self.listcnt, wx.aui.AuiPaneInfo().Name("listcnt").Caption(u"邮件内容").
-                          MinSize(wx.Size(-1, 200)).
-                          Bottom().Layer(0).Position(3).CloseButton(True).MaximizeButton(True))
+                          MinSize(wx.Size(300,-1)).
+                          Right().Layer(0).Position(1).CloseButton(True).MaximizeButton(True))
         
         self.mgr.AddPane(self.attachctl, wx.aui.AuiPaneInfo().Name("attachctl").Caption(u"附件内容").
                           MinSize(wx.Size(48,-1)).Bottom().
@@ -291,6 +291,11 @@ class MainFrame(wx.Frame):
         self.toolbar.AddLabelTool(self.ID_TOOLBAR_FIND, u'查找', common.load_bitmap('bitmaps/32/filefind.png'), shortHelp=u"查找", longHelp=u"查找")
         self.toolbar.AddSeparator()
         self.toolbar.AddLabelTool(self.ID_TOOLBAR_WWW, u'主页', common.load_bitmap('bitmaps/32/home.png'), shortHelp=u"主页", longHelp=u"主页")
+        self.toolbar.AddSeparator()
+
+        searchctl = search.MailSearchCtrl(self.toolbar, size=(150,-1), doSearch=self.DoSearch)
+        self.toolbar.AddControl(searchctl)
+
         self.toolbar.Realize ()
         self.SetToolBar(self.toolbar)
         
@@ -500,7 +505,10 @@ class MainFrame(wx.Frame):
             logerr('display_mailbox:', e)
         return True
         
-        
+    def DoSearch(self, text):
+        loginfo('search:', text)
+        return True
+
     def OnCloseWindow(self, event):
         self.Hide()
         self.mgr.UnInit()
@@ -535,6 +543,7 @@ class MainFrame(wx.Frame):
                     if ret:
                         for info in ret:
                             loginfo('get mail:', info['filename'])
+                            info['status'] = 'noread'
                             self.load_db_info(name, info)
                             conn.execute("update mailinfo set status='noread' where id=" + str(info['id']))
                     conn.close()
@@ -549,6 +558,7 @@ class MainFrame(wx.Frame):
                     if ret:
                         for info in ret:
                             loginfo('get mail:', info['filename'])
+                            info['status'] = 'noread'
                             self.load_db_info(name, info)
                             conn.execute("update mailinfo set status='noread' where id=" + str(info['id']))
                     conn.close()

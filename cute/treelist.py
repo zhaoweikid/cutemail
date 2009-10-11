@@ -106,6 +106,7 @@ class MailListPanel(wx.Panel):
         self.tree.Expand(self.root)
         self.tree.GetMainWindow().Bind(wx.EVT_RIGHT_UP, self.OnRightUp)
         #self.tree.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.OnActivate)
+        self.tree.Bind(wx.EVT_LEFT_DCLICK, self.OnLeftDClick)
         self.tree.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnActivate)
         self.tree.Bind(wx.EVT_LIST_COL_CLICK, self.OnColClick)
 
@@ -433,7 +434,7 @@ class MailListPanel(wx.Panel):
             #row['status'] = 'read' 
             item = evt.GetItem()
             itemdata = self.tree.GetItemData(item).GetData()
-            loginfo('noread itemdata:', itemdata)
+            #loginfo('noread itemdata:', itemdata)
             self.draw_category_text(item, 'read')
             self.tree.SetItemBold(item, False)
         
@@ -453,6 +454,16 @@ class MailListPanel(wx.Panel):
             
         self.make_popup_menu()
 
+    def OnLeftDClick(self, evt):
+        loginfo('left double click')
+        if self.lastitem:
+            s = self.tree.GetItemData(self.lastitem).GetData()
+            if not s:
+                return
+        filepath = s['filepath']
+        frame = viewer.MailViewFrame(self, self.parent.rundir, s['user'], filepath)
+        frame.Show()
+    
     def OnSize(self, evt):
         self.tree.SetSize(self.GetSize())
 
