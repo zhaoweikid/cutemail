@@ -134,6 +134,7 @@ class MainFrame(wx.Frame):
         
     def init_data(self):
         mailboxkeys = self.mailboxs.keys()
+        loginfo('mailboxkeys:', mailboxkeys)
         for k in mailboxkeys:
             loginfo('init data:', k)
             if not self.mailboxs[k]:

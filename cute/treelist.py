@@ -610,6 +610,7 @@ class MailboxTree(wx.TreeCtrl):
 
     def add_tree_node(self, parent, name, user, tpath):
         item  = self.AppendItem(parent, name)
+        loginfo('add mail panel:', tpath)
         panel = self.parent.add_mailbox_panel(tpath)
         
         data = {'path':tpath, 'user':user, 'boxname':name, 'item':item, 'panel':panel}

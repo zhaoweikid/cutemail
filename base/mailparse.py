@@ -22,9 +22,14 @@ charset = locale.getdefaultlocale()[1]
 def parsedate(s):
     if not s:
         return '%d-%02d-%02d %02d:%02d:%02d' % time.localtime()[:6]
+
+    pos = s.find(',')
+    if pos > 0:
+        s = s[pos+1:].strip()
+
     ns = s.split()
     try:
-        t = time.strptime(' '.join(ns[:5]), "%a, %d %b %Y %H:%M:%S")
+        t = time.strptime(' '.join(ns[:4]), "%d %b %Y %H:%M:%S")
     except ValueError, e:
         logerr(e)
         return '%d-%02d-%02d %02d:%02d:%02d' % time.localtime()[:6]
@@ -202,7 +207,7 @@ def main(dirname):
         ret = decode_mail(dirname)
         print ret
 
-if __name__ == '__main__':
+def test1():
     if len(sys.argv) < 2:
         print 'usage: decodemail.py filename [attachname]'
         sys.exit()
@@ -212,5 +217,11 @@ if __name__ == '__main__':
     elif len(sys.argv) == 3:
         decode_attach(sys.argv[1], sys.argv[2])
     
-       
+def test2():
+    print parsedate(sys.argv[1]) 
+
+
+if __name__ == '__main__':
+    test2()
+
 
