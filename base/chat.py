@@ -3,7 +3,7 @@ import os, sys, time
 import socket, threading
 import Queue
 import simplejson
-import logfile
+import logfile, config
 from logfile import loginfo, logwarn, logerr
 
 receq = {}
@@ -12,7 +12,6 @@ sendq = Queue.Queue()
 class Chat:
     def __init__(self):
         self.addr = ('0.0.0.0', 10010) 
-        self.email = ''
         self.clients = {}
         self.isrunning = True
 
@@ -39,14 +38,23 @@ class Chat:
         self.localtcp.bind(self.addr)
         self.localtcp.listen(32)
 
+    def notify(self, user=None):
+        if not user:
+            users = config.cf.users.keys()
+        else:
+            users = [user]
+            
+        for u in users:
+            v = config.cf.users[u]
+            x = {'cmd':'new', 'msg':'', 'from':v['email'], 'to':'', 'time':int(time.time())}
+            self.localudp.sendto(simplejson.dumps(x), ('<broadcast>', 10010))
+        
     def recevier(self):
         '''
         cmd: me  发现服务
         cmd: msg message
         message: {'cmd':'','msg':'','from':'','to':'','time':''}
         '''
-        x = {'cmd':'new', 'msg':self.email, 'from':self.email, 'to':'', 'time':int(time.time())}
-        self.localudp.sendto(simplejson.dumps(x), ('<broadcast>', 10010)) 
 
         while self.isrunning:
             #loginfo('recevied get.')

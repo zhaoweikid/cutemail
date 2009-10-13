@@ -184,11 +184,19 @@ class ContactTree(wx.TreeCtrl):
             self.Expand(item)
             return
         
+        
+        tdata = self.parent.tree.last_item_data()
+        if not tdata:
+            return
+        user  = tdata['user']
+        
+        
         if self.chatwin.has_key(data[1]):
             frame = self.chatwin[data[1]]
             frame.Show()
         else:
-            frame = ChatWindow(self, self.rundir, self.chat, self.user, data[1], data[0] + ' ' + data[1])
+            title = data[0] + ' ' + data[1]
+            frame = ChatWindow(self, self.rundir, self.chat, user, data[1], title)
             self.chatwin[data[1]] = frame
             frame.Show()
         loginfo('left double click ok.')

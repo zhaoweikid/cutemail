@@ -351,7 +351,7 @@ class MailListPanel(wx.Panel):
                 return
             loginfo('Source:', s)
             mfrom = s['mailfrom'] 
-            item = config.cf.linkmans[s['user']].add(mfrom, mfrom)
+            item = config.cf.linkman.add(mfrom, mfrom)
             ctree = self.parent.contacts[s['user']]
             ctree.add(item)
 

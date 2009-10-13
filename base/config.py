@@ -57,12 +57,13 @@ class AppConfig:
         mailfrom varchar(128) not null,
         mailto varchar(128) not null,
         size integer default 0,
-        ctime datetime,
-        date datetime,
+        ctime integer,
+        date integer,
         attach text default '',
         mailbox varchar(64),
         status varchar(32) default 'new',
         threads integer default 0,
+        uidl varchar(128),
         charset varchar(64) default 'gbk'
         )'''
         # 用户配置信息, recv_interval为接收间隔时间，单位为分，reserve_time为信件保留时间，
@@ -105,10 +106,10 @@ class AppConfig:
                 boxs.append([x, []])
             conf['mailbox'] = [unicode(incf['name']), boxs]
             
-        userpath = self.datadir + os.sep + name
+        userpath = os.path.join(self.datadir, name)
         if not os.path.isdir(userpath):
             os.mkdir(userpath)
-        infopath = userpath + os.sep + 'mailinfo.db'
+        infopath = os.path.join(userpath, 'mailinfo.db')
         #conf['mailinfo'] = dbtable.DBTable(infopath, self.mailinfo_fields)
         self.db = dbope.DBOpe(infopath)
         self.db.open()
@@ -136,7 +137,6 @@ class AppConfig:
 
     
     def load(self):
-
         self.linkman = linkman.LinkMan(self.datadir)
 
         boxes = os.listdir(self.datadir)
@@ -156,7 +156,6 @@ class AppConfig:
             #userconf = {'config': conf, 'mailinfo':mailinfo}
             self.users[conf['name']] = conf
             self.mailboxs[conf['email']] = conf
-
 
             loginfo(conf['mailbox'])
     

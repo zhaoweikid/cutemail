@@ -74,19 +74,8 @@ class MainFrame(wx.Frame):
         self.contact.Hide()
         
         self.mgr.AddPane(self.contact, wx.aui.AuiPaneInfo().Name("contact").Caption(u"联系人").
-                    Left().Layer(0).Position(2).CloseButton(True).MaximizeButton(False))
+                    Right().Layer(0).Position(2).CloseButton(True).MaximizeButton(False))
         self.mgr.GetPane('contact').Hide()
-
-        '''
-        for k in config.cf.users:
-            ct = contact.ContactTree(self, self.rundir, k)
-            ct.Hide()
-            self.contacts[k] = ct
-
-            self.mgr.AddPane(ct, wx.aui.AuiPaneInfo().Name("contact_"+k).Caption(u"联系人").
-                    Left().Layer(0).Position(2).CloseButton(True).MaximizeButton(False))
-            self.mgr.GetPane('contact_'+k).Hide()
-        '''
 
         # 为面板管理器增加用户邮箱树形结构
         self.mgr.AddPane(self.tree, wx.aui.AuiPaneInfo().Name("tree").Caption(u"用户").
@@ -94,8 +83,8 @@ class MainFrame(wx.Frame):
             
         # 把邮件内容面板添加到面板管理器
         self.mgr.AddPane(self.listcnt, wx.aui.AuiPaneInfo().Name("listcnt").Caption(u"邮件内容").
-                          MinSize(wx.Size(200,-1)).
-                          Right().Layer(0).Position(1).CloseButton(True).MaximizeButton(True))
+                          MinSize(wx.Size(-1, 200)).
+                          Bottom().Layer(0).Position(1).CloseButton(True).MaximizeButton(True))
         
         self.mgr.AddPane(self.attachctl, wx.aui.AuiPaneInfo().Name("attachctl").Caption(u"附件内容").
                           MinSize(wx.Size(48,-1)).Bottom().
@@ -169,7 +158,7 @@ class MainFrame(wx.Frame):
         dbpath = os.path.join(config.cf.datadir, user, 'mailinfo.db')
         loginfo('load db from path:', dbpath)
         conn = dbope.DBOpe(dbpath)
-        ret = conn.query("select id,filename,subject,fromuser,mailfrom,mailto,size,ctime,date,attach,mailbox,status from mailinfo where id=" + str(mid))
+        ret = conn.query("select id,filename,subject,fromuser,mailfrom,mailto,size,ctime,datetime(date,'unixepoch') as date,attach,mailbox,status from mailinfo where id=" + str(mid))
         conn.close()
         if not ret:
             return None
@@ -184,7 +173,7 @@ class MainFrame(wx.Frame):
             dbpath = os.path.join(config.cf.datadir, u, 'mailinfo.db')
             loginfo('load db from path:', dbpath)
             conn = dbope.DBOpe(dbpath)
-            ret = conn.query("select id,filename,subject,fromuser,mailfrom,mailto,size,ctime,date,attach,mailbox,status from mailinfo order by date")
+            ret = conn.query("select id,filename,subject,fromuser,mailfrom,mailto,size,ctime,datetime(date,'unixepoch') as date,attach,mailbox,status from mailinfo order by date")
             conn.close()
             for row in ret:
                 self.load_db_info(u, row) 
@@ -540,7 +529,7 @@ class MainFrame(wx.Frame):
                     dbpath = os.path.join(config.cf.datadir, name, 'mailinfo.db')
                     conn = dbope.DBOpe(dbpath)
                     count = conn.query('select count(*) as count from mailinfo')[0]['count']
-                    ret = conn.query("select id,filename,subject,fromuser,mailfrom,mailto,size,ctime,date,attach,mailbox,status from mailinfo where status='new' and mailbox='recv'")
+                    ret = conn.query("select id,filename,subject,fromuser,mailfrom,mailto,size,ctime,datetime(date,'unixepoch') as date,attach,mailbox,status from mailinfo where status='new' and mailbox='recv'")
                     if ret:
                         for info in ret:
                             loginfo('get mail:', info['filename'])
@@ -555,7 +544,7 @@ class MainFrame(wx.Frame):
                     usercf = config.cf.users[name]
                     dbpath = os.path.join(config.cf.datadir, name, 'mailinfo.db')
                     conn = dbope.DBOpe(dbpath)
-                    ret = conn.query("select id,filename,subject,fromuser,mailfrom,mailto,size,ctime,date,attach,mailbox,status from mailinfo where filename='%s'" % (filename))
+                    ret = conn.query("select id,filename,subject,fromuser,mailfrom,mailto,size,ctime,datetime(date,'unixepoch') as date,attach,mailbox,status from mailinfo where filename='%s'" % (filename))
                     if ret:
                         for info in ret:
                             loginfo('get mail:', info['filename'])
@@ -575,7 +564,7 @@ class MainFrame(wx.Frame):
 
                         dbpath = os.path.join(config.cf.datadir, name, 'mailinfo.db')
                         conn = dbope.DBOpe(dbpath)
-                        ret = conn.query("select id,filename,subject,mailfrom,mailto,size,ctime,date,attach,mailbox,status from mailinfo where filename='%s'" % (item['filename']))
+                        ret = conn.query("select id,filename,subject,mailfrom,mailto,size,ctime,datetime(date,'unixepoch') as date,attach,mailbox,status from mailinfo where filename='%s'" % (item['filename']))
                         conn.close()
                     
                         if ret:

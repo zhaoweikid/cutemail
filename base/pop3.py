@@ -173,8 +173,9 @@ class POP3Client:
             
         ret['filename'] = filename[len(self.recvpath):]
         ret['mailbox'] = 'recv'
-        ret['ctime'] = 'datetime()'
+        ret['ctime'] = int(time.time())
         ret['uidl'] = k
+        ret['date'] = time.mktime(time.strptime(ret['date'], '%Y-%m-%d %H:%M:%S'))
         #print ret
         loginfo('======== pos:', self.uidl_pos, ' of ', len(self.uidls))
         #config.cf.mail_add(name, ret) 

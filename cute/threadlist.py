@@ -50,9 +50,10 @@ class Schedule(threading.Thread):
         userpath = os.path.join(config.cf.home, 'data')
         users = os.listdir(userpath)
         for u in users:
-            if u.endswith('.bak'):
+            dirpath = os.path.join(userpath, u)
+            if u.endswith('.bak') or os.path.isfile(dirpath):
                 continue
-            ufile = os.path.join(userpath, u, 'config.db')
+            ufile = os.path.join(dirpath, 'config.db')
             mtime = int(os.path.getmtime(ufile))
             if self.file_mtime.has_key(ufile) and self.file_mtime[ufile] == mtime:
                 continue
@@ -196,10 +197,10 @@ class Task(threading.Thread):
         tousers = ','.join([ k[1] for k in minfo['to'] ])
         fromuser = minfo['from'][0]
         fromaddr = minfo['from'][1]
-        sql = "insert into mailinfo(filename,subject,fromuser,mailfrom,mailto,size,ctime,date,attach,mailbox) values " \
-              "('%s','%s','%s','%s','%s',%d,%s,'%s','%s','%s')" % \
+        sql = "insert into mailinfo(filename,subject,fromuser,mailfrom,mailto,size,ctime,date,attach,mailbox,uidl) values " \
+              "('%s','%s','%s','%s','%s',%d,%d,%d,'%s','%s','%s')" % \
               (filename, subject, fromuser, fromaddr, tousers, minfo['size'],
-               minfo['ctime'], minfo['date'], attach, minfo['mailbox'])
+               minfo['ctime'], minfo['date'], attach, minfo['mailbox'], minfo['uidl'])
             
         try:
             conn.execute(sql)
