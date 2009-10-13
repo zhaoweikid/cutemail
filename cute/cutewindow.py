@@ -159,8 +159,7 @@ class MainFrame(wx.Frame):
         mailaddr = row['mailfrom']
         if row['mailbox'] in ['send','draft','sendover']:
             mailaddr = row['mailto']
-        item = [mailaddr, att, row['subject'], 1, row['date'], str(row['size']/1024 + 1)+' K',
-                wx.TreeItemData(row)]
+        item = [mailaddr, att, row['subject'], 1, row['date'],wx.TreeItemData(row)]
             #print item
         panel = self.mailboxs[boxname]
         return panel.add_mail(item)

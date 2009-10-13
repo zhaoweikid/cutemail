@@ -29,9 +29,8 @@ class MailListPanel(wx.Panel):
         #self.idx = self.il.Add(images.getSmilesBitmap())
         
         self.tree.SetImageList(self.il)
-        cols = [u'发件人','attach',u'邮件主题','mark',u'日期',u'邮件大小']
+        cols = [u'发件人','attach',u'邮件主题','mark',u'日期']
         
-        #item = ['zhaowei@bobo.com', 1,1, u'呵呵我的测试', '20090210', '12873']
         self.lastitem = None
 
         self.image_attach = config.cf.home+'/bitmaps/16/attach.png'
@@ -83,11 +82,11 @@ class MailListPanel(wx.Panel):
         self.tree.SetMainColumn(0)
         self.root = self.tree.AddRoot("root")
         
-        self.earlier = self.add_item([u' 更早 ',0,'',0,'','', wx.TreeItemData({'new':0, 'all':0})])
-        self.month = self.add_item([u' 本月 ',0,'',0,'','', wx.TreeItemData({'new':0, 'all':0})]) 
-        self.week  = self.add_item([u' 本周 ',0,'',0,'','', wx.TreeItemData({'new':0, 'all':0})]) 
-        self.yestoday = self.add_item([u' 昨天 ',0,'',0,'','', wx.TreeItemData({'new':0, 'all':0})]) 
-        self.today = self.add_item([u' 今天 ',0,'',0,'','', wx.TreeItemData({'new':0, 'all':0})]) 
+        self.earlier = self.add_item([u' 更早 ',0,'',0,'', wx.TreeItemData({'new':0, 'all':0})])
+        self.month = self.add_item([u' 本月 ',0,'',0,'', wx.TreeItemData({'new':0, 'all':0})]) 
+        self.week  = self.add_item([u' 本周 ',0,'',0,'', wx.TreeItemData({'new':0, 'all':0})]) 
+        self.yestoday = self.add_item([u' 昨天 ',0,'',0,'', wx.TreeItemData({'new':0, 'all':0})]) 
+        self.today = self.add_item([u' 今天 ',0,'',0,'', wx.TreeItemData({'new':0, 'all':0})]) 
 
         self.parent_items = [self.earlier, self.month, self.week, self.yestoday, self.today]
         
@@ -189,13 +188,13 @@ class MailListPanel(wx.Panel):
         self.tree.SetItemText(first, item[2], 2)
         if item[3]:
             self.tree.SetItemImage(first, self.pngs[self.image_mark], 3)
-        self.tree.SetItemText(first, item[4], 4)
-        self.tree.SetItemText(first, item[5], 5)
-        self.tree.SetItemData(first, item[6]) 
+        self.tree.SetItemText(first, item[4][:-3], 4)
+        #self.tree.SetItemText(first, item[5], 5)
+        self.tree.SetItemData(first, item[5]) 
        
         if parent != self.root:
             self.draw_category_text(first, 'add')
-            itemdata = item[6].GetData()
+            itemdata = item[5].GetData()
             if itemdata['status'] == 'noread':
                 self.tree.SetItemBold(first, True)
 
@@ -603,7 +602,7 @@ class MailboxTree(wx.TreeCtrl):
             mbox = usercf['mailbox']
             #tpathls = []
             self.usertree[k] = {}
-            self.add_to_tree(self.root, mbox, k)
+            self.add_to_tree(self.root, mbox, k, [])
         
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnSelChanged, self) 
         self.Bind(wx.EVT_RIGHT_UP, self.OnRightUp)
@@ -621,15 +620,15 @@ class MailboxTree(wx.TreeCtrl):
 
         return item
             
-    def add_to_tree(self, parent, name, user, tpathls=[]):
-        #loginfo('add_to_tree:', name)
-        #loginfo('tpathls:', tpathls)
+    def add_to_tree(self, parent, name, user, tpathls):
+        loginfo('add_to_tree:', name)
+        loginfo('tpathls:', tpathls)
         if tpathls:
             tpath = '/' + '/'.join(tpathls) + '/' + name[0]
         else:
             tpath = '/' + name[0]
 
-        #loginfo('tpath:', tpath)
+        loginfo('tpath:', tpath)
         
         p = self.add_tree_node(parent, name[0], user, tpath)
         if len(tpathls) == 1:
@@ -642,7 +641,9 @@ class MailboxTree(wx.TreeCtrl):
             tpathls.pop(-1)
             
         
-    def append(self, name, user, tpathls=[]):
+    def append(self, name, user, tpathls=None):
+        if not tpathls:
+            tpathls = []
         self.add_to_tree(self.root, name, user, tpathls) 
     
     
