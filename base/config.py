@@ -25,7 +25,7 @@ class AppConfig:
         self.users = {}
         # 以邮件地址为索引的用户配置信息
         self.mailboxs = {}
-        self.linkmans = {}
+        self.linkman = None
 
         self.mailbox_cn_names = [u'收件箱', u'发件箱', u'草稿箱', u'已发送邮件', u'垃圾邮件', u'删除邮件']
         self.mailbox_en_names = ['recv', 'send', 'draft', 'sendover', 'spam', 'trash']
@@ -52,17 +52,14 @@ class AppConfig:
         self.mailinfo_sql = '''create table if not exists mailinfo (
         id integer primary key autoincrement,
         filename varchar(255) not null,
-        -- plain text,
-        -- html text,
-        -- header text,
         subject varchar(255),
+        fromuser varchar(32),
         mailfrom varchar(128) not null,
         mailto varchar(128) not null,
         size integer default 0,
         ctime datetime,
         date datetime,
         attach text default '',
-        -- attachcount integer default 0,
         mailbox varchar(64),
         status varchar(32) default 'new',
         threads integer default 0,
@@ -122,7 +119,6 @@ class AppConfig:
         
         self.users[name] = conf
         self.mailboxs[email] = conf
-        self.linkmans[name] = linkman.LinkMan(name)
 
         return conf
      
@@ -140,6 +136,9 @@ class AppConfig:
 
     
     def load(self):
+
+        self.linkman = linkman.LinkMan(self.datadir)
+
         boxes = os.listdir(self.datadir)
         for box in boxes:
             if box.endswith(".bak"): # ignore dir name end with .bak
@@ -158,7 +157,6 @@ class AppConfig:
             self.users[conf['name']] = conf
             self.mailboxs[conf['email']] = conf
 
-            self.linkmans[conf['name']] = linkman.LinkMan(conf['name'])
 
             loginfo(conf['mailbox'])
     

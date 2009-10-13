@@ -22,13 +22,15 @@ charset = locale.getdefaultlocale()[1]
 def parsedate(s):
     if not s:
         return '%d-%02d-%02d %02d:%02d:%02d' % time.localtime()[:6]
-
+    s = s.strip()
     pos = s.find(',')
     if pos > 0:
         s = s[pos+1:].strip()
 
     ns = s.split()
     try:
+        if ns[3].count(':') == 1:
+            ns[3] = ns[3] + ':00'
         t = time.strptime(' '.join(ns[:4]), "%d %b %Y %H:%M:%S")
     except ValueError, e:
         logerr(e)
@@ -95,8 +97,9 @@ def get_content(msg, ret):
 
 def decode_message(msg, ret):
     ret['subject'] = decode_string(msg.get("subject"))
-    ret['from'] = email.utils.parseaddr(msg.get("from"))[1]
-    ret['to'].append(email.utils.parseaddr(msg.get("to"))[1])
+    ret['from'] = list(email.utils.parseaddr(msg.get("from")))
+    ret['from'][0] = decode_string(ret['from'][0])
+    ret['to'].append(email.utils.parseaddr(msg.get("to")))
     ret['date'] = parsedate(msg.get('date'))
 
     text = get_content(msg, ret)
@@ -116,7 +119,7 @@ def decode_message(msg, ret):
 
 
 def decode_mail(mailfile):
-    ret = {'file':mailfile, 'from':'', 'to':[], 'subject':'', 'size':0, 'date':'', 'plain':'', 'html':'', 'charset':'gbk', 'attach':[]}
+    ret = {'file':mailfile, 'from':None, 'to':[], 'subject':'', 'size':0, 'date':'', 'plain':'', 'html':'', 'charset':'gbk', 'attach':[]}
     
     ret['size'] = os.path.getsize(mailfile)
     fp = open(mailfile, "r")
@@ -129,7 +132,7 @@ def decode_mail(mailfile):
 
 
 def decode_mail_string(mailstr):
-    ret = {'file':'', 'from':'', 'to':[], 'subject':'', 'size':0, 'date':'', 'plain':'', 'html':'', 'charset':'gbk', 'attach':[]}
+    ret = {'file':'', 'from':None, 'to':[], 'subject':'', 'size':0, 'date':'', 'plain':'', 'html':'', 'charset':'gbk', 'attach':[]}
     
     ret['size'] = len(mailstr)
     msg = email.message_from_string(mailstr)

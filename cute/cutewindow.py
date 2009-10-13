@@ -70,7 +70,14 @@ class MainFrame(wx.Frame):
         self.attachctl = viewhtml.AttachListCtrl(self, self.rundir)
         self.attachctl.Hide()
         # 联系人 
-        self.contacts = {}
+        self.contact = contact.ContactTree(self, self.rundir)
+        self.contact.Hide()
+        
+        self.mgr.AddPane(self.contact, wx.aui.AuiPaneInfo().Name("contact").Caption(u"联系人").
+                    Left().Layer(0).Position(2).CloseButton(True).MaximizeButton(False))
+        self.mgr.GetPane('contact').Hide()
+
+        '''
         for k in config.cf.users:
             ct = contact.ContactTree(self, self.rundir, k)
             ct.Hide()
@@ -79,6 +86,7 @@ class MainFrame(wx.Frame):
             self.mgr.AddPane(ct, wx.aui.AuiPaneInfo().Name("contact_"+k).Caption(u"联系人").
                     Left().Layer(0).Position(2).CloseButton(True).MaximizeButton(False))
             self.mgr.GetPane('contact_'+k).Hide()
+        '''
 
         # 为面板管理器增加用户邮箱树形结构
         self.mgr.AddPane(self.tree, wx.aui.AuiPaneInfo().Name("tree").Caption(u"用户").
@@ -107,16 +115,6 @@ class MainFrame(wx.Frame):
 
 
         self.mail_writer_item = ['subject', 'from', 'to', 'text', 'user', 'attach']
-
-    def add_user(self, user):
-        ct = contact.ContactTree(self, self.rundir, user)
-        ct.Hide()
-        self.contacts[user] = ct
-        k = "contact_"+user
-        self.mgr.AddPane(ct, wx.aui.AuiPaneInfo().Name(k).Caption(u"联系人").
-                Left().Layer(1).Position(2).CloseButton(True).MaximizeButton(False))
-
-        self.mgr.GetPane(k).Hide()
 
         
     def add_mailbox_panel(self, k, obj=None):
@@ -159,6 +157,9 @@ class MainFrame(wx.Frame):
         mailaddr = row['mailfrom']
         if row['mailbox'] in ['send','draft','sendover']:
             mailaddr = row['mailto']
+        else:
+            if row['fromuser']:
+                mailaddr = row['fromuser']
         item = [mailaddr, att, row['subject'], 1, row['date'],wx.TreeItemData(row)]
             #print item
         panel = self.mailboxs[boxname]
@@ -168,7 +169,7 @@ class MainFrame(wx.Frame):
         dbpath = os.path.join(config.cf.datadir, user, 'mailinfo.db')
         loginfo('load db from path:', dbpath)
         conn = dbope.DBOpe(dbpath)
-        ret = conn.query("select id,filename,subject,mailfrom,mailto,size,ctime,date,attach,mailbox,status from mailinfo where id=" + str(mid))
+        ret = conn.query("select id,filename,subject,fromuser,mailfrom,mailto,size,ctime,date,attach,mailbox,status from mailinfo where id=" + str(mid))
         conn.close()
         if not ret:
             return None
@@ -183,7 +184,7 @@ class MainFrame(wx.Frame):
             dbpath = os.path.join(config.cf.datadir, u, 'mailinfo.db')
             loginfo('load db from path:', dbpath)
             conn = dbope.DBOpe(dbpath)
-            ret = conn.query("select id,filename,subject,mailfrom,mailto,size,ctime,date,attach,mailbox,status from mailinfo order by date")
+            ret = conn.query("select id,filename,subject,fromuser,mailfrom,mailto,size,ctime,date,attach,mailbox,status from mailinfo order by date")
             conn.close()
             for row in ret:
                 self.load_db_info(u, row) 
@@ -539,7 +540,7 @@ class MainFrame(wx.Frame):
                     dbpath = os.path.join(config.cf.datadir, name, 'mailinfo.db')
                     conn = dbope.DBOpe(dbpath)
                     count = conn.query('select count(*) as count from mailinfo')[0]['count']
-                    ret = conn.query("select id,filename,subject,mailfrom,mailto,size,ctime,date,attach,mailbox,status from mailinfo where status='new' and mailbox='recv'")
+                    ret = conn.query("select id,filename,subject,fromuser,mailfrom,mailto,size,ctime,date,attach,mailbox,status from mailinfo where status='new' and mailbox='recv'")
                     if ret:
                         for info in ret:
                             loginfo('get mail:', info['filename'])
@@ -554,7 +555,7 @@ class MainFrame(wx.Frame):
                     usercf = config.cf.users[name]
                     dbpath = os.path.join(config.cf.datadir, name, 'mailinfo.db')
                     conn = dbope.DBOpe(dbpath)
-                    ret = conn.query("select id,filename,subject,mailfrom,mailto,size,ctime,date,attach,mailbox,status from mailinfo where filename='%s'" % (filename))
+                    ret = conn.query("select id,filename,subject,fromuser,mailfrom,mailto,size,ctime,date,attach,mailbox,status from mailinfo where filename='%s'" % (filename))
                     if ret:
                         for info in ret:
                             loginfo('get mail:', info['filename'])
@@ -768,20 +769,9 @@ class MainFrame(wx.Frame):
         self.mgr.Update()
        
     def OnViewContact(self, event):
-        item = self.tree.last_item_data()
-        if not item:
-            return
-        user  = item['user']
-        
-        for u in config.cf.users:
-            k = 'contact_' + u
-            if u == user:
-                loginfo('display contact:', u)
-                self.mgr.GetPane(k).Caption(u'联系人 '+u).Show()
-            else:
-                self.mgr.GetPane(k).Hide()
+        self.mgr.GetPane('contact').Show()
         self.mgr.Update()
-
+ 
     def OnViewSource(self, event):
         self.mailboxs[self.last_mailbox].OnPopupSource(event)
     
@@ -848,7 +838,6 @@ class MainFrame(wx.Frame):
             loginfo('me:', me)
             try:
                 conf = config.cf.user_add(me)
-                self.add_user(me['name'])
             except Exception, e:
                 wx.MessageBox(u"用户添加失败!"+str(e), u"欢迎使用CuteMail")
             else:

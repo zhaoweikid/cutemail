@@ -10,9 +10,9 @@ receq = {}
 sendq = Queue.Queue()
 
 class Chat:
-    def __init__(self, email):
+    def __init__(self):
         self.addr = ('0.0.0.0', 10010) 
-        self.email = email
+        self.email = ''
         self.clients = {}
         self.isrunning = True
 

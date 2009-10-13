@@ -15,8 +15,10 @@ class LinkManSync:
 
 
 class LinkMan:
-    def __init__(self, user):
-        self.user = user
+    def __init__(self, datadir):
+        #self.user = user
+        self.datadir = datadir
+        self.path = os.path.join(self.datadir, 'linkman.db')
         self.defgroups = [u'最近联系人', u'我的好友', u'我的同事', u'其他联系人']
         self.defuserinfo = [u'head', u'手机', u'qq', u'msn', u'家庭电话', u'单位电话', u'生日']
         # {'groupname':[], u'最近联系人':[[u'赵威', 'zhaoewikid@163.com', {'head':'',u'手机':'',u'qq':'','msn':'','家庭电话':'','单位电话':''}], ], }
@@ -24,13 +26,12 @@ class LinkMan:
         self.index_email = {}
     
     def load(self):
-        fpath = os.path.join(config.cf.datadir, self.user, 'linkman.cf')
-        if not os.path.isfile(fpath) or os.path.getsize(fpath) == 0:
+        if not os.path.isfile(self.path) or os.path.getsize(self.path) == 0:
             self.groups['groupname'] = self.defgroups
             for k in self.defgroups:
                 self.groups[k] = []
             return
-        f = open(fpath ,'r')
+        f = open(self.path ,'r')
         x = pickle.load(f)
         f.close()
 
@@ -43,8 +44,7 @@ class LinkMan:
                 self.index_email[item[1]] = item
 
     def dump(self):
-        fpath = os.path.join(config.cf.datadir, self.user, 'linkman.cf')
-        f = open(fpath, 'w')
+        f = open(self.path, 'w')
         pickle.dump(self.groups, f)
         f.close()
    
@@ -119,7 +119,7 @@ class LinkMan:
 def test():
     import pprint
     print 'test linkman'
-    m = LinkMan('zhaowei')
+    m = LinkMan()
     m.load()
     pprint.pprint(m.groups)
     m.add('bobo', 'rabbit_haobobo@163.com', u'我的好友')

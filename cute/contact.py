@@ -94,22 +94,19 @@ class ChatWindow(wx.Frame):
             self.output.AppendText(s)
 
 class ContactTree(wx.TreeCtrl):
-    def __init__(self, parent, rundir, user):
+    def __init__(self, parent, rundir):
         super(ContactTree, self).__init__(parent, wx.NewId(), 
                 wx.Point(0, 0), wx.Size(200, 200), 
                 style = wx.TR_DEFAULT_STYLE |wx.TR_HIDE_ROOT)
-        
+        self.parent = parent 
         self.rundir = rundir
-        self.user   = user
-        #self.linkman = linkman.LinkMan(user)
-        self.linkman = config.cf.linkmans[user]
+        self.linkman = config.cf.linkman
         self.linkman.load() 
-
-        self.chat = chat.Chat(self.user)
-        loginfo('chat create ok.')
-        #chat.receq[self.toaddr] = Queue.Queue()
+        
+        self.chat = None
         self.chatwin = {}
-
+        
+        self.create_chat()
         self.init()
 
     def init(self):
@@ -137,6 +134,11 @@ class ContactTree(wx.TreeCtrl):
         
         self.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.OnActivate)
         self.Bind(wx.EVT_LEFT_DCLICK, self.OnLeftDClick)
+
+    def create_chat(self):
+        self.chat = chat.Chat()
+        loginfo('chat create ok.')
+ 
 
     def add(self, lmitem):
         gpname = lmitem[2]

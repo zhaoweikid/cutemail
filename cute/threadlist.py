@@ -193,10 +193,12 @@ class Task(threading.Thread):
         #plain = minfo['plain'].replace("'", "''")
         #html  = minfo['html'].replace("'", "''")
         attach = attachstr.replace("'", "''")
-            
-        sql = "insert into mailinfo(filename,subject,mailfrom,mailto,size,ctime,date,attach,mailbox) values " \
-              "('%s','%s','%s','%s',%d,%s,'%s','%s','%s')" % \
-              (filename, subject, minfo['from'], ','.join(minfo['to']), minfo['size'],
+        tousers = ','.join([ k[1] for k in minfo['to'] ])
+        fromuser = minfo['from'][0]
+        fromaddr = minfo['from'][1]
+        sql = "insert into mailinfo(filename,subject,fromuser,mailfrom,mailto,size,ctime,date,attach,mailbox) values " \
+              "('%s','%s','%s','%s','%s',%d,%s,'%s','%s','%s')" % \
+              (filename, subject, fromuser, fromaddr, tousers, minfo['size'],
                minfo['ctime'], minfo['date'], attach, minfo['mailbox'])
             
         try:
