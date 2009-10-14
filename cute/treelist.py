@@ -352,7 +352,7 @@ class MailListPanel(wx.Panel):
             loginfo('Source:', s)
             mfrom = s['mailfrom'] 
             item = config.cf.linkman.add(mfrom, mfrom)
-            ctree = self.parent.contacts[s['user']]
+            ctree = self.parent.contact
             ctree.add(item)
 
     def OnPopupView(self, evt):

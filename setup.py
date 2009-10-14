@@ -6,7 +6,7 @@ modules = [ k[5:-3] for k in files]
 print 'modules:', modules
 
 includes = ["encodings", "encodings.*", 'shutil', 'uuid', 'email', 'email', 'email.*',
-            'email.mime.*', 'sqlite3', 'poplib', 'smtplib']
+            'email.mime.*', 'sqlite3', 'poplib', 'smtplib', 'cute']
 options = {"py2exe":
             {   "compressed": 0,
                 #"optimize": 2,
@@ -22,7 +22,8 @@ setup(
                   ('bitmaps/32', glob.glob('./bitmaps/32/*.*')),
                   ('bitmaps/mailbox', glob.glob('./bitmaps/mailbox/*.*')),
                   ('bitmaps', glob.glob('./bitmaps/*.*')), 
-                  ('base', glob.glob('./base/*.py'))],
+                  ('base', glob.glob('./base/*.py')),
+                  ('cute', glob.glob('./cute/*.py'))],
     options = options,   
     windows=[{"script": "cutemail.py", "icon_resources": [(1, "bitmaps/cutemail.png")] }],     
     )
