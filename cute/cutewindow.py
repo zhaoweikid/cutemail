@@ -128,7 +128,7 @@ class MainFrame(wx.Frame):
                 self.add_mailbox_panel(k)
         k = u'/'
         obj = viewhtml.ViewHtml(self)
-        obj.set_url('http://www.pythonid.com')
+        obj.set_url('http://code.google.com/p/cutemail')
         self.add_mailbox_panel(k, obj)
  
     def load_db_info(self, user, row):
@@ -821,7 +821,7 @@ class MainFrame(wx.Frame):
                   'email': page1.email.GetValue(),
                   'pop3_server': page2.pop3server.GetValue(),
                   'pop3_pass': page2.pop3pass.GetValue(),
-                  'smtp_server:': page2.smtpserver.GetValue(),
+                  'smtp_server': page2.smtpserver.GetValue(),
                   'smtp_pass': page2.smtppass.GetValue(),
                   }
             loginfo('me:', me)
