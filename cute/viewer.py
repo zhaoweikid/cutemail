@@ -74,17 +74,11 @@ class MailViewFrame(wx.Frame):
         self.SetStatusWidths([-1, -2])
         
     def make_viewer(self, mailfile):
-        text = ''
         ret = mailparse.decode_mail(mailfile)
-        if ret:
-            if ret['html']:
-                text = ret['html']
-            else:
-                text = ret['plain']
         #panel = wx.Panel(self)
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.viewer = viewhtml.ViewHtml(self)
-        self.viewer.set_text(text)
+        self.viewer.set_text_auto(ret['html'], ret['plain'])
         sizer.Add(self.viewer, flag=wx.ALL|wx.EXPAND, border=0, proportion=1)
             
         if ret['attach']:

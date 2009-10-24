@@ -413,10 +413,12 @@ class MailListPanel(wx.Panel):
         
         htmldata = info['html']
         plaindata = info['plain']
-        if htmldata:
-            self.parent.listcnt.set_text(htmldata)
-        elif plaindata:
-            self.parent.listcnt.set_text(plaindata.replace('\r\n', '<br>').replace('\n', '<br>'))
+        #if htmldata:
+        #    self.parent.listcnt.set_text(htmldata)
+        #elif plaindata:
+        #    self.parent.listcnt.set_text(plaindata.replace('\r\n', '<br>').replace('\n', '<br>'))
+        self.parent.listcnt.set_text_auto(htmldata, plaindata)
+
         attachctl = self.parent.attachctl
         attachctl.clear()
         
