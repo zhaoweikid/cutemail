@@ -13,11 +13,14 @@ from email.MIMEImage     import MIMEImage
 from email.MIMEBase      import MIMEBase
 from email.MIMEMessage   import MIMEMessage
 from email.MIMEMultipart import MIMEMultipart
-import locale
+import locale, traceback
 import logfile
 from logfile import loginfo, logwarn, logerr
 
 charset = locale.getdefaultlocale()[1]
+
+month = {'Jan':1, 'Feb':2, 'Mar':3, 'Apr':4, 'May':5, 'Jun':6, 'Jul':7, 
+         'Aug':8, 'Sep':9, 'Oct':10, 'Nov':11, 'Dec':12}
 
 def parsedate(s):
     if not s:
@@ -26,17 +29,20 @@ def parsedate(s):
     pos = s.find(',')
     if pos > 0:
         s = s[pos+1:].strip()
-
     ns = s.split()
     try:
+        if len(ns) < 4:
+            if ns[0].count('-') == 2:
+                ts = ns[0].split('-')
+                return '%s-%02d-%02d %s'% (ts[0], int(ts[1]), int(ts[2]), ns[1])
+            return '%d-%02d-%02d %02d:%02d:%02d' % time.localtime()[:6]
         if ns[3].count(':') == 1:
             ns[3] = ns[3] + ':00'
-        t = time.strptime(' '.join(ns[:4]), "%d %b %Y %H:%M:%S")
+        return '%s-%02d-%s %s' % (ns[2], month[ns[1]], ns[0], ns[3])
     except ValueError, e:
         logwarn('date string:', s)
-        logerr(e)
-        return '%d-%02d-%02d %02d:%02d:%02d' % time.localtime()[:6]
-    return str(datetime.datetime(*t[:6]))
+        logerr(traceback.format_exc())
+    return '%d-%02d-%02d %02d:%02d:%02d' % time.localtime()[:6]
 
 
 def decode_string(s, defcharset='gbk'):
