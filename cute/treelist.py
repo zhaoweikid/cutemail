@@ -445,6 +445,8 @@ class MailListPanel(wx.Panel):
             db.execute(sql)
             db.close()
 
+        self.SetFocus()
+
     def OnRightUp(self, evt):
         pos = evt.GetPosition()
         self.tree.HitTest(pos)

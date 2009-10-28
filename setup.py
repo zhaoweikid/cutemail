@@ -25,5 +25,5 @@ setup(
                   ('base', glob.glob('./base/*.py')),
                   ('cute', glob.glob('./cute/*.py'))],
     options = options,   
-    windows=[{"script": "cutemail.py", "icon_resources": [(1, "bitmaps/cutemail.png")] }],     
+    windows=[{"script": "cutemail.py", "icon_resources": [(1, "bitmaps/cutemail.ico")] }],     
     )
