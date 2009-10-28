@@ -61,6 +61,7 @@ class AppConfig:
         date integer,
         attach text default '',
         mailbox varchar(64),
+        tag varchar(32),
         status varchar(32) default 'new',
         threads integer default 0,
         uidl varchar(128),

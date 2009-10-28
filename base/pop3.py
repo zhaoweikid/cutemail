@@ -150,7 +150,7 @@ class POP3Client:
                 logerr(e)
                 trycount += 1
                 if trycount == 3:
-                    raise ValueError, 'pop3 retr error:', i
+                    raise ValueError, 'pop3 retr error:' + str(i)
                 continue
             trycount = 0
             break
