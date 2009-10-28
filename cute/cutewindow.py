@@ -558,7 +558,7 @@ class MainFrame(wx.Frame):
                     self.statusbar.SetStatusText(s, 0)
 
                 elif task == 'alert':
-                    wx.MessageBox(u'发送返回信息:' + item['message'], u'邮件信息!', wx.OK|wx.ICON_ERROR)
+                    wx.MessageBox(u'发送返回信息:' + item['message'], u'邮件信息!', wx.OK|wx.ICON_INFORMATION)
                     if item['runtask'] == 'sendmail' and item['return']:
                         boxpanel = self.mailboxs['/%s/' % (name) + u'发件箱']
 

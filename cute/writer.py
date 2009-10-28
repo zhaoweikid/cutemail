@@ -9,6 +9,7 @@ import images
 import viewhtml
 import createmail, config, dbope, logfile
 from logfile import loginfo, logwarn, logerr
+import simplejson
 
 class WriterFrame (wx.Frame):
     def __init__(self, parent, rundir, maildata):
@@ -244,7 +245,8 @@ class WriterFrame (wx.Frame):
         f.close()
         
         self.maildata['size'] = len(s)
-        self.maildata['date'] = '%d-%02d-%02d %02d:%02d:%02d' % (time.localtime()[:6])
+        #self.maildata['date'] = '%d-%02d-%02d %02d:%02d:%02d' % (time.localtime()[:6])
+        self.maildata['date'] = int(time.time())
         attachs = [ [k, ''] for k in self.attachlist ]
         self.maildata['attach'] = simplejson.dumps(attachs)
     

@@ -28,6 +28,7 @@ def parsedate(s):
         s = s[pos+1:].strip()
 
     ns = s.split()
+    loginfo('ns:', ns)
     try:
         if ns[3].count(':') == 1:
             ns[3] = ns[3] + ':00'
