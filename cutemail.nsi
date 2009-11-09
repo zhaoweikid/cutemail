@@ -1,7 +1,7 @@
 !include "MUI2.nsh"
 
 Name "CuteMail"
-OutFile "CuteMail 0.8.6.exe"
+OutFile "CuteMail_0.8.65.exe"
 
 InstallDir "$PROGRAMFILES\CuteMail"
 

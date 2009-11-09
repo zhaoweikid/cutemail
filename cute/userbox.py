@@ -35,13 +35,15 @@ class UserBoxInfo(sc.SizedPanel):
 
     def display(self):
         conn = dbope.openuser(config.cf, self.user)
-        for x in self.display_sqls:
-            mcount = conn.query(x[1], False)[0][0]
-            msize  = conn.query(x[2], False)[0][0]
-            if msize is None:
-                msize = 0
-            x[3].SetValue(u'信件%d封 大小%.2fM' % (mcount, float(msize)/1024/1024)) 
-        conn.close()
+        try:
+            for x in self.display_sqls:
+                mcount = conn.query(x[1], False)[0][0]
+                msize  = conn.query(x[2], False)[0][0]
+                if msize is None:
+                    msize = 0
+                x[3].SetValue(u'信件%d封 大小%.2fM' % (mcount, float(msize)/1024/1024)) 
+        finally:
+            conn.close()
 
         
         

@@ -185,7 +185,6 @@ class Task(threading.Thread):
 
     def recvmail_one_result(self, name, minfo, rcount, allcount):
         dbpath = os.path.join(config.cf.datadir, name, 'mailinfo.db')
-        conn = dbope.DBOpe(dbpath)
  
         attachstr = simplejson.dumps(minfo['attach'])
             
@@ -197,17 +196,19 @@ class Task(threading.Thread):
         tousers = ','.join([ k[1] for k in minfo['to'] ])
         fromuser = minfo['from'][0]
         fromaddr = minfo['from'][1]
+
         sql = "insert into mailinfo(filename,subject,fromuser,mailfrom,mailto,size,ctime,date,attach,mailbox,uidl) values " \
               "('%s','%s','%s','%s','%s',%d,%d,%d,'%s','%s','%s')" % \
               (filename, subject, fromuser, fromaddr, tousers, minfo['size'],
                minfo['ctime'], minfo['date'], attach, minfo['mailbox'], minfo['uidl'])
             
+        conn = dbope.DBOpe(dbpath, 'w')
         try:
             conn.execute(sql)
         except:
             traceback.print_exc(file=logfile.logobj.log)
-     
-        conn.close()
+        finally: 
+            conn.close()
         x = {'name':name, 'task':'newmail', 'message':'', 'filename':filename, 'allcount':allcount, 'count':rcount}
         config.uiq.put(x, timeout=5)
         config.cf.dump_conf(name)

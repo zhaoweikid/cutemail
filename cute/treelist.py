@@ -382,11 +382,12 @@ class MailListPanel(wx.Panel):
             except:
                 source = unicode(source, 'utf-8')
 
-
+            loginfo('source:', source)
             dlg = wx.lib.dialogs.ScrolledMessageDialog(self, source, u'信件原文',
                                 size = (800, 600), 
                                 style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX)
             dlg.ShowModal()
+            dlg.Destroy()
        
     def OnPopupDelete(self, evt):
         loginfo('delete mail')

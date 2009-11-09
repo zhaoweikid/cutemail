@@ -158,8 +158,10 @@ class MainFrame(wx.Frame):
         dbpath = os.path.join(config.cf.datadir, user, 'mailinfo.db')
         loginfo('load db from path:', dbpath)
         conn = dbope.DBOpe(dbpath)
-        ret = conn.query("select id,filename,subject,fromuser,mailfrom,mailto,size,ctime,datetime(date,'unixepoch') as date,attach,mailbox,status from mailinfo where id=" + str(mid))
-        conn.close()
+        try:
+            ret = conn.query("select id,filename,subject,fromuser,mailfrom,mailto,size,ctime,datetime(date,'unixepoch') as date,attach,mailbox,status from mailinfo where id=" + str(mid))
+        finally:
+            conn.close()
         if not ret:
             return None
         #for row in ret:
@@ -173,8 +175,10 @@ class MainFrame(wx.Frame):
             dbpath = os.path.join(config.cf.datadir, u, 'mailinfo.db')
             loginfo('load db from path:', dbpath)
             conn = dbope.DBOpe(dbpath)
-            ret = conn.query("select id,filename,subject,fromuser,mailfrom,mailto,size,ctime,datetime(date,'unixepoch') as date,attach,mailbox,status from mailinfo order by date")
-            conn.close()
+            try:
+                ret = conn.query("select id,filename,subject,fromuser,mailfrom,mailto,size,ctime,datetime(date,'unixepoch') as date,attach,mailbox,status from mailinfo order by date")
+            finally:
+                conn.close()
             for row in ret:
                 self.load_db_info(u, row) 
 
@@ -527,31 +531,35 @@ class MainFrame(wx.Frame):
                 if task == 'updatebox':
                     usercf = config.cf.users[name]
                     dbpath = os.path.join(config.cf.datadir, name, 'mailinfo.db')
-                    conn = dbope.DBOpe(dbpath)
-                    count = conn.query('select count(*) as count from mailinfo')[0]['count']
-                    ret = conn.query("select id,filename,subject,fromuser,mailfrom,mailto,size,ctime,datetime(date,'unixepoch') as date,attach,mailbox,status from mailinfo where status='new' and mailbox='recv'")
-                    if ret:
-                        for info in ret:
-                            loginfo('get mail:', info['filename'])
-                            info['status'] = 'noread'
-                            self.load_db_info(name, info)
-                            conn.execute("update mailinfo set status='noread' where id=" + str(info['id']))
-                    conn.close()
+                    conn = dbope.DBOpe(dbpath, 'w')
+                    try:
+                        count = conn.query('select count(*) as count from mailinfo')[0]['count']
+                        ret = conn.query("select id,filename,subject,fromuser,mailfrom,mailto,size,ctime,datetime(date,'unixepoch') as date,attach,mailbox,status from mailinfo where status='new' and mailbox='recv'")
+                        if ret:
+                            for info in ret:
+                                loginfo('get mail:', info['filename'])
+                                info['status'] = 'noread'
+                                self.load_db_info(name, info)
+                                conn.execute("update mailinfo set status='noread' where id=" + str(info['id']))
+                    finally:
+                        conn.close()
 
                     self.statusbar.SetStatusText(u'最后收信时间: %d-%02d-%02d %02d:%02d:%02d' % time.localtime()[:6], 1)
                 elif task == 'newmail':
                     filename = item['filename']
                     usercf = config.cf.users[name]
                     dbpath = os.path.join(config.cf.datadir, name, 'mailinfo.db')
-                    conn = dbope.DBOpe(dbpath)
-                    ret = conn.query("select id,filename,subject,fromuser,mailfrom,mailto,size,ctime,datetime(date,'unixepoch') as date,attach,mailbox,status from mailinfo where filename='%s'" % (filename))
-                    if ret:
-                        for info in ret:
-                            loginfo('get mail:', info['filename'])
-                            info['status'] = 'noread'
-                            self.load_db_info(name, info)
-                            conn.execute("update mailinfo set status='noread' where id=" + str(info['id']))
-                    conn.close()
+                    conn = dbope.DBOpe(dbpath, 'w')
+                    try:
+                        ret = conn.query("select id,filename,subject,fromuser,mailfrom,mailto,size,ctime,datetime(date,'unixepoch') as date,attach,mailbox,status from mailinfo where filename='%s'" % (filename))
+                        if ret:
+                            for info in ret:
+                                loginfo('get mail:', info['filename'])
+                                info['status'] = 'noread'
+                                self.load_db_info(name, info)
+                                conn.execute("update mailinfo set status='noread' where id=" + str(info['id']))
+                    finally:
+                        conn.close()
 
                     self.statusbar.SetStatusText(u'最后收信时间: %d-%02d-%02d %02d:%02d:%02d' % time.localtime()[:6], 1)
                     s = u'%s 收信 %d/%d' % (name, item['count'], item['allcount'])
@@ -564,8 +572,10 @@ class MainFrame(wx.Frame):
 
                         dbpath = os.path.join(config.cf.datadir, name, 'mailinfo.db')
                         conn = dbope.DBOpe(dbpath)
-                        ret = conn.query("select id,filename,subject,mailfrom,mailto,size,ctime,datetime(date,'unixepoch') as date,attach,mailbox,status from mailinfo where filename='%s'" % (item['filename']))
-                        conn.close()
+                        try:
+                            ret = conn.query("select id,filename,subject,mailfrom,mailto,size,ctime,datetime(date,'unixepoch') as date,attach,mailbox,status from mailinfo where filename='%s'" % (item['filename']))
+                        finally:
+                            conn.close()
                     
                         if ret:
                             info = ret[0]

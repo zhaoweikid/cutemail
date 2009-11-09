@@ -1,12 +1,19 @@
 # coding: utf-8
 import os, sys, sqlite3
+import rwlock
+
+dblock = rwlock.RWLock()
 
 class DBOpe:
-    def __init__(self, dbpath):
+    def __init__(self, dbpath, mode='r'):
         self.conn = None
         self.path = dbpath
-
+        self.mode = mode
+        
+        self.lockid = dblock.acquire(mode)
+        
         self.open()
+
 
     def open(self):
         if not self.conn:
@@ -15,6 +22,7 @@ class DBOpe:
     def close(self):
         self.conn.close()
         self.conn = None
+        dblock.release(self.lockid, self.mode)
 
     def execute(self, sql, iscommit=True):
         self.conn.execute(sql)
@@ -44,9 +52,9 @@ class DBOpe:
         cur.close()
         return ret
 
-def openuser(cf, username):
+def openuser(cf, username, mode='r'):
     dbpath = os.path.join(cf.datadir, username, 'mailinfo.db')
     
-    return DBOpe(dbpath) 
+    return DBOpe(dbpath, mode) 
     
     

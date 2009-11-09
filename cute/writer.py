@@ -267,11 +267,13 @@ class WriterFrame (wx.Frame):
               (s, self.maildata['subject'], self.maildata['from'], ','.join(self.maildata['to']), self.maildata['size'],
                'datetime()', self.maildata['date'], self.maildata['attach'], box)
         loginfo(sql)
-        db = dbope.openuser(config.cf, self.maildata['user'])
-        db.execute(sql)
-        ret = db.query("select last_insert_rowid();", False)
-        rowid = ret[0][0]
-        db.close()
+        db = dbope.openuser(config.cf, self.maildata['user'], 'w')
+        try:
+            db.execute(sql)
+            ret = db.query("select last_insert_rowid();", False)
+            rowid = ret[0][0]
+        finally:
+            db.close()
 
         self.maildata['id'] = rowid
 
