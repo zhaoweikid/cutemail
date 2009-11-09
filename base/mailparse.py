@@ -29,7 +29,10 @@ def parsedate(s):
     pos = s.find(',')
     if pos > 0:
         s = s[pos+1:].strip()
+
     ns = s.split()
+    if s[0] in 'JFMAMJJASOND':
+        ns = ns[1:]
     loginfo('ns:', ns)
     try:
         if len(ns) < 4:
