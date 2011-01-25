@@ -40,8 +40,34 @@ menu = [u'文件', [
                 [wx.NewId(), 'ID_MAIL_FLAG', u'标记为', 'flag.png', 'On', None],
                 [wx.NewId(), 'ID_MAIL_SEARCH', u'查找', 'mail_find.png', 'On', None],
                 ],
-        u'邮箱', [[]],
-        u'帮助']
+        u'邮箱', [
+                [wx.NewId(), 'ID_MAILBOX_USER_NEW', u'新建邮箱账户', 'user.png', 'On', None],
+                [wx.NewId(), 'ID_MAILBOX_USER_RENAME', u'重命名邮箱账户', 'user.png', 'On', None],
+                [wx.NewId(), 'ID_MAILBOX_USER_DEL', u'删除邮箱账户', 'user.png', 'On', None],
+                [wx.NewId(), 'ID_MAILBOX_NEW', u'新建邮件夹', 'folder_open.png', 'On', None],
+                [wx.NewId(), 'ID_MAILBOX_RENAME', u'重命名邮件夹', 'folder_red.png', 'On', None],
+                [wx.NewId(), 'ID_MAILBOX_DEL', u'删除邮件夹', 'folder_grey.png', 'On', None],
+                [wx.NewId(), 'ID_MAILBOX_CLEAR_TRASH', u'清空删除邮件', '', 'On', None],
+                [wx.NewId(), 'ID_MAILBOX_CLEAR_SPAM', u'清空垃圾邮件', '', 'On', None],
+                [wx.NewId(), 'ID_MAILBOX_IMPORT', u'导入账户/联系人', '', 'On', [
+                            [wx.NewId(), 'ID_IMPORT_MAB_ACCOUT', u'导入cutemail账户', 'On', None],
+                            [wx.NewId(), 'ID_IMPORT_MAB_CONTACT', u'导入cutemail联系人', 'On', None],
+                            [wx.NewId(), 'ID_IMPORT_OUTLOOK_ACCOUT', u'导入outlook账户', 'On', None],
+                            [wx.NewId(), 'ID_IMPORT_OUTLOOK_CONTACT', u'导入outlook联系人', 'On', None],
+                            [wx.NewId(), 'ID_IMPORT_FOXMAIL_ACCOUT', u'导入foxmail账户', 'On', None],
+                            [wx.NewId(), 'ID_IMPORT_FOXMAIL_CONTACT', u'导入foxmail联系人', 'On', None],
+                            ]],
+                [wx.NewId(), 'ID_MAILBOX_EXPORT', u'导出账户/联系人', '', 'On', [
+                            [wx.NewId(), 'ID_EXPORT_MAB_ACCOUT', u'导出cutemail账户', 'On', None],
+                            [wx.NewId(), 'ID_EXPORT_MAB_CONTACT', u'导出cutemail联系人', 'On', None],
+                            ]],
+                [wx.NewId(), 'ID_MAILBOX_USER_OPTIONS', u'属性', 'preferences.png', 'On', None],
+                ],
+        u'帮助', [[
+                [wx.NewId(), 'ID_HELP', u'帮助主题', 'help.png', 'On', None],
+                [wx.NewId(), 'ID_HELP_UPDATE', u'检查更新', 'help.png', 'On', None],
+                [wx.NewId(), 'ID_HELP_ABOUT', u'关于', 'help.png', 'On', None],
+                ]]]
 
 toolbar = [[]]
 
