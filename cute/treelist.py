@@ -2,6 +2,7 @@
 import os, sys, time, simplejson
 import wx, wx.gizmos
 import  wx.lib.dialogs
+import mypprint
 import cStringIO, types
 import config, common, dbope, utils, mailparse
 from optiondlg import OptionsDialog
@@ -626,7 +627,7 @@ class MailboxTree(wx.TreeCtrl):
         return item
             
     def add_to_tree(self, parent, name, user, tpathls):
-        loginfo('add_to_tree:', name)
+        loginfo('add_to_tree:', mypprint.pformat(name))
         loginfo('tpathls:', tpathls)
         if tpathls:
             tpath = '/' + '/'.join(tpathls) + '/' + name[0]

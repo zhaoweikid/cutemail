@@ -1,5 +1,6 @@
 # coding: utf-8
 import os, sys, time
+import traceback
 import threading
 
 class RWLock:
@@ -13,13 +14,14 @@ class RWLock:
 
     def acquire_read(self):
         self.cond.acquire()
-        print 'read wcount:', self.wcount, 'rcount:', self.rcount
+        #print 'read wcount:', self.wcount, 'rcount:', self.rcount
         while len(self.wcount) > 0 or self.write_wait:
             try:
-                print 'read wait ...'
+                #print 'read wait ...'
                 self.cond.wait()
             except Exception, e:
-                print 'wait error:', e
+                traceback.print_exc()
+                #print 'wait error:', e
         self.idc += 1
         rid = self.idc
         self.rcount.add(rid)
@@ -30,11 +32,11 @@ class RWLock:
     def acquire_write(self):
         self.cond.acquire()
         self.write_wait = True
-        print 'write wcount:', self.wcount, 'rcount:', self.rcount
+        #print 'write wcount:', self.wcount, 'rcount:', self.rcount
         while len(self.wcount) + len(self.rcount) > 0:
             try:
                 self.cond.notify()
-                print 'write wait ...'
+                #print 'write wait ...'
                 self.cond.wait()
             except:
                 pass
@@ -48,7 +50,7 @@ class RWLock:
  
     def release_read(self, rid):
         self.cond.acquire()
-        print 'release read:', rid
+        #print 'release read:', rid
         try:
             self.rcount.remove(rid)
         except:
@@ -58,7 +60,7 @@ class RWLock:
 
     def release_write(self, wid):
         self.cond.acquire()
-        print 'release read:', wid
+        #print 'release read:', wid
         try:
             self.wcount.remove(wid)
         except:

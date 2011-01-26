@@ -136,6 +136,7 @@ class Task(threading.Thread):
             except:
                 #print threadname, 'not found task'
                 continue
+            loginfo('get task:', item)
             func = getattr(self, item['task'])
             if not func:
                 loginfo('task type not found')

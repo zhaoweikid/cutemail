@@ -10,15 +10,16 @@ from wx.lib.wordwrap import wordwrap
 from   picmenu import PicMenu
 from   listindex import *
 import treelist, viewhtml, contact
-import config, common, dbope, useradd, logfile
+import config, dbope, useradd, logfile, uiconfig
 import writer, userbox, search
 import cPickle as pickle
 import pop3, mailparse, utils
+from common import load_bitmap
 from logfile import loginfo, logerr, logwarn
 
 class MainFrame(wx.Frame):
     def __init__(self, parent, id, title):
-        wx.Frame.__init__(self, parent, id, title, wx.DefaultPosition, wx.Size(1000, 618), 
+        wx.Frame.__init__(self, parent, id, title, wx.DefaultPosition, wx.Size(1100, 700), 
                             name="CuteMail", style=wx.DEFAULT_FRAME_STYLE )
         
         self.mgr = wx.aui.AuiManager()
@@ -35,8 +36,6 @@ class MainFrame(wx.Frame):
         # 以邮箱路径为索引存储MailListPane
         self.mailboxs = {}
 
-        # 初始化常量
-        self.init_const()
         # 创建菜单        
         self.make_menu()
         # 创建工具栏
@@ -73,22 +72,27 @@ class MainFrame(wx.Frame):
         self.contact = contact.ContactTree(self, self.rundir)
         self.contact.Hide()
         
-        self.mgr.AddPane(self.contact, wx.aui.AuiPaneInfo().Name("contact").Caption(u"联系人").
+        self.mgr.AddPane(self.contact, wx.aui.AuiPaneInfo().
+                    Name("contact").Caption(u"联系人").
                     Right().Layer(0).Position(2).CloseButton(True).MaximizeButton(False))
         self.mgr.GetPane('contact').Hide()
 
         # 为面板管理器增加用户邮箱树形结构
         self.mgr.AddPane(self.tree, wx.aui.AuiPaneInfo().Name("tree").Caption(u"用户").
-                          Left().Layer(1).Position(1).CloseButton(False).MaximizeButton(False))
+                          Left().Layer(1).Position(1).CloseButton(False).
+                          MaximizeButton(False))
             
         # 把邮件内容面板添加到面板管理器
-        self.mgr.AddPane(self.listcnt, wx.aui.AuiPaneInfo().Name("listcnt").Caption(u"邮件内容").
+        self.mgr.AddPane(self.listcnt, wx.aui.AuiPaneInfo().
+                          Name("listcnt").Caption(u"邮件内容").
                           MinSize(wx.Size(-1, 200)).
-                          Bottom().Layer(0).Position(1).CloseButton(True).MaximizeButton(True))
+                          Bottom().Layer(0).Position(1).CloseButton(True).
+                          MaximizeButton(True))
         
-        self.mgr.AddPane(self.attachctl, wx.aui.AuiPaneInfo().Name("attachctl").Caption(u"附件内容").
-                          MinSize(wx.Size(48,-1)).Bottom().
-                          Layer(0).Position(4).CloseButton(True).MaximizeButton(True))
+        self.mgr.AddPane(self.attachctl, wx.aui.AuiPaneInfo().
+                         Name("attachctl").Caption(u"附件内容").
+                         MinSize(wx.Size(48,-1)).Bottom().
+                         Layer(0).Position(4).CloseButton(True).MaximizeButton(True))
         # 显示当前选择的邮件列表面板
         loginfo('show:', self.last_mailbox)
         self.mgr.GetPane(self.last_mailbox).Show()
@@ -101,7 +105,6 @@ class MainFrame(wx.Frame):
         
         self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
         self.Bind(wx.EVT_SIZE, self.OnSize)
-
 
         self.mail_writer_item = ['subject', 'from', 'to', 'text', 'user', 'attach']
 
@@ -182,298 +185,57 @@ class MainFrame(wx.Frame):
             for row in ret:
                 self.load_db_info(u, row) 
 
-
-    def init_const(self):
-        self.ID_FILE_OPEN          = wx.NewId()
-        self.ID_FILE_SAVE_AS       = wx.NewId()
-        self.ID_FILE_GET_MAIL      = wx.NewId()
-        self.ID_FILE_SEND_MAIL     = wx.NewId()
-        self.ID_FILE_GET_ALL_MAIL  = wx.NewId()
-        self.ID_FILE_SEND_ALL_MAIL = wx.NewId()
-        self.ID_FILE_IMPORT        = wx.NewId()
-        self.ID_FILE_EXPORT        = wx.NewId()
-        self.ID_FILE_EXIT          = wx.NewId()
-
-        self.ID_VIEW_MAIL    = wx.NewId()
-        self.ID_VIEW_ATTACH  = wx.NewId()
-        self.ID_VIEW_CONTACT = wx.NewId()
-        #self.ID_VIEW_SEARCH  = wx.NewId()
-        self.ID_VIEW_ENCODE  = wx.NewId()
-        self.ID_VIEW_SOURCE  = wx.NewId()
-        
-        self.ID_VIEW_TEMPLATE   = wx.NewId()
-        
-        self.ID_MAIL_WRITE     = wx.NewId()
-        self.ID_MAIL_REPLY     = wx.NewId()
-        self.ID_MAIL_REPLY_ALL = wx.NewId()
-        self.ID_MAIL_FORWARD   = wx.NewId()
-        self.ID_MAIL_SEND_SEC  = wx.NewId()
-        self.ID_MAIL_ATTACH    = wx.NewId()
-       
-        self.ID_MAIL_SELECTALL = wx.NewId()
-        self.ID_MAIL_COPYTO    = wx.NewId()
-        self.ID_MAIL_MOVETO    = wx.NewId()
-        self.ID_MAIL_DEL       = wx.NewId()
-        self.ID_MAIL_FLAG      = wx.NewId()
-        self.ID_MAIL_SEARCH    = wx.NewId()
- 
-        self.ID_MAILBOX_USER_NEW            = wx.NewId()
-        self.ID_MAILBOX_USER_RENAME         = wx.NewId()
-        self.ID_MAILBOX_USER_DEL            = wx.NewId()
-        self.ID_MAILBOX_USER_OPTIONS        = wx.NewId()
-       
-        self.ID_MAILBOX_NEW         = wx.NewId()
-        self.ID_MAILBOX_RENAME      = wx.NewId()
-        self.ID_MAILBOX_DEL         = wx.NewId()
-        self.ID_MAILBOX_CLEAR_TRASH = wx.NewId()
-        self.ID_MAILBOX_CLEAR_SPAM  = wx.NewId()
- 
-        self.ID_MAILBOX_IMPORT     = wx.NewId()
-        self.ID_MAILBOX_EXPORT     = wx.NewId()
-       
-        self.ID_HELP          = wx.NewId()
-        self.ID_HELP_UPDATE   = wx.NewId()
-        self.ID_HELP_ABOUT    = wx.NewId()
-        
-        self.ID_IMPORT_MAB_USER       = wx.NewId()
-        self.ID_IMPORT_MAB_MAILBOX    = wx.NewId()
-        self.ID_IMPORT_MAB_LINKMAN    = wx.NewId()
-        self.ID_IMPORT_OUTLOOK_USER    = wx.NewId()
-        self.ID_IMPORT_OUTLOOK_MAILBOX = wx.NewId()
-        self.ID_IMPORT_OUTLOOK_LINKMAN = wx.NewId()
-        self.ID_IMPORT_FOXMAIL_USER    = wx.NewId()
-        self.ID_IMPORT_FOXMAIL_MAILBOX = wx.NewId()
-        self.ID_IMPORT_FOXMAIL_LINKMAN = wx.NewId()
-        
-        self.ID_EXPORT_MAB_USER       = wx.NewId()
-        self.ID_EXPORT_MAB_MAILBOX    = wx.NewId()
-        self.ID_EXPORT_MAB_LINKMAN    = wx.NewId()
-        
-        self.ID_ENCODING_AUTO     = wx.NewId()
-        self.ID_ENCODING_GB2312   = wx.NewId()
-        self.ID_ENCODING_GBK      = wx.NewId()
-        self.ID_ENCODING_GB18030  = wx.NewId()
-        self.ID_ENCODING_BIG5     = wx.NewId()
-        self.ID_ENCODING_UTF8     = wx.NewId()
-        self.ID_ENCODING_EUC      = wx.NewId()
-        self.ID_ENCODING_SHIFTJIS = wx.NewId()
-        self.ID_ENCODING_KOREA    = wx.NewId()
-        
     def make_toolbar(self):
-        self.ID_TOOLBAR_MAIL_GET = wx.NewId()
-        self.ID_TOOLBAR_MAIL_SEND = wx.NewId()
-        self.ID_TOOLBAR_MAIL_NEW = wx.NewId()
-        self.ID_TOOLBAR_MAIL_REPLY = wx.NewId()
-        self.ID_TOOLBAR_MAIL_FORWARD = wx.NewId()
-        self.ID_TOOLBAR_MAIL_DELETE = wx.NewId()
-        self.ID_TOOLBAR_ADDR = wx.NewId()
-        #self.ID_TOOLBAR_FIND = wx.NewId()
-        self.ID_TOOLBAR_WWW = wx.NewId()
-        
         self.toolbar = wx.ToolBar(self, -1, wx.DefaultPosition, wx.Size(48, 48), wx.TB_HORIZONTAL|wx.TB_FLAT|wx.TB_TEXT)
         self.toolbar.SetToolBitmapSize(wx.Size (48, 48))
-        self.toolbar.AddLabelTool(self.ID_TOOLBAR_MAIL_GET, u"收邮件", common.load_bitmap('bitmaps/32/mail_get.png'), shortHelp=u"收取邮件", longHelp=u"收取邮件")
-        #self.toolbar.AddLabelTool(3401, 'aaaa', common.load_bitmap('bitmaps/32/mail_get.png'),shortHelp="收取邮件", longHelp="收取邮件")
-        self.toolbar.AddLabelTool(self.ID_TOOLBAR_MAIL_SEND, u'发送', common.load_bitmap('bitmaps/32/mail_send.png'),  shortHelp=u"发送候发邮件", longHelp=u"发送候发邮件")
-        self.toolbar.AddSeparator()
-        self.toolbar.AddLabelTool(self.ID_TOOLBAR_MAIL_NEW, u'新邮件', common.load_bitmap('bitmaps/32/mail_new.png'),  shortHelp=u"写新邮件", longHelp=u"写新邮件")
-        self.toolbar.AddLabelTool(self.ID_TOOLBAR_MAIL_REPLY, u'回复', common.load_bitmap('bitmaps/32/mail_reply.png'), shortHelp=u"回复", longHelp=u"回复")
-        self.toolbar.AddLabelTool(self.ID_TOOLBAR_MAIL_FORWARD, u'转发', common.load_bitmap('bitmaps/32/mail_forward.png'), shortHelp=u"转发", longHelp=u"转发")
-        self.toolbar.AddLabelTool(self.ID_TOOLBAR_MAIL_DELETE, u'删除', common.load_bitmap('bitmaps/32/mail_delete.png'), shortHelp=u"删除", longHelp=u"删除")
-        self.toolbar.AddSeparator()
-        self.toolbar.AddLabelTool(self.ID_TOOLBAR_ADDR, u'联系人', common.load_bitmap('bitmaps/32/toggle_log.png'), shortHelp=u"地址薄", longHelp=u"地址薄")
-        #self.toolbar.AddLabelTool(self.ID_TOOLBAR_FIND, u'查找', common.load_bitmap('bitmaps/32/filefind.png'), shortHelp=u"查找", longHelp=u"查找")
-        self.toolbar.AddSeparator()
-        self.toolbar.AddLabelTool(self.ID_TOOLBAR_WWW, u'主页', common.load_bitmap('bitmaps/32/home.png'), shortHelp=u"主页", longHelp=u"主页")
-        self.toolbar.AddSeparator()
+        
+        for tb in uiconfig.toolbar:            
+            if type(tb) != type([]):
+                self.toolbar.AddSeparator()
+                continue 
+            setattr(self, tb[1], tb[0])
+            self.toolbar.AddLabelTool(tb[0], tb[2], load_bitmap(tb[3]), shortHelp=tb[4], longHelp=tb[4])
+            if tb[-1]:
+                self.Bind(wx.EVT_TOOL, getattr(self, tb[-1]), id=tb[0])
 
-        searchctl = search.MailSearchCtrl(self.toolbar, size=(150,-1), doSearch=self.DoSearch)
+        searchctl = search.MailSearchCtrl(self.toolbar, size=(180,-1), doSearch=self.DoSearch)
         self.toolbar.AddControl(searchctl)
 
         self.toolbar.Realize ()
         self.SetToolBar(self.toolbar)
-        
-        self.Bind(wx.EVT_TOOL, self.OnFileGetMail, id=self.ID_TOOLBAR_MAIL_GET)
-        self.Bind(wx.EVT_TOOL, self.OnFileSendMail, id=self.ID_TOOLBAR_MAIL_SEND)
-        self.Bind(wx.EVT_TOOL, self.OnMailWrite, id=self.ID_TOOLBAR_MAIL_NEW)
-        self.Bind(wx.EVT_TOOL, self.OnMailReply, id=self.ID_TOOLBAR_MAIL_REPLY)
-        self.Bind(wx.EVT_TOOL, self.OnMailForward, id=self.ID_TOOLBAR_MAIL_FORWARD)
-        self.Bind(wx.EVT_TOOL, self.OnMailDel, id=self.ID_TOOLBAR_MAIL_DELETE)
-        self.Bind(wx.EVT_TOOL, self.OnViewContact, id=self.ID_TOOLBAR_ADDR)
-        #self.Bind(wx.EVT_TOOL, self.OnMailSearch, id=self.ID_TOOLBAR_FIND)
-        self.Bind(wx.EVT_TOOL, self.OnWebsite, id=self.ID_TOOLBAR_WWW)
-        
-    def make_menu(self):        
-        self.filemenu = PicMenu(self)        
-        self.filemenu.Append(self.ID_FILE_OPEN, u"打开", "open.png")        
-        self.filemenu.Append(self.ID_FILE_SAVE_AS, u"另存为", "saveas.png")    
-        self.filemenu.AppendSeparator()
-        self.filemenu.Append(self.ID_FILE_GET_MAIL, u'收取邮件', "mail_get.png")
-        self.filemenu.Append(self.ID_FILE_SEND_MAIL, u'发送邮件', "mail_send.png")
-        self.filemenu.Append(self.ID_FILE_GET_ALL_MAIL, u'收取所有帐户邮件', "mail_get.png")
-        self.filemenu.Append(self.ID_FILE_SEND_ALL_MAIL, u'发送所有帐户邮件', "mail_send.png")      
-        self.filemenu.AppendSeparator()
-        self.filemenu.Append(self.ID_FILE_IMPORT, u'导入邮件', "down.png")
-        self.filemenu.Append(self.ID_FILE_EXPORT, u'导出邮件', "up.png")
-        self.filemenu.AppendSeparator()
-        self.filemenu.Append(self.ID_FILE_EXIT, u'退出', "exit.png")      
-
-        encodingmenu = wx.Menu()
-        encodingmenu.Append(self.ID_ENCODING_AUTO, u"自动选择")
-        encodingmenu.Append(self.ID_ENCODING_GB2312, u"简体中文(gb2312)")
-        encodingmenu.Append(self.ID_ENCODING_GBK, u"简体中文(gbk)")
-        encodingmenu.Append(self.ID_ENCODING_GB18030, u"简体中文(gb18030)")
-        encodingmenu.Append(self.ID_ENCODING_BIG5, u"繁体中文(big5)")
-        encodingmenu.Append(self.ID_ENCODING_UTF8, u"UTF-8")
-        encodingmenu.AppendSeparator()
-        encodingmenu.Append(self.ID_ENCODING_EUC, u"日文(EUC)")
-        encodingmenu.Append(self.ID_ENCODING_SHIFTJIS, u"日文(Shift-JIS)")
-        encodingmenu.AppendSeparator()
-        encodingmenu.Append(self.ID_ENCODING_KOREA, u"韩文")
-        
-        self.viewmenu = PicMenu(self)
-        self.viewmenu.Append(self.ID_VIEW_MAIL, u"邮件内容窗口", 'contents.png')        
-        self.viewmenu.Append(self.ID_VIEW_ATTACH, u"附件内容窗口", 'attach.png')        
-        self.viewmenu.Append(self.ID_VIEW_CONTACT, u"联系人窗口", 'contact.png')        
-        self.viewmenu.Append(self.ID_VIEW_SOURCE, u"信件原文", 'note.png')
-        #self.viewmenu.Append(self.ID_VIEW_SEARCH, u"查找邮件", 'mail_find.png')
-        self.viewmenu.AppendSeparator()
-        self.viewmenu.Append(self.ID_VIEW_TEMPLATE, u"模板管理", "template.png")
-
-        self.viewmenu.AppendSeparator()
-        self.viewmenu.AppendMenu(self.ID_VIEW_ENCODE, u"编码", encodingmenu)
-
-        self.mailmenu = PicMenu(self)
-        self.mailmenu.Append(self.ID_MAIL_WRITE, u"写新邮件", 'mail_new.png')
-        self.mailmenu.Append(self.ID_MAIL_REPLY, u"回复邮件", 'mail_reply.png')
-        self.mailmenu.Append(self.ID_MAIL_REPLY_ALL, u"回复全部", 'mail_replyall.png')
-        self.mailmenu.Append(self.ID_MAIL_FORWARD, u"转发邮件", 'mail_send.png')            
-        self.mailmenu.Append(self.ID_MAIL_SEND_SEC, u"再次发送", 'mail_send.png')
-        self.mailmenu.Append(self.ID_MAIL_ATTACH, u"作为附件发送", 'mail_send.png')
-        self.mailmenu.AppendSeparator()
-        
-        self.mailmenu.Append(self.ID_MAIL_SELECTALL, u"选择所有", 'check.png')
-        self.mailmenu.Append(self.ID_MAIL_COPYTO, u"复制到", 'editcopy.png')
-        self.mailmenu.Append(self.ID_MAIL_MOVETO, u"移动到", 'editcut.png')
-        self.mailmenu.Append(self.ID_MAIL_DEL, u"删除", 'editdelete.png')
-        self.mailmenu.AppendSeparator()
-        self.mailmenu.Append(self.ID_MAIL_FLAG, u"标记为", 'flag.png')
-        self.mailmenu.Append(self.ID_MAIL_SEARCH, u"查找", 'mail_find.png') 
-        
-        self.mailboxmenu = PicMenu(self)
-        self.mailboxmenu.Append(self.ID_MAILBOX_USER_NEW, u"新建邮箱帐户", 'user.png')        
-        self.mailboxmenu.Append(self.ID_MAILBOX_USER_RENAME, u"更名邮箱帐户", 'user.png')
-        self.mailboxmenu.Append(self.ID_MAILBOX_USER_DEL, u"删除邮箱帐户", "user.png")
-        self.mailboxmenu.AppendSeparator()
-
-        self.mailboxmenu.Append(self.ID_MAILBOX_NEW, u"新建邮件夹", 'folder_open.png')
-        self.mailboxmenu.Append(self.ID_MAILBOX_RENAME, u"邮件夹改名", 'folder_red.png')
-        self.mailboxmenu.Append(self.ID_MAILBOX_DEL, u"删除邮件夹", 'folder_grey.png')
-        self.mailboxmenu.AppendSeparator()
-        self.mailboxmenu.Append(self.ID_MAILBOX_CLEAR_TRASH, u"清空删除邮件")
-        self.mailboxmenu.Append(self.ID_MAILBOX_CLEAR_SPAM, u"清空垃圾邮件")   
-        
-        importmenu = wx.Menu()
-        importmenu.Append(self.ID_IMPORT_MAB_USER, u"导入cutemail帐户")
-        importmenu.Append(self.ID_IMPORT_MAB_MAILBOX, u"导入cutemail邮件")
-        importmenu.Append(self.ID_IMPORT_MAB_LINKMAN, u"导入cutemail联系人")
-        importmenu.AppendSeparator()
-        importmenu.Append(self.ID_IMPORT_OUTLOOK_USER, u"导入outlook帐户")
-        importmenu.Append(self.ID_IMPORT_OUTLOOK_MAILBOX, u"导入outlook邮件")
-        importmenu.Append(self.ID_IMPORT_OUTLOOK_LINKMAN, u"导入outlook联系人")
-        importmenu.AppendSeparator()
-        importmenu.Append(self.ID_IMPORT_FOXMAIL_USER, u"导入foxmail帐户")
-        importmenu.Append(self.ID_IMPORT_FOXMAIL_MAILBOX, u"导入foxmail邮件")
-        importmenu.Append(self.ID_IMPORT_FOXMAIL_LINKMAN, u"导入foxmail联系人")
-        
-        exportmenu = wx.Menu()        
-        exportmenu.Append(self.ID_EXPORT_MAB_USER, u"导出cutemail帐户")
-        exportmenu.Append(self.ID_EXPORT_MAB_MAILBOX, u"导出cutemail邮件")
-        exportmenu.Append(self.ID_EXPORT_MAB_LINKMAN, u"导出cutemail联系人")
        
-        self.mailboxmenu.AppendSeparator()
-        self.mailboxmenu.AppendMenu(self.ID_MAILBOX_IMPORT, u"导入账户/邮件/联系人", importmenu)
-        self.mailboxmenu.AppendMenu(self.ID_MAILBOX_EXPORT, u"导出账户/邮件/联系人", exportmenu)
-        
-        self.mailboxmenu.AppendSeparator()
-        self.mailboxmenu.Append(self.ID_MAILBOX_USER_OPTIONS, u"属性", 'preferences.png')       
-        
-        self.helpmenu = PicMenu(self)
-        self.helpmenu.Append(self.ID_HELP, u"帮助主题", 'help.png')      
-        self.helpmenu.AppendSeparator()
-        self.helpmenu.Append(self.ID_HELP_UPDATE, u"检查更新", 'help.png') 
-        self.helpmenu.Append(self.ID_HELP_ABOUT, u"关于", 'info.png')
-        
-        self.menuBar = wx.MenuBar()
-        self.menuBar.Append(self.filemenu,u"文件")        
-        self.menuBar.Append(self.viewmenu,u"查看")
-        self.menuBar.Append(self.mailmenu,u"邮件")
-        self.menuBar.Append(self.mailboxmenu,u"邮箱")
-        self.menuBar.Append(self.helpmenu,u"帮助")
-        self.SetMenuBar(self.menuBar)
+    def create_menu_one(self, menu):
+        m = PicMenu(self)
+        for sub in menu:
+            #print sub
+            if type(sub) != type([]):
+                m.AppendSeparator()
+                continue
+            setattr(self, sub[1], sub[0])
+            #self.menus[uiconfig.menu[i]] = m
+            if sub[5]:
+                m2 = self.create_menu_one(sub[5])
+                m.AppendMenu(sub[0], sub[2], m2)
+            else:
+                m.Append(sub[0], sub[2], sub[3])
+            if sub[4]:
+                self.Bind(wx.EVT_MENU, getattr(self, sub[4]), id=sub[0])
+   
+                
+        return m
+ 
+    def make_menu(self):        
+        self.menus = {}
+        menubar = wx.MenuBar()
 
-        self.Bind(wx.EVT_MENU, self.OnFileOpen, id=self.ID_FILE_OPEN)
-        self.Bind(wx.EVT_MENU, self.OnFileSaveAs, id=self.ID_FILE_SAVE_AS)
-        self.Bind(wx.EVT_MENU, self.OnFileGetMail, id=self.ID_FILE_GET_MAIL)
-        self.Bind(wx.EVT_MENU, self.OnFileSendMail, id=self.ID_FILE_SEND_MAIL)
-        self.Bind(wx.EVT_MENU, self.OnFileGetAllMail, id=self.ID_FILE_GET_ALL_MAIL)
-        self.Bind(wx.EVT_MENU, self.OnFileSendAllMail, id=self.ID_FILE_SEND_ALL_MAIL)
-        self.Bind(wx.EVT_MENU, self.OnFileImport, id=self.ID_FILE_IMPORT)
-        self.Bind(wx.EVT_MENU, self.OnFileExport, id=self.ID_FILE_EXPORT)
-        self.Bind(wx.EVT_MENU, self.OnCloseWindow, id=self.ID_FILE_EXIT)
-        
-        self.Bind(wx.EVT_MENU, self.OnViewMail, id=self.ID_VIEW_MAIL)
-        self.Bind(wx.EVT_MENU, self.OnViewAttach, id=self.ID_VIEW_ATTACH)
-        self.Bind(wx.EVT_MENU, self.OnViewContact, id=self.ID_VIEW_CONTACT)
-        self.Bind(wx.EVT_MENU, self.OnViewSource, id=self.ID_VIEW_SOURCE)
-        #self.Bind(wx.EVT_MENU, self.OnMailSearch, id=self.ID_VIEW_SEARCH)
-        self.Bind(wx.EVT_MENU, self.OnViewEncode, id=self.ID_VIEW_ENCODE)
-        
-        self.Bind(wx.EVT_MENU, self.OnImportOutlookUser, id=self.ID_IMPORT_OUTLOOK_USER)
-        self.Bind(wx.EVT_MENU, self.OnImportOutlookMailbox, id=self.ID_IMPORT_OUTLOOK_MAILBOX)
-        self.Bind(wx.EVT_MENU, self.OnImportOutlookLinkman, id=self.ID_IMPORT_OUTLOOK_LINKMAN)
-        self.Bind(wx.EVT_MENU, self.OnImportFoxmailUser, id=self.ID_IMPORT_FOXMAIL_USER)
-        self.Bind(wx.EVT_MENU, self.OnImportFoxmailMailbox, id=self.ID_IMPORT_FOXMAIL_MAILBOX)
-        self.Bind(wx.EVT_MENU, self.OnImportFoxmailLinkman, id=self.ID_IMPORT_FOXMAIL_LINKMAN)
-        self.Bind(wx.EVT_MENU, self.OnImportCuteUser, id=self.ID_IMPORT_MAB_USER)
-        self.Bind(wx.EVT_MENU, self.OnImportCuteMailbox, id=self.ID_IMPORT_MAB_MAILBOX)
-        self.Bind(wx.EVT_MENU, self.OnImportCuteLinkman, id=self.ID_IMPORT_MAB_LINKMAN)
-        
-        self.Bind(wx.EVT_MENU, self.OnExportCuteUser, id=self.ID_EXPORT_MAB_USER)
-        self.Bind(wx.EVT_MENU, self.OnExportCuteMailbox, id=self.ID_EXPORT_MAB_MAILBOX)
-        self.Bind(wx.EVT_MENU, self.OnExportCuteLinkman, id=self.ID_EXPORT_MAB_LINKMAN)
-        
-        self.Bind(wx.EVT_MENU, self.OnViewTemplate, id=self.ID_VIEW_TEMPLATE)
+        for i in range(0, len(uiconfig.menu), 2):
+            submenus = uiconfig.menu[i+1]
+            m = self.create_menu_one(submenus)
+            self.menus[uiconfig.menu[i]] = m
+            menubar.Append(m, uiconfig.menu[i])
+                
+        self.SetMenuBar(menubar)
 
-        self.Bind(wx.EVT_MENU, self.OnMailboxUserNew, id=self.ID_MAILBOX_USER_NEW)
-        self.Bind(wx.EVT_MENU, self.OnMailboxUserRename, id=self.ID_MAILBOX_USER_RENAME)
-        self.Bind(wx.EVT_MENU, self.OnMailboxUserDel, id=self.ID_MAILBOX_USER_DEL)
-        self.Bind(wx.EVT_MENU, self.OnMailboxUserOptions, id=self.ID_MAILBOX_USER_OPTIONS)
-        
-        self.Bind(wx.EVT_MENU, self.OnMailWrite, id=self.ID_MAIL_WRITE)
-        self.Bind(wx.EVT_MENU, self.OnMailReply, id=self.ID_MAIL_REPLY)
-        self.Bind(wx.EVT_MENU, self.OnMailReplyAll, id=self.ID_MAIL_REPLY_ALL)
-        self.Bind(wx.EVT_MENU, self.OnMailForward, id=self.ID_MAIL_FORWARD)
-        self.Bind(wx.EVT_MENU, self.OnMailSendSec, id=self.ID_MAIL_SEND_SEC)
-        self.Bind(wx.EVT_MENU, self.OnMailAttach, id=self.ID_MAIL_ATTACH)
-        self.Bind(wx.EVT_MENU, self.OnMailSelectAll, id=self.ID_MAIL_SELECTALL)
-        self.Bind(wx.EVT_MENU, self.OnMailCopyTo, id=self.ID_MAIL_COPYTO)
-        self.Bind(wx.EVT_MENU, self.OnMailMoveTo, id=self.ID_MAIL_MOVETO)
-        self.Bind(wx.EVT_MENU, self.OnMailDel, id=self.ID_MAIL_DEL)
-        self.Bind(wx.EVT_MENU, self.OnMailFlag, id=self.ID_MAIL_FLAG)
-        #self.Bind(wx.EVT_MENU, self.OnMailSearch, id=self.ID_MAIL_SEARCH)
-        
-        self.Bind(wx.EVT_MENU, self.OnMailboxNew, id=self.ID_MAILBOX_NEW)
-        self.Bind(wx.EVT_MENU, self.OnMailboxRename, id=self.ID_MAILBOX_RENAME)
-        self.Bind(wx.EVT_MENU, self.OnMailboxDel, id=self.ID_MAILBOX_DEL)
-        self.Bind(wx.EVT_MENU, self.OnMailboxClearTrash, id=self.ID_MAILBOX_CLEAR_TRASH)
-        self.Bind(wx.EVT_MENU, self.OnMailboxClearSpam, id=self.ID_MAILBOX_CLEAR_SPAM)
-
-
-        self.Bind(wx.EVT_MENU, self.OnHelp, id=self.ID_HELP)
-        self.Bind(wx.EVT_MENU, self.OnHelpUpdate, id=self.ID_HELP_UPDATE)
-        self.Bind(wx.EVT_MENU, self.OnHelpAbout, id=self.ID_HELP_ABOUT)
-        
     def make_statusbar(self):
         self.statusbar = self.CreateStatusBar()
         self.statusbar.SetFieldsCount(3)
@@ -646,8 +408,8 @@ class MainFrame(wx.Frame):
         data = self.tree.last_item_data()
         if not data:
             return
-        loginfo('last_mailbox:', data['user'])
         x = {'name':data['user'], 'task':'recvmail'}
+        loginfo('add taskq: last_mailbox:', data['user'], 'task:', x)
         config.taskq.put(x)
         
     def OnFileSendMail(self, event):
@@ -776,24 +538,39 @@ class MainFrame(wx.Frame):
     
     def OnViewEncode(self, event):
         pass
-        
+
+    def OnEncodeAuto(self, event):
+        pass
+
+    def OnEncodeGBK(self, event):
+        pass
+
+    def OnEncodeGB18030(self, event):
+        pass
+
+    def OnEncodeBIG5(self, event):
+        pass
+
+    def OnEncodeUTF8(self, event):
+        pass
+       
     def OnImportOutlookUser(self, event):
         pass       
     def OnImportOutlookMailbox(self, event):
         pass
-    def OnImportOutlookLinkman(self, event):
+    def OnImportOutlookContact(self, event):
         pass
     def OnImportFoxmailUser(self, event):
         pass
     def OnImportFoxmailMailbox(self, event):
         pass
-    def OnImportFoxmailLinkman(self, event):
+    def OnImportFoxmailContact(self, event):
         pass
     def OnImportCuteUser(self, event):
         pass
     def OnImportCuteMailbox(self, event):
         pass
-    def OnImportCuteLinkman(self, event):
+    def OnImportCuteContact(self, event):
         pass
         
         
@@ -801,7 +578,7 @@ class MainFrame(wx.Frame):
         pass
     def OnExportCuteMailbox(self, event):
         pass
-    def OnExportCuteLinkman(self, event):
+    def OnExportCuteContact(self, event):
         pass
         
         
@@ -835,15 +612,19 @@ class MainFrame(wx.Frame):
                   'smtp_pass': page2.smtppass.GetValue(),
                   }
             loginfo('me:', me)
-            try:
-                conf = config.cf.user_add(me)
-            except Exception, e:
-                wx.MessageBox(u"用户添加失败!"+str(e), u"欢迎使用CuteMail")
+            if me['name']:
+                try:
+                    conf = config.cf.user_add(me)
+                except Exception, e:
+                    wx.MessageBox(u"用户添加失败!"+str(e), u"欢迎使用CuteMail")
+                else:
+                    #wx.MessageBox(u"用户添加成功!", u"欢迎使用CuteMail")
+                    self.tree.append(conf['mailbox'], me['name'])
+                    self.tree.Refresh()
             else:
-                #wx.MessageBox(u"用户添加成功!", u"欢迎使用CuteMail")
-                self.tree.append(conf['mailbox'], me['name'])
-                self.tree.Refresh()
-                
+                dlg = wx.MessageDialog(self, u'用户名不能为空', u'错误', wx.OK)
+                dlg.Destroy()
+                    
         
     def OnMailboxUserRename(self, event):
         dlg = wx.TextEntryDialog(
@@ -852,7 +633,6 @@ class MainFrame(wx.Frame):
 
         if dlg.ShowModal() == wx.ID_OK:
             name = dlg.GetValue()
-
         dlg.Destroy()
          
     def OnMailboxUserDel(self, event):
@@ -870,6 +650,7 @@ class MainFrame(wx.Frame):
         data = self.tree.last_item_data()
         if not data:
             return
+
         user = data['user']
         loginfo('user name:', user)
         mailaddr = config.cf.users[user]['email']
@@ -878,8 +659,6 @@ class MainFrame(wx.Frame):
         maildata['user'] = user
         maildata['attach'] = []
         #maildata = {'subject':'', 'from':mailaddr, 'to':'', 'text':'', 'user':user, 'attach':[]}
-
-
         frame = writer.WriterFrame(self, self.rundir, maildata)
         frame.Show(True)
 
@@ -998,8 +777,6 @@ class MainFrame(wx.Frame):
         frame = writer.WriterFrame(self, self.rundir, maildata)
         frame.Show(True)
 
-
-
     def OnMailSelectAll(self, event):
         data = self.tree.last_item_data()
         if not data:
@@ -1029,8 +806,8 @@ class MainFrame(wx.Frame):
     def OnMailFlag(self, event):
         pass
     
-    #def OnMailSearch(self, event):
-    #    pass
+    def OnMailSearch(self, event):
+        pass
 
     def OnMailboxNew(self, event):
         self.tree.last_item_add_child()
@@ -1064,8 +841,7 @@ class MainFrame(wx.Frame):
             "It used wxPython\n",
             350, wx.ClientDC(self))
         info.WebSite = ("http://code.google.com/p/cutemail", "CuteMail home page")
-        info.Developers = [ "zhaoweikid",
-                            "lanwenhong"]
+        info.Developers = ["zhaoweikid"]
 
         info.License = wordwrap("GPL", 500, wx.ClientDC(self))
         wx.AboutBox(info)
