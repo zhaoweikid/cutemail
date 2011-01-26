@@ -16,6 +16,7 @@ class cuteApp(wx.App):
         wx.InitAllImageHandlers()       
         self.frame = cutewindow.MainFrame(None, 101, config.VERSION)
         self.frame.Show(True)
+        self.frame.CenterOnScreen()
         self.SetTopWindow(self.frame)
         self.Bind(wx.EVT_ACTIVATE_APP, self.OnActivate)
         return True

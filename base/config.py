@@ -1,5 +1,6 @@
 #-*- encoding: utf-8 -*-
 import os, string, sys, traceback, types
+import mypprint
 import utils
 import threading, Queue
 import cPickle as pickle
@@ -158,7 +159,7 @@ class AppConfig:
             self.users[conf['name']] = conf
             self.mailboxs[conf['email']] = conf
 
-            loginfo(conf['mailbox'])
+            loginfo(mypprint.pformat(conf['mailbox']))
     
     def load_conf(self, name):
         conf_path = os.path.join(self.datadir, name, 'config.db')
